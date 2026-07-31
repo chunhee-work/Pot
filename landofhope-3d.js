@@ -239,18 +239,39 @@ class LandOfHope3D extends HTMLElement {
     controls.minPolarAngle = Math.PI * 0.15;
     controls.target.set(0, 0, 0);
 
+    // Slow left-right pan. SPIN_RANGE and SPIN_SPEED are the original values —
+    // the sweep itself is unchanged. START_ANGLE is the rotation.y the logo holds
+    // the moment it first comes into view; the phase offset places the sine there
+    // so the pan begins from that angle instead of wherever the clock happened to be.
+    const SPIN_RANGE = 0.35;
+    const SPIN_SPEED = 0.00025;
+    const START_ANGLE = 0;
+    const SPIN_PHASE = Math.asin(Math.max(-1, Math.min(1, START_ANGLE / SPIN_RANGE)));
+    let spinT0 = null;
+    group.rotation.y = START_ANGLE;   // held until the pan starts
+
     let autoRotate = true;
     renderer.domElement.addEventListener("pointerdown", () => { autoRotate = false; });
 
     let visible = true;
-    this.io = new IntersectionObserver(es => { visible = es[0].isIntersecting; }, { rootMargin: "15% 0px" });
+    this.io = new IntersectionObserver(es => {
+      visible = es[0].isIntersecting;
+      // Start the pan the first time the logo actually enters the viewport.
+      // Doing it here rather than on the first animation frame matters: `visible`
+      // is seeded true, so a frame runs before the observer's first callback and
+      // would otherwise start the clock at component init — reintroducing the
+      // load-time dependency this is meant to remove.
+      if (visible && spinT0 === null) spinT0 = performance.now();
+    }, { rootMargin: "15% 0px" });
     this.io.observe(this);
 
     const animate = () => {
       if (this.dead) return;
       this.raf = requestAnimationFrame(animate);
       if (!visible) return;
-      if (autoRotate) group.rotation.y = Math.sin(performance.now() * 0.00025) * 0.35;
+      if (autoRotate && spinT0 !== null) {
+        group.rotation.y = Math.sin((performance.now() - spinT0) * SPIN_SPEED + SPIN_PHASE) * SPIN_RANGE;
+      }
       controls.update();
       renderer.render(scene, camera);
     };
