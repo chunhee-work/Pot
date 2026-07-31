@@ -157,7 +157,7 @@ class LandOfHope3D extends HTMLElement {
     // underneath — the hero angle. The target stays at the origin, so this is
     // a pitch, not a pan; OrbitControls re-derives its spherical from the live
     // camera position each frame, so dragging still works from here.
-    const CAM_HEIGHT = -0.28;
+    const CAM_HEIGHT = -0.40;
     const camera = new THREE.PerspectiveCamera(28, 16 / 9, 0.1, 100);
     camera.position.set(0, CAM_HEIGHT, 9.5);
 
