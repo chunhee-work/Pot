@@ -273,14 +273,13 @@ landofhope-3d canvas{background:transparent}
 <script src="landofhope-3d.js"></script>
 <script src="cylinder-carousel.js"></script>
 <script src="nav-metal.js"></script>
-<script src="nav-glass.js"></script>
 </helmet>
 
 <svg data-grain="" style="position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:70;opacity:.05" aria-hidden="true"><filter id="omGrain"><feTurbulence type="fractalNoise" sc-camel-base-frequency="0.85" sc-camel-num-octaves="2"></feTurbulence></filter><rect width="100%" height="100%" filter="url(#omGrain)" opacity="0.6"></rect></svg>
 <canvas data-dust="" style="position:fixed;inset:0;z-index:0;pointer-events:none" aria-hidden="true"></canvas>
 <div data-navprogress="" style="position:fixed;top:0;left:0;right:0;height:2px;background:#111110;transform-origin:0 50%;transform:scaleX(0);z-index:95;will-change:transform"></div>
 
-<nav data-glassnav="" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:90;border-radius:999px;max-width:94vw;isolation:isolate;background:rgba(17,17,16,.62);-webkit-backdrop-filter:blur(16px) saturate(1.8);backdrop-filter:blur(16px) saturate(1.8);box-shadow:0 6px 6px rgba(0,0,0,.2),0 0 20px rgba(0,0,0,.1),inset 2px 2px 1px 0 rgba(255,255,255,.3),inset -1px -1px 1px 1px rgba(255,255,255,.2);transition:background .5s cubic-bezier(.32,.72,0,1)"><div style="position:relative;z-index:2;display:flex;align-items:center;gap:2px;padding:8px 6px;overflow-x:auto;scrollbar-width:none;border-radius:999px">
+<nav data-metal="" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:90;border-radius:999px;background:#111110;box-shadow:0 12px 30px rgba(0,0,0,.35);max-width:94vw;isolation:isolate"><div style="position:absolute;inset:3px;border-radius:999px;background:linear-gradient(180deg,#1d1d1b 0%,#0a0a09 100%);z-index:1;pointer-events:none"></div><div style="position:relative;z-index:2;display:flex;align-items:center;gap:2px;padding:8px 6px;overflow-x:auto;scrollbar-width:none;border-radius:999px">
   <a href="#about" data-nav="" data-hpair="" data-hin="transform:scaleX(1)" data-hout="transform:scaleX(0)" style="position:relative;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:#a19f97;padding:14px;min-height:44px;display:flex;align-items:center;border-radius:999px;transition:color .35s cubic-bezier(.32,.72,0,1);white-space:nowrap" style-hover="color:#f5f5f0">About<span data-hchild="" style="position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;background:#f5f5f0;transform:scaleX(0);transform-origin:left;transition:transform .38s cubic-bezier(.32,.72,0,1)"></span></a>
   <a href="#gateway" data-nav="" data-hpair="" data-hin="transform:scaleX(1)" data-hout="transform:scaleX(0)" style="position:relative;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:#a19f97;padding:14px;min-height:44px;display:flex;align-items:center;border-radius:999px;transition:color .35s cubic-bezier(.32,.72,0,1);white-space:nowrap" style-hover="color:#f5f5f0">Work<span data-hchild="" style="position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;background:#f5f5f0;transform:scaleX(0);transform-origin:left;transition:transform .38s cubic-bezier(.32,.72,0,1)"></span></a>
   <a href="#series" data-nav="" data-hpair="" data-hin="transform:scaleX(1)" data-hout="transform:scaleX(0)" style="position:relative;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:#a19f97;padding:14px;min-height:44px;display:flex;align-items:center;border-radius:999px;transition:color .35s cubic-bezier(.32,.72,0,1);white-space:nowrap" style-hover="color:#f5f5f0">Series<span data-hchild="" style="position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;background:#f5f5f0;transform:scaleX(0);transform-origin:left;transition:transform .38s cubic-bezier(.32,.72,0,1)"></span></a>
@@ -299,8 +298,8 @@ landofhope-3d canvas{background:transparent}
       <div data-reveal="" data-d="1" style="font-size:clamp(16px,1.8vw,20px);color:#57564f;margin:16px 0 22px;font-weight:400">from needle &amp; thread, to camera &amp; code.</div>
       <p data-reveal="" data-d="2" style="max-width:520px;color:#57564f;font-weight:300;font-size:16.5px;text-wrap:pretty">I trained as a fashion designer. Today I run a full studio's output <b style="color:#111110;font-weight:700">alone</b> — brand strategy, an <b style="color:#111110;font-weight:700">original animated universe</b>, character voices, cinematic short-form, and <b style="color:#111110;font-weight:700">working software</b> — for a four-brand Web3 ecosystem.</p>
       <div data-reveal="" data-d="3" style="display:flex;gap:14px;margin-top:36px;flex-wrap:wrap">
-        <button data-scroll="#about" data-metalbtn="" data-hpair="" data-hin="transform:translate(2px,-1px)" data-hout="transform:none" style="position:relative;isolation:isolate;overflow:hidden;display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:none;background:#111110;color:#f5f4f0;font-family:inherit;font-weight:700;font-size:14px;padding:12.5px 12.5px 12.5px 25.5px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1)" style-active="transform:scale(.97)"><span aria-hidden="true" style="position:absolute;inset:2px;border-radius:999px;background:linear-gradient(180deg,#1d1d1b 0%,#0a0a09 100%);z-index:0;pointer-events:none"></span><span style="position:relative;z-index:1">My journey</span> <span data-hchild="" style="position:relative;z-index:1;width:32px;height:32px;border-radius:50%;background:#f5f4f0;color:#111110;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1)">↓</span></button>
-        <button data-scroll="#gateway" data-metalbtn="" style="position:relative;isolation:isolate;overflow:hidden;display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:none;background:#111110;color:#f5f4f0;font-family:inherit;font-weight:700;font-size:14px;padding:12.5px 12.5px 12.5px 25.5px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1)" style-active="transform:scale(.97)">
+        <button data-scroll="#about" data-metal="" data-hpair="" data-hin="transform:translate(2px,-1px)" data-hout="transform:none" style="position:relative;isolation:isolate;overflow:hidden;display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:none;background:#111110;color:#f5f4f0;font-family:inherit;font-weight:700;font-size:14px;padding:12.5px 12.5px 12.5px 25.5px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1)" style-active="transform:scale(.97)"><span aria-hidden="true" style="position:absolute;inset:2px;border-radius:999px;background:linear-gradient(180deg,#1d1d1b 0%,#0a0a09 100%);z-index:0;pointer-events:none"></span><span style="position:relative;z-index:1">My journey</span> <span data-hchild="" style="position:relative;z-index:1;width:32px;height:32px;border-radius:50%;background:#f5f4f0;color:#111110;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1)">↓</span></button>
+        <button data-scroll="#gateway" data-metal="" style="position:relative;isolation:isolate;overflow:hidden;display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:none;background:#111110;color:#f5f4f0;font-family:inherit;font-weight:700;font-size:14px;padding:12.5px 12.5px 12.5px 25.5px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1)" style-active="transform:scale(.97)">
           <span aria-hidden="true" style="position:absolute;inset:2px;border-radius:999px;background:linear-gradient(180deg,#1d1d1b 0%,#0a0a09 100%);z-index:0;pointer-events:none"></span>
           <span aria-hidden="true" style="position:absolute;inset:3px;border-radius:999px;z-index:0;pointer-events:none;opacity:.32;background:radial-gradient(circle at 1px 1px,rgba(245,245,242,.95) .5px,transparent 0);background-size:4px 4px"></span>
           <span aria-hidden="true" style="position:absolute;top:50%;left:50%;width:140%;aspect-ratio:1;translate:-50% -50%;z-index:0;pointer-events:none;opacity:.42;background:linear-gradient(-50deg,transparent 38%,rgba(245,245,242,.7) 50%,transparent 62%);mask-image:radial-gradient(circle at bottom,transparent 40%,black);-webkit-mask-image:radial-gradient(circle at bottom,transparent 40%,black);animation:streak 7.5s linear infinite"></span>
@@ -743,12 +742,9 @@ class Component extends DCLogic {
     this.onKey = (e) => { if (e.key === 'Escape') this.closeLb(); };
     document.addEventListener('keydown', this.onKey);
 
-    const bar = document.querySelector('[data-glassnav]');
-    if (bar && typeof mountGlass === 'function') this.glass = mountGlass(bar);
-
     this.rims = [];
     if (typeof mountMetalRim === 'function') {
-      document.querySelectorAll('[data-metalbtn]').forEach((btn) => {
+      document.querySelectorAll('[data-metal]').forEach((btn) => {
         const rim = mountMetalRim(btn, { speed: 0.6, polish: 0.8 });
         if (rim) { rim.host = btn; this.rims.push(rim); }
       });
@@ -768,7 +764,6 @@ class Component extends DCLogic {
     this.dead = true;
     cancelAnimationFrame(this.raf);
     clearInterval(this.scanTimer);
-    if (this.glass) { this.glass.destroy(); this.glass = null; }
     if (this.rims) { this.rims.forEach((r) => r.destroy()); this.rims = null; }
     if (this.io) this.io.disconnect();
     removeEventListener('scroll', this.onScroll);
@@ -803,7 +798,7 @@ class Component extends DCLogic {
     const t = e.target;
     if (!t || !t.closest) return;
     if (this.rims && t.closest) {
-      const btn = t.closest('[data-metalbtn]');
+      const btn = t.closest('[data-metal]');
       if (btn) this.rims.forEach((r) => { if (r.host === btn) r.setSpeed(on ? 1 : r.base); });
     }
     const p = t.closest('[data-hpair]');
@@ -823,7 +818,7 @@ class Component extends DCLogic {
   click(e) {
     const t = e.target;
     if (!t || !t.closest) return;
-    const mb = t.closest('[data-metalbtn]');
+    const mb = t.closest('[data-metal]');
     if (mb && this.rims) {
       this.rims.forEach((r) => { if (r.host === mb) r.setSpeed(2.4); });
       clearTimeout(this._rimT);
@@ -961,7 +956,6 @@ class Component extends DCLogic {
     }
 
     const ts = now || 0;
-    if (this.glass) this.glass.frame(ts);
     if (this.rims) this.rims.forEach((r) => r.frame(ts));
     if (this.dots) this.dustFrame();
   }
