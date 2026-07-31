@@ -153,8 +153,13 @@ class LandOfHope3D extends HTMLElement {
     await loadThree();
     const scene = new THREE.Scene();
 
+    // Negative height puts the camera below the lockup so it is seen from
+    // underneath — the hero angle. The target stays at the origin, so this is
+    // a pitch, not a pan; OrbitControls re-derives its spherical from the live
+    // camera position each frame, so dragging still works from here.
+    const CAM_HEIGHT = -0.28;
     const camera = new THREE.PerspectiveCamera(28, 16 / 9, 0.1, 100);
-    camera.position.set(0, 0.15, 9.5);
+    camera.position.set(0, CAM_HEIGHT, 9.5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer = renderer;
