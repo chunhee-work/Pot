@@ -15,6 +15,7 @@ const FRAG = `precision mediump float;
 uniform vec2  u_res;
 uniform float u_time;
 uniform float u_polish;
+uniform float u_freq;
 
 const float REPETITION = 2.1;
 const float SOFTNESS   = 0.5;
@@ -30,9 +31,9 @@ const float SHIFT_B    = 0.30;
 float field(vec2 uv, float t) {
   float x = uv.x, y = uv.y;
   return y * 2.30
-       + 0.62 * sin(x * 6.2832 * 1.15 + t * 0.95)
-       + 0.30 * sin(x * 6.2832 * 2.40 - t * 0.62)
-       + 0.14 * sin((x * 3.1 + y * 1.4) * 6.2832 * 0.7 + t * 1.3);
+       + 0.62 * sin(x * 6.2832 * 1.15 * u_freq + t * 0.95)
+       + 0.30 * sin(x * 6.2832 * 2.40 * u_freq - t * 0.62)
+       + 0.14 * sin((x * 3.1 * u_freq + y * 1.4) * 6.2832 * 0.7 + t * 1.3);
 }
 
 // One colour channel, phase-shifted. Softness blends between hard-edged bands
@@ -101,6 +102,8 @@ function mountMetalRim(host, opts) {
   const uRes = gl.getUniformLocation(prog, 'u_res');
   const uTime = gl.getUniformLocation(prog, 'u_time');
   const uPolish = gl.getUniformLocation(prog, 'u_polish');
+  const uFreq = gl.getUniformLocation(prog, 'u_freq');
+  const REF_W = 575;
   const POLISH = o.polish == null ? 0.8 : o.polish;
 
   // The pill is a couple of pixels of visible rim, so it never needs full DPR.
@@ -115,6 +118,7 @@ function mountMetalRim(host, opts) {
     canvas.width = w; canvas.height = h;
     gl.viewport(0, 0, w, h);
     gl.uniform2f(uRes, w, h);
+    gl.uniform1f(uFreq, Math.max(0.34, host.clientWidth / REF_W));
   };
   resize();
 
