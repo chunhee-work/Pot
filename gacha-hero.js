@@ -11,7 +11,7 @@
     var x = cv.getContext('2d'), N = 1500, p = [], i;
     var rnd = function () { return Math.random(); };
     for (i = 0; i < N; i++) p.push({ x: rnd(), y: rnd(), r: 0.25 + rnd() * 0.6,
-      a: 0.15 + rnd() * 0.75, s: 0.0014 + rnd() * 0.006, ph: rnd() * 6.2832 });
+      a: 0.15 + rnd() * 0.75, s: 0.0007 + rnd() * 0.003, ph: rnd() * 6.2832 });
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var seen = true, raf;
     if ('IntersectionObserver' in window)

@@ -328,22 +328,21 @@ gacha-hero canvas[data-gmark]{width:100% !important;right:0 !important;opacity:.
 .gu-tag.gu-now b{color:#8fded7}
 .gu-num{display:block;font-family:inherit;font-weight:800;font-size:clamp(30px,3.4vw,46px);
   letter-spacing:-.03em;line-height:1;color:var(--gu-a);margin-bottom:6px}
-.gu-cta{display:inline-grid;grid-template-columns:auto 1fr auto;align-items:center;gap:0 16px;
-  margin-top:clamp(40px,6vw,70px);text-decoration:none;border:1px solid rgba(78,205,196,.34);
-  border-radius:999px;padding:15px 20px 15px 26px;background:rgba(78,205,196,.05);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  box-shadow:0 0 34px rgba(78,205,196,.09),inset 0 1px 0 rgba(245,245,242,.06);
-  transition:border-color .4s cubic-bezier(.32,.72,0,1),background .4s,box-shadow .4s}
-.gu-cta:hover{border-color:rgba(78,205,196,.7);background:rgba(78,205,196,.10);
-  box-shadow:0 0 54px rgba(78,205,196,.2),inset 0 1px 0 rgba(245,245,242,.1)}
-.gu-cta-l{font-size:15px;font-weight:700;letter-spacing:-.01em;color:#f5f5f2}
-.gu-cta-m{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
-  text-transform:uppercase;color:#7fb8b2;padding-left:16px;border-left:1px solid rgba(78,205,196,.22)}
-.gu-cta-i{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:flex;align-items:center;
-  justify-content:center;font-size:13px;color:#0a0a0a;background:#4ECDC4}
-@media (max-width:560px){
-.gu-cta{grid-template-columns:auto auto;padding:14px 16px 14px 20px;gap:0 12px}
+.gu-cta{display:flex;align-items:center;gap:22px;width:min(660px,100%);
+  margin-top:clamp(44px,6vw,76px);padding:22px 4px;text-decoration:none;
+  border-top:1px solid rgba(245,245,242,.34);border-bottom:1px solid rgba(245,245,242,.34);
+  transition:border-color .4s cubic-bezier(.32,.72,0,1)}
+.gu-cta:hover{border-color:rgba(245,245,242,.7)}
+.gu-cta-l{font-size:clamp(20px,2.4vw,27px);font-weight:800;letter-spacing:-.02em;color:#f5f5f2}
+.gu-cta-m{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.18em;
+  text-transform:uppercase;color:#8d8d86}
+.gu-cta-i{width:44px;height:44px;flex:0 0 44px;border-radius:50%;border:1px solid #f5f5f2;
+  color:#f5f5f2;display:grid;place-items:center;font-size:15px}
+@media (max-width:640px){
+.gu-cta{gap:14px;padding:18px 2px}
 .gu-cta-m{display:none}
+.gu-cta-l{flex:1}
+}
 }
 landofhope-3d{background:transparent}
 landofhope-3d canvas{background:transparent}
@@ -685,7 +684,7 @@ landofhope-3d canvas{background:transparent}
       <div><span class="gu-num">02</span><h3>And when it is, the product is still playing</h3><p>The auth card sits <b>inside the product</b> rather than in front of it. Email or Telegram, nothing else — a Telegram-first product saying so by what it leaves out.</p></div></div></div>
   </div>
 <div style="max-width:1200px;margin:0 auto;padding:1rem clamp(22px,4vw,56px) 7rem;position:relative;z-index:2">
-      <a href="https://gacha.thechillgallery.com/#/" target="_blank" rel="noopener" class="gu-cta" data-hpair="" data-hin="transform:translate(3px,-3px)" data-hout="transform:none"><span class="gu-cta-l">Play it</span><span class="gu-cta-m">gacha.thechillgallery.com</span><span class="gu-cta-i" data-hchild="" style="transition:transform .45s cubic-bezier(.32,.72,0,1)">&#8599;</span></a>
+      <a href="https://gacha.thechillgallery.com/#/" target="_blank" rel="noopener" class="gu-cta" data-hpair="" data-hin="transform:translate(3px,-3px)" data-hout="transform:none"><span class="gu-cta-l">Open the live game</span><span class="gu-cta-m">gacha.thechillgallery.com</span><span class="gu-cta-i" data-hchild="" style="transition:transform .45s cubic-bezier(.32,.72,0,1)">&#8599;</span></a>
     </div>
   
 </section>
