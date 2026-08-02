@@ -11,7 +11,7 @@
     var x = cv.getContext('2d'), N = 1500, p = [], i;
     var rnd = function () { return Math.random(); };
     for (i = 0; i < N; i++) p.push({ x: rnd(), y: rnd(), r: 0.25 + rnd() * 0.6,
-      a: 0.15 + rnd() * 0.75, s: 0.005 + rnd() * 0.025, ph: rnd() * 6.2832 });
+      a: 0.15 + rnd() * 0.75, s: 0.0014 + rnd() * 0.006, ph: rnd() * 6.2832 });
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var seen = true, raf;
     if ('IntersectionObserver' in window)
@@ -56,11 +56,11 @@
        as it leaves. Ambient is what kills that, so the environment is pulled
        almost all the way down; what is left is only enough that the dark side
        still has a shape rather than a hole. */
-    sc.add(new T.AmbientLight(0xbfd0d8, 0.035));
+    sc.add(new T.AmbientLight(0xc6ccd0, 0.05));
     var spot = new T.SpotLight(0xfff3e2, 170, 0, 0.26, 0.40, 1.6);
     spot.position.set(-2.6, 4.2, 3.4); spot.target.position.set(0, 0, 0);
     sc.add(spot); sc.add(spot.target);
-    var rim = new T.DirectionalLight(0x8fb6d8, 0.22); rim.position.set(-2.8, 0.6, -2.2); sc.add(rim);
+    var rim = new T.DirectionalLight(0xaebccc, 0.24); rim.position.set(-2.8, 0.6, -2.2); sc.add(rim);
     var cam = new T.PerspectiveCamera(26, 1, 0.1, 100), piv = new T.Group(); sc.add(piv);
     function size() { var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
       r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
@@ -72,16 +72,18 @@
       /* the environment is a lit room; at full strength it floods every face
          and there is no beam left to see */
       m.traverse(function (o) { if (o.isMesh && o.material) {
-        o.material.envMapIntensity = 0.10; o.material.needsUpdate = true; } });
+        o.material.envMapIntensity = 0.05; o.material.needsUpdate = true; } });
       piv.add(m); piv.rotation.x = 0.09;
       size();
-      cam.position.set(0, 0, Math.max(s.x, s.y) / (2 * Math.tan(26 * Math.PI / 360)) * 1.5);
+      cam.position.set(0, 0, Math.max(s.x, s.y) / (2 * Math.tan(26 * Math.PI / 360)) * 2.15);
       cam.lookAt(0, 0, 0);
       host.setAttribute('data-live', '1');
       live = true; requestAnimationFrame(loop);
     });
+    cv.style.cursor = 'grab';
     host.addEventListener('pointerdown', function (e) {
       drag = true; px = e.clientX; vel = 0; host.setAttribute('data-touched', '1');
+      cv.style.cursor = 'grabbing';
       try { host.setPointerCapture(e.pointerId); } catch (_) {}
     });
     host.addEventListener('pointermove', function (e) {
@@ -89,7 +91,7 @@
       var dx = e.clientX - px; px = e.clientX;
       spin += dx * 0.01; vel = Math.max(-9, Math.min(9, dx * 0.6));
     });
-    function up() { drag = false; }
+    function up() { drag = false; cv.style.cursor = 'grab'; }
     host.addEventListener('pointerup', up); host.addEventListener('pointercancel', up);
     if ('IntersectionObserver' in window)
       new IntersectionObserver(function (es) { es.forEach(function (e) {
