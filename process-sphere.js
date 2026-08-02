@@ -8,11 +8,6 @@
 
   const INTRO = 'assets/process/intro-69cf014726.mp3';
   const BGM = 'assets/process/bgm-0ac7bdea7b.mp3';
-  /* WebKit — Safari on both platforms, and every browser on iOS, which are all
-     WebKit underneath and share its two rules: a play() outside the gesture's
-     own task is refused, and volume is read-only, so only muted can hold a
-     sound back. Blink is left on the path it already handles correctly. */
-  const WEBKIT = /apple/i.test(navigator.vendor || '');
   const DEPART = 900;      /* a backstop; the scatter normally leaves first */
   const SCATTER = 0.7;     /* seconds of particles before the page hands over */
   const rand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -279,44 +274,25 @@
         const cp = clip.play();
         if (cp && cp.catch) cp.catch(function () {});
 
-        if (WEBKIT) {
-          /* WebKit hands out its permission to the element, in the gesture's own
-             task — a play() a second later is a stranger to it and gets refused,
-             and the score would arrive whenever the visitor next touched
-             something. So it starts here, silenced, and the second's wait is
-             served by unmuting rather than by delaying the play(). It also gets
-             its download a second earlier, which is most of the wait on a phone. */
-          const bgm = new Audio(BGM);
-          bgm.loop = true; bgm.muted = true; bgm.volume = 0;
-          const bp = bgm.play();
-          if (bp && bp.catch) bp.catch(function () {});
-          setTimeout(function () {
-            bgm.muted = false;
-            /* iOS ignores this — volume is the hardware's business there, and
-               the score simply arrives. Safari on a desktop does honour it, and
-               without it the score would land at full volume against a fade
-               everywhere else. */
-            const t0 = performance.now();
-            (function fade(n) {
-              const k = Math.max(0, Math.min(1, (n - t0) / 1800));
-              bgm.volume = 0.85 * k;
-              if (k < 1) requestAnimationFrame(fade);
-            })(t0);
-          }, 1000);
-        } else {
-          setTimeout(function () {
-            const bgm = new Audio(BGM);
-            bgm.loop = true; bgm.volume = 0;
-            const bp = bgm.play();
-            if (bp && bp.catch) bp.catch(function () {});
-            const t0 = performance.now();
-            (function fade(n) {
-              const k = Math.max(0, Math.min(1, (n - t0) / 1800));
-              bgm.volume = 0.85 * k;
-              if (k < 1) requestAnimationFrame(fade);
-            })(t0);
-          }, 1000);
-        }
+        /* The score starts on the same click, not a second behind it. Holding
+           it back was the whole delay, and the hold was also what WebKit
+           refused: it grants a media element its permission inside the
+           gesture's own task, so a play() scheduled for later was a stranger
+           to the click and waited for whatever the visitor touched next.
+           Starting both here answers the delay and the refusal at once, and
+           the swell is what keeps the clip legible underneath. */
+        const bgm = new Audio(BGM);
+        bgm.loop = true; bgm.volume = 0;
+        const bp = bgm.play();
+        if (bp && bp.catch) bp.catch(function () {});
+        const t0 = performance.now();
+        (function fade(n) {
+          const k = Math.max(0, Math.min(1, (n - t0) / 1800));
+          /* iOS discards this — volume there belongs to the hardware buttons —
+             so the score simply arrives at once, which is what was asked for */
+          bgm.volume = 0.85 * k;
+          if (k < 1) requestAnimationFrame(fade);
+        })(t0);
       } catch (e) {}
 
       if (this.reduced) { location.href = href; return; }
