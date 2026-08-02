@@ -143,6 +143,22 @@ h2 b{font-weight:800}
 .srow figcaption p{margin:10px 0 0;color:var(--dim);font-size:14.5px;line-height:1.6;max-width:46ch;text-wrap:pretty}
 .srow figcaption .num{color:var(--accent)}
 
+
+/* the mark, turning */
+.box.hold{position:relative;aspect-ratio:21/9;background:
+  radial-gradient(120% 100% at 50% 10%,rgba(78,205,196,.07),rgba(10,10,10,0) 68%),#0b0b0a;
+  border-style:solid;border-color:var(--line);cursor:grab;touch-action:pan-y;display:block}
+.box.hold.grabbing{cursor:grabbing}
+#cv3d{position:absolute;inset:0;width:100%;height:100%;display:block}
+.holdin{position:absolute;inset:0;display:grid;place-content:center;text-align:center;
+  transition:opacity .6s var(--E);pointer-events:none}
+.box.hold.live .holdin{opacity:0}
+.hint3d{position:absolute;right:16px;bottom:12px;margin:0;font-family:var(--mono);font-size:10px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--faint);opacity:0;
+  transition:opacity .5s;pointer-events:none}
+.box.hold.live .hint3d{opacity:.65}
+.box.hold.touched .hint3d{opacity:0}
+
 /* the sign-in banner and the reserved slot */
 .finale,.slot{margin:clamp(20px,3vw,34px) 0 0}
 .box.banner{aspect-ratio:21/9}
@@ -150,10 +166,6 @@ h2 b{font-weight:800}
   text-align:center;padding:clamp(20px,3vw,40px)}
 .over.centre h3{font-size:clamp(22px,3vw,36px)}
 .over.centre p{max-width:52ch;font-size:13.5px}
-.box.hold{aspect-ratio:21/9;display:grid;place-items:center;background:
-  repeating-linear-gradient(135deg,rgba(245,245,242,.028) 0 12px,transparent 12px 24px),#0d0d0c;
-  border-style:dashed;border-color:rgba(245,245,242,.2)}
-.holdin{text-align:center;padding:20px}
 .holdin .tag{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.24em;
   text-transform:uppercase;color:var(--teal);border:1px solid rgba(78,205,196,.4);
   border-radius:999px;padding:5px 13px}
@@ -296,11 +308,16 @@ h2 b{font-weight:800}
       <p>Email or Telegram, on the same footage the packs are shot against. The score that
         started at the intro is still playing — it never restarts between screens.</p></div>
   </div></figure>
-      <figure class="slot" id="model-slot" aria-label="Reserved for the pack model">
-  <div class="box hold">
-    <div class="holdin"><span class="tag">Model in hand</span>
-      <p>The logo at its full half-million triangles, 3.64 MB. Waiting on a viewer.</p></div>
-  </div></figure>
+      <figure class="slot" id="model-slot">
+  <div class="box hold" id="stage3d">
+    <canvas id="cv3d"></canvas>
+    <div class="holdin" id="hold3d"><span class="tag">Loading the mark</span>
+      <p>Half a million triangles, as exported.</p></div>
+    <p class="hint3d">Drag to turn</p>
+  </div>
+  <figcaption class="note" style="text-align:center">The pack mark in three dimensions — the same
+    logo that sits on every card, on the packs, and in the corner of every screen above.</figcaption>
+</figure>
     </div>
   </section>
 </div>
@@ -374,6 +391,105 @@ h2 b{font-weight:800}
     });
   }, { rootMargin: '300px 0px' });
   vids.forEach(function (v) { io.observe(v); });
+})();
+</script>
+<script>
+/* The mark is 3.6 MB of geometry and the renderer another 716 KB, so neither
+   is fetched until the slot is close, and the loop only runs while it is on
+   screen. Under reduced motion it holds a single frame. */
+(function () {
+  var stage = document.getElementById('stage3d');
+  if (!stage || !('IntersectionObserver' in window)) return;
+  var THREE_SRC = 'assets/gameui/three-219c2a1f8e.js';
+  var MODEL = 'assets/gameui/gacha-logo-22e7cf0f05.glb';
+  var started = false;
+
+  new IntersectionObserver(function (es, io) {
+    if (!es.some(function (e) { return e.isIntersecting; }) || started) return;
+    started = true; io.disconnect();
+    var s = document.createElement('script');
+    s.src = THREE_SRC;
+    s.onload = boot;
+    s.onerror = function () {
+      document.querySelector('#hold3d .tag').textContent = 'Could not load the viewer';
+    };
+    document.head.appendChild(s);
+  }, { rootMargin: '500px 0px' }).observe(stage);
+
+  function boot() {
+    var T = window.__THREE__.THREE, GL = window.__THREE__.GLTFLoader,
+        MD = window.__THREE__.MeshoptDecoder, RE = window.__THREE__.RoomEnvironment;
+    var cv = document.getElementById('cv3d');
+    var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+    r.setPixelRatio(Math.min(innerWidth < 760 ? 1.5 : 2, devicePixelRatio || 1));
+    r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.12;
+    r.outputColorSpace = T.SRGBColorSpace;
+
+    var sc = new T.Scene();
+    sc.environment = new T.PMREMGenerator(r).fromScene(new RE(), 0.04).texture;
+    var key = new T.DirectionalLight(0xffffff, 2.3); key.position.set(2.5, 3, 2.5); sc.add(key);
+    var rim = new T.DirectionalLight(0x8fe6de, 1.7); rim.position.set(-2.6, 1.2, -2.2); sc.add(rim);
+
+    var cam = new T.PerspectiveCamera(26, 1, 0.1, 100);
+    var pivot = new T.Group(); sc.add(pivot);
+
+    function size() {
+      var w = stage.clientWidth, h = stage.clientHeight;
+      if (!w || !h) return;
+      r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
+    }
+    (typeof ResizeObserver === 'function' ? new ResizeObserver(size) : { observe: function () {
+      addEventListener('resize', size); } }).observe(stage);
+
+    new GL().setMeshoptDecoder(MD).load(MODEL, function (g) {
+      var m = g.scene, box = new T.Box3().setFromObject(m), sz = box.getSize(new T.Vector3());
+      m.position.sub(box.getCenter(new T.Vector3()));
+      pivot.add(m); pivot.rotation.x = 0.1;
+      size();
+      var d = Math.max(sz.x, sz.y) / (2 * Math.tan(26 * Math.PI / 360)) * 1.45;
+      cam.position.set(0, 0, d); cam.lookAt(0, 0, 0);
+      stage.classList.add('live');
+      running = true; requestAnimationFrame(loop);
+    }, null, function () {
+      document.querySelector('#hold3d .tag').textContent = 'Could not load the mark';
+    });
+
+    var spin = 0.4, vel = 0, drag = false, px = 0, last = 0, running = false, seen = true;
+    stage.addEventListener('pointerdown', function (e) {
+      drag = true; px = e.clientX; vel = 0;
+      stage.classList.add('grabbing', 'touched');
+      try { stage.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    stage.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var dx = e.clientX - px; px = e.clientX;
+      spin += dx * 0.01; vel = Math.max(-9, Math.min(9, dx * 0.6));
+    });
+    function up() { drag = false; stage.classList.remove('grabbing'); }
+    stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        seen = e.isIntersecting;
+        if (seen && running) requestAnimationFrame(loop);
+      });
+    }, { rootMargin: '150px 0px' }).observe(stage);
+
+    function loop(t) {
+      if (!running || !seen) { last = 0; return; }
+      var dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
+      if (!drag) {
+        var target = reduced ? 0 : 0.26;
+        vel += (target - vel) * Math.min(1, dt * 1.6);
+        spin += vel * dt;
+      }
+      pivot.rotation.y = spin;
+      r.render(sc, cam);
+      requestAnimationFrame(loop);
+    }
+  }
 })();
 </script>
 </body></html>
