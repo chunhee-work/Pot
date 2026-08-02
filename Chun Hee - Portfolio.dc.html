@@ -273,6 +273,7 @@ landofhope-3d canvas{background:transparent}
 <script src="landofhope-3d.js"></script>
 <script src="cylinder-carousel.js"></script>
 <script src="nav-metal.js"></script>
+<script src="process-sphere.js"></script>
 </helmet>
 
 <svg data-grain="" style="position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:70;opacity:.05" aria-hidden="true"><filter id="omGrain"><feTurbulence type="fractalNoise" sc-camel-base-frequency="0.85" sc-camel-num-octaves="2"></feTurbulence></filter><rect width="100%" height="100%" filter="url(#omGrain)" opacity="0.6"></rect></svg>
@@ -667,16 +668,23 @@ landofhope-3d canvas{background:transparent}
   </div>
 </section>
 
-<section id="process" data-screen-label="Process" style="position:relative;padding:clamp(5rem,9vw,8.5rem) 0">
-  <div style="max-width:1200px;margin:0 auto;padding:0 clamp(22px,4vw,56px);position:relative;z-index:2">
-    <span data-reveal="" style="display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(17,17,16,.22);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#57564f"><span style="width:6px;height:6px;border-radius:50%;background:#111110;flex:0 0 6px"></span>How It's Made</span>
-    <h2 data-reveal="" style="font-weight:200;font-size:clamp(42px,6.2vw,84px);letter-spacing:-.02em;line-height:1;margin:22px 0 0;color:#111110">Directed, <b style="font-weight:800">not generated.</b></h2>
-    <p data-reveal="" data-d="1" style="max-width:640px;margin-top:24px;color:#57564f;font-size:16.5px;font-weight:300;text-wrap:pretty">Storyboards, character sheets with locked identities, style frames, set plates, in-world props — built shot by shot, then animated, cut, voiced and scored. Studio discipline, <b style="color:#111110;font-weight:700">one person</b>.</p>
-    <div style="margin-top:56px">
-      <a href="/process" data-reveal="" data-hpair="" data-hin="transform:scale(1.04)" data-hout="transform:scale(1)" style="display:block;position:relative;border:1px solid rgba(17,17,16,.12);border-radius:18px;background:rgba(17,17,16,.035);padding:7px;text-decoration:none;color:inherit;transition:transform .6s cubic-bezier(.32,.72,0,1),border-color .6s" style-hover="transform:translateY(-6px);border-color:rgba(17,17,16,.22)"><div style="border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#111"><img data-hchild="" loading="lazy" src="assets/p-storyboard.jpg" alt="OG10 teaser storyboard" style="width:100%;height:100%;object-fit:cover;transition:transform 1.3s cubic-bezier(.32,.72,0,1)"></div><div style="padding:13px 12px 8px;display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b style="font-weight:700;font-size:13.5px">The production line — six stages, one operator</b><span style="font-size:9px;font-weight:700;letter-spacing:.16em;color:#8f8e86;text-transform:uppercase;white-space:nowrap">Story → Cut</span></div></a>
-      <div data-reveal="" data-d="1" style="margin-top:34px"><a href="/process" data-hpair="" data-hin="background:#f5f4f0;color:#111110;transform:translate(2px,-1px)" data-hout="background:#111110;color:#f5f4f0;transform:none" style="display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:1.5px solid #111110;background:#111110;color:#f5f4f0;font-weight:700;font-size:14px;padding:11px 11px 11px 24px;cursor:pointer;text-decoration:none;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s,border-color .4s" style-hover="background:transparent;color:#111110">See how it's made <span data-hchild="" style="width:32px;height:32px;border-radius:50%;background:#f5f4f0;color:#111110;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s">&#8594;</span></a></div>
+<section id="process" data-screen-label="Process" style="position:relative;padding:0;background:#0a0a09">
+  <div style="height:clamp(90px,13vw,190px);background:linear-gradient(180deg,#f5f4f0 0%,#0a0a09 100%)"></div>
+
+  <div style="background:#0a0a09;padding:clamp(1rem,3vw,3rem) 0 clamp(3rem,6vw,6rem);position:relative;z-index:2">
+    <div style="max-width:1200px;margin:0 auto;padding:0 clamp(22px,4vw,56px);position:relative;z-index:2">
+      <span data-reveal="" style="display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(245,245,242,.24);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#a3a39c"><span style="width:6px;height:6px;border-radius:50%;background:#f5f5f2;flex:0 0 6px"></span>How It's Made</span>
+      <h2 data-reveal="" style="font-weight:200;font-size:clamp(42px,6.2vw,84px);letter-spacing:-.02em;line-height:1;margin:22px 0 0;color:#f5f4f0">Directed, <b style="font-weight:800">not generated.</b></h2>
+      <p data-reveal="" data-d="1" style="max-width:640px;margin-top:24px;color:#a3a39c;font-size:16.5px;font-weight:300;text-wrap:pretty">Storyboards, character sheets with locked identities, style frames, set plates, in-world props &#8212; built shot by shot, then animated, cut, voiced and scored. Studio discipline, <b style="color:#f5f4f0;font-weight:700">one person</b>.</p>
+
+      <a href="/process" data-sphere-portal="" data-reveal="" data-d="2" aria-label="Open the production line" style="display:flex;flex-direction:column;align-items:center;gap:clamp(20px,3vw,34px);margin:clamp(30px,5vw,56px) auto 0;width:min(430px,72vw);text-decoration:none;color:inherit">
+        <process-sphere style="width:100%;aspect-ratio:1"></process-sphere>
+        <span data-hpair="" data-hin="color:#f5f4f0" data-hout="color:#6d6c64" style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#6d6c64;transition:color .4s">Click to learn more</span>
+      </a>
     </div>
   </div>
+
+  <div style="height:clamp(90px,13vw,190px);background:linear-gradient(180deg,#0a0a09 0%,#f5f4f0 100%)"></div>
 </section>
 
 <section id="contact" data-screen-label="Contact" style="position:relative;padding:clamp(5rem,9vw,8.5rem) 0 4rem">
