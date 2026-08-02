@@ -287,10 +287,22 @@
              served by unmuting rather than by delaying the play(). It also gets
              its download a second earlier, which is most of the wait on a phone. */
           const bgm = new Audio(BGM);
-          bgm.loop = true; bgm.muted = true;
+          bgm.loop = true; bgm.muted = true; bgm.volume = 0;
           const bp = bgm.play();
           if (bp && bp.catch) bp.catch(function () {});
-          setTimeout(function () { bgm.muted = false; }, 1000);
+          setTimeout(function () {
+            bgm.muted = false;
+            /* iOS ignores this — volume is the hardware's business there, and
+               the score simply arrives. Safari on a desktop does honour it, and
+               without it the score would land at full volume against a fade
+               everywhere else. */
+            const t0 = performance.now();
+            (function fade(n) {
+              const k = Math.max(0, Math.min(1, (n - t0) / 1800));
+              bgm.volume = 0.85 * k;
+              if (k < 1) requestAnimationFrame(fade);
+            })(t0);
+          }, 1000);
         } else {
           setTimeout(function () {
             const bgm = new Audio(BGM);
