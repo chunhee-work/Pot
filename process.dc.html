@@ -744,6 +744,9 @@
     guard(a);
   }
   function startCue(){
+    /* when the home page brought this content in without a navigation, the cue
+       is already sounding there and this document must not start a second one */
+    if(window.__cueRunning) return;
     if(cueOn) return; cueOn = true;
     /* the clip began on the click that sent the visitor here — resume it where
        it got to, so it plays out whole instead of starting its attack twice */

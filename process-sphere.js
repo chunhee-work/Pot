@@ -163,6 +163,59 @@
       this.removeEventListener('mouseleave', this.onLeave);
     }
 
+    /* Bring the destination into this document. Nothing unloads, so the cue
+       carries straight through; a failure here just falls back to a normal
+       navigation, which costs the sound but never the page. */
+    async arrive() {
+      if (this._arrived) return;
+      this._arrived = true;
+      const href = this.href;
+      try {
+        const res = await fetch(href, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error(res.status);
+        const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+        if (!doc.getElementById('stages')) throw new Error('unexpected document');
+
+        const stash = document.createElement('div');
+        stash.id = '__home-stash';
+        stash.style.display = 'none';
+        while (document.body.firstChild) stash.appendChild(document.body.firstChild);
+        document.body.appendChild(stash);
+
+        /* DOMParser parses with scripting disabled, so a <noscript> fallback
+           comes through as real elements — its "hide the opening" rule would
+           apply here, where scripting is very much enabled */
+        doc.querySelectorAll('style').forEach((el) => {
+          if (el.closest('noscript')) return;
+          const s = document.createElement('style');
+          s.textContent = el.textContent;
+          s.dataset.arrived = '1';
+          document.head.appendChild(s);
+        });
+        doc.body.childNodes.forEach((n) => {
+          if (n.nodeName === 'SCRIPT' || n.nodeName === 'NOSCRIPT') return;
+          document.body.appendChild(document.importNode(n, true));
+        });
+
+        window.__cueRunning = true;   // the cue is already sounding in this document
+        doc.querySelectorAll('script').forEach((el) => {
+          const s = document.createElement('script');
+          s.textContent = el.textContent;
+          document.body.appendChild(s);
+        });
+
+        history.pushState({ arrived: true }, '', href);
+        scrollTo(0, 0);
+        addEventListener('popstate', function back() {
+          removeEventListener('popstate', back);
+          location.href = '/';
+        });
+      } catch (e) {
+        console.warn('[portal]', e);
+        location.href = href;
+      }
+    }
+
     /* pull the destination and the clip into cache before the click needs them */
     warmDestination() {
       if (this._warmed) return;
@@ -209,16 +262,30 @@
       if (this.mode === 'snap') return;
       this.t0 = performance.now();
 
-      /* The click is the only gesture the browser will honour, so the clip
-         starts here — but a navigation kills it, so the destination has to
-         pick it up rather than start it over. The stamp is what tells it how
-         far in the clip already is. */
+      /* A browser will not let a freshly navigated page make a sound until the
+         visitor touches it, so the clip cannot survive a navigation — it is cut
+         at the moment the document is replaced. The cue therefore starts here,
+         on the click that authorises it, and the destination is brought into
+         *this* document instead of being navigated to. Nothing unloads, so
+         nothing stops: the clip plays itself out and the score follows it. */
       try {
-        sessionStorage.setItem('cue-started', String(Date.now()));
         const clip = new Audio(INTRO);
         clip.volume = 1;
         const cp = clip.play();
         if (cp && cp.catch) cp.catch(function () {});
+
+        setTimeout(function () {
+          const bgm = new Audio(BGM);
+          bgm.loop = true; bgm.volume = 0;
+          const bp = bgm.play();
+          if (bp && bp.catch) bp.catch(function () {});
+          const t0 = performance.now();
+          (function fade(n) {
+            const k = Math.max(0, Math.min(1, (n - t0) / 1800));
+            bgm.volume = 0.85 * k;
+            if (k < 1) requestAnimationFrame(fade);
+          })(t0);
+        }, 1000);
       } catch (e) {}
 
       if (this.reduced) { location.href = href; return; }
@@ -234,7 +301,7 @@
       this.mode = 'snap'; this.snapT = 0;
       const stars = document.querySelector('process-stars');
       if (stars && stars.warp) stars.warp();
-      this.bail = setTimeout(() => { location.href = href; }, DEPART);
+      this.bail = setTimeout(() => this.arrive(), DEPART);
     }
 
     frame(now) {
@@ -292,7 +359,7 @@
           this.done = true;
           clearTimeout(this.bail);
           try { window.__depart = Math.round(performance.now() - this.t0); } catch (e) {}
-          location.href = this.href;
+          this.arrive();
           return;
         }
       }
