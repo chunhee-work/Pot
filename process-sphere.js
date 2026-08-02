@@ -209,9 +209,18 @@
       if (this.mode === 'snap') return;
       this.t0 = performance.now();
 
-      /* The cue belongs to the destination now: a navigation kills whatever is
-         playing, so anything started here would be cut off mid-swell. This page
-         only owes the visitor the scatter, and then to get out of the way. */
+      /* The click is the only gesture the browser will honour, so the clip
+         starts here — but a navigation kills it, so the destination has to
+         pick it up rather than start it over. The stamp is what tells it how
+         far in the clip already is. */
+      try {
+        sessionStorage.setItem('cue-started', String(Date.now()));
+        const clip = new Audio(INTRO);
+        clip.volume = 1;
+        const cp = clip.play();
+        if (cp && cp.catch) cp.catch(function () {});
+      } catch (e) {}
+
       if (this.reduced) { location.href = href; return; }
       const r = this.getBoundingClientRect();
       this.href = href;

@@ -771,9 +771,29 @@
   }
   function startCue(){
     if(cueOn) return; cueOn = true;
+    /* the clip began on the click that sent the visitor here — resume it where
+       it got to, so it plays out whole instead of starting its attack twice */
+    var began = 0;
+    try{ began = +sessionStorage.getItem('cue-started') || 0;
+         sessionStorage.removeItem('cue-started'); }catch(e){}
+    var elapsed = began ? (Date.now() - began) / 1000 : 0;
     var clip = document.getElementById('sfx');
-    if(clip){ clip.volume = 1; guard(clip); }
-    setTimeout(startBgm, 1000);   /* the score swells in under the clip */
+    if(clip){
+      clip.volume = 1;
+      if(elapsed > 0.15 && elapsed < 4.0){
+        var seeked = false;
+        var seek = function(){
+          if(seeked || !isFinite(clip.duration) || !clip.duration) return;
+          seeked = true; try{ clip.currentTime = Math.min(elapsed, clip.duration - 0.05); }catch(e){}
+        };
+        clip.addEventListener('loadedmetadata', seek);
+        clip.addEventListener('canplay', seek);
+        clip.addEventListener('playing', seek);
+        seek();
+      }
+      guard(clip);
+    }
+    setTimeout(startBgm, Math.max(0, 1000 - elapsed * 1000));
   }
 
   /* ── metal thread: enters each box top, exits its bottom ─────────── */
