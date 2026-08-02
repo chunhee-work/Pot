@@ -28,6 +28,7 @@
       // a wide margin loads it; a tight one decides whether it should be running
       this.io = new IntersectionObserver((entries) => {
         entries.forEach((en) => {
+          this.wanted = en.isIntersecting;
           if (en.isIntersecting) { this.load(); this.play(); }
           else this.pause();
         });
@@ -41,12 +42,17 @@
       /* VP9 is the smaller file wherever it decodes; H.264 covers the rest */
       const vp9 = this.webm && this.video.canPlayType('video/webm; codecs="vp9"');
       this.video.src = vp9 ? this.webm : this.src;
+      /* Safari will refuse a play() issued before there are frames to show, so
+         ask again the moment there are */
+      ['loadeddata', 'canplay', 'canplaythrough'].forEach((ev) =>
+        this.video.addEventListener(ev, () => { if (this.wanted) this.play(); }));
+      this.video.muted = true;      // the property, not just the attribute
       this.video.load();
     }
 
     play() {
       /* a still frame is the whole experience under reduced motion */
-      if (this.reduced || !this._loaded) return;
+      if (this.reduced || !this._loaded || !this.video.paused) return;
       const p = this.video.play();
       if (p && p.catch) p.catch(function () {});
     }
