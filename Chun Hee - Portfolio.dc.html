@@ -317,6 +317,34 @@ gacha-hero[data-touched] .gu-drag{opacity:0}
 gacha-hero>div{left:6vw !important;max-width:80% !important;top:auto !important;bottom:8vh !important;transform:none !important}
 gacha-hero canvas[data-gmark]{width:100% !important;right:0 !important;opacity:.5}
 }
+
+.gu-tag{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 12px;margin:0 0 14px}
+.gu-tag span{font-weight:800;font-size:clamp(22px,2.6vw,34px);letter-spacing:-.02em;
+  text-transform:uppercase;color:#5f7a76;line-height:1;font-family:inherit}
+.gu-tag.gu-now span{color:#4ECDC4}
+.gu-tag em{font-style:normal;font-size:12.5px;color:#5f7a76}
+.gu-tag b{flex:1 0 100%;margin-top:7px;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;
+  font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#5f7a76}
+.gu-tag.gu-now b{color:#8fded7}
+.gu-num{display:block;font-family:inherit;font-weight:800;font-size:clamp(30px,3.4vw,46px);
+  letter-spacing:-.03em;line-height:1;color:var(--gu-a);margin-bottom:6px}
+.gu-cta{display:inline-grid;grid-template-columns:auto 1fr auto;align-items:center;gap:0 16px;
+  margin-top:clamp(40px,6vw,70px);text-decoration:none;border:1px solid rgba(78,205,196,.34);
+  border-radius:999px;padding:15px 20px 15px 26px;background:rgba(78,205,196,.05);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  box-shadow:0 0 34px rgba(78,205,196,.09),inset 0 1px 0 rgba(245,245,242,.06);
+  transition:border-color .4s cubic-bezier(.32,.72,0,1),background .4s,box-shadow .4s}
+.gu-cta:hover{border-color:rgba(78,205,196,.7);background:rgba(78,205,196,.10);
+  box-shadow:0 0 54px rgba(78,205,196,.2),inset 0 1px 0 rgba(245,245,242,.1)}
+.gu-cta-l{font-size:15px;font-weight:700;letter-spacing:-.01em;color:#f5f5f2}
+.gu-cta-m{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:#7fb8b2;padding-left:16px;border-left:1px solid rgba(78,205,196,.22)}
+.gu-cta-i{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:13px;color:#0a0a0a;background:#4ECDC4}
+@media (max-width:560px){
+.gu-cta{grid-template-columns:auto auto;padding:14px 16px 14px 20px;gap:0 12px}
+.gu-cta-m{display:none}
+}
 landofhope-3d{background:transparent}
 landofhope-3d canvas{background:transparent}
 </style>
@@ -634,10 +662,10 @@ landofhope-3d canvas{background:transparent}
     <h2 class="gu-h">The pack screen, <b>redrawn.</b></h2>
     <p class="gu-lede">The screen the whole product turns on — if opening a pack does not feel like an event here, nothing later can rescue it. This is what it was, and what it became.</p>
     <div class="gu-pair">
-      <div><p class="gu-tag"><span>Before</span> the shipped build</p>
+      <div><p class="gu-tag"><span>Before</span><em>the shipped build</em><b>45% of the screen doing nothing</b></p>
         <div class="gu-frame"><img src="assets/gameui/packs-before-f95c9a88a9.jpg" width="1131" height="1098" loading="lazy" decoding="async" alt="The earlier pack screen: a small pack, a single Open Pack button, and most of a screen holding nothing."></div>
         <p class="gu-note">One pack, one button, one collapsed row of numbers — and beneath it, most of a screen holding nothing at all.</p></div>
-      <div><p class="gu-tag gu-now"><span>After</span> live now</p>
+      <div><p class="gu-tag gu-now"><span>After</span><em>live now</em><b>every pixel given a job</b></p>
         <div class="gu-frame gu-lit"><video class="gu-v" muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/packs-after-210a9a6933.webp" data-webm="assets/gameui/packs-after-d4fbaac8b7.webm" data-mp4="assets/gameui/packs-after-aa3b2c8802.mp4"></video></div>
         <p class="gu-note">The refills became a ring you can see and touch. The empty half became the panel that governs it.</p></div>
     </div>
@@ -654,7 +682,7 @@ landofhope-3d canvas{background:transparent}
       <div><span class="gu-num">02</span><h3>And when it is, the product is still playing</h3><p>The auth card sits <b>inside the product</b> rather than in front of it. Email or Telegram, nothing else — a Telegram-first product saying so by what it leaves out.</p></div></div></div>
   </div>
 <div style="max-width:1200px;margin:0 auto;padding:1rem clamp(22px,4vw,56px) 7rem;position:relative;z-index:2">
-      <a href="https://gacha.thechillgallery.com/#/" target="_blank" rel="noopener" data-hpair="" data-hin="background:#111110;color:#f5f4f0;transform:translate(2px,-1px)" data-hout="background:#f5f4f0;color:#111110;transform:none" style="display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:1.5px solid #f5f4f0;background:#f5f4f0;color:#111110;font-weight:700;font-size:14px;padding:11px 11px 11px 24px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s,border-color .4s" style-hover="background:transparent;color:#f5f4f0">Visit the live site <span data-hchild="" style="width:32px;height:32px;border-radius:50%;background:#111110;color:#f5f4f0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s">↗</span></a>
+      <a href="https://gacha.thechillgallery.com/#/" target="_blank" rel="noopener" class="gu-cta" data-hpair="" data-hin="transform:translate(3px,-3px)" data-hout="transform:none"><span class="gu-cta-l">Play it</span><span class="gu-cta-m">gacha.thechillgallery.com</span><span class="gu-cta-i" data-hchild="" style="transition:transform .45s cubic-bezier(.32,.72,0,1)">&#8599;</span></a>
     </div>
   
 </section>
