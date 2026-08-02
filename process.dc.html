@@ -196,6 +196,19 @@
   .striprow img{height:clamp(220px,38vh,380px);width:auto;border-radius:22px;display:block;
                 box-shadow:0 22px 50px -20px rgba(0,0,0,.85);
                 pointer-events:none;-webkit-user-drag:none}
+  .stage{position:relative;margin:26px 0 0;width:100%;height:clamp(340px,52svh,540px);
+         border-radius:22px;overflow:hidden;cursor:grab;touch-action:pan-y;
+         background:radial-gradient(120% 100% at 50% 0%,rgba(245,244,240,.05),rgba(10,10,9,0) 70%),
+                    linear-gradient(180deg,var(--panel2),var(--panel) 70%);
+         border:1px solid var(--line)}
+  .stage.grabbing{cursor:grabbing}
+  .stage canvas{width:100%;height:100%;display:block}
+  .stagehint{position:absolute;right:20px;bottom:16px;margin:0;text-align:right;
+             font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+             color:var(--faint);pointer-events:none;transition:opacity .5s}
+  .stage.live .stagehint{opacity:.55}
+  .stage.touched .stagehint{opacity:0}
+
   .galcap{margin:8px 0 0;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
           text-transform:uppercase;color:var(--faint)}
 
@@ -224,6 +237,13 @@
     .card.on,.card.linked{animation:none}
   }
 </style>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
 
 <div class="bgvid" aria-hidden="true"><canvas id="stars"></canvas></div>
 <audio id="bgm" loop preload="none" src="assets/process/bgm.mp3"></audio>
@@ -539,6 +559,11 @@
     <div class="strip" data-strip><div class="striprow"><img src="assets/process/img-0228a1c847.webp" alt="char-planet 1" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-7f0defe846.webp" alt="char-planet 2" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-bae6fde335.webp" alt="char-planet 3" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-bff5e8b6c9.webp" alt="char-planet 4" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-b91f2d7882.webp" alt="char-planet 5" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-68739592b7.webp" alt="char-planet 6" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-b64470ad86.webp" alt="char-planet 7" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-f99ea10870.webp" alt="char-planet 8" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-5cd74671d4.webp" alt="char-planet 9" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-8a1be95fec.webp" alt="char-planet 10" loading="lazy" decoding="async" draggable="false"></div></div><p class="galcap">Planet — 6 Position · ×10 characters</p>
     <div class="strip" data-strip><div class="striprow"><img src="assets/process/img-bbccb845bc.webp" alt="char-earth 1" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-0228a1c847.webp" alt="char-earth 2" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-1705e9b48e.webp" alt="char-earth 3" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-5d079f4857.webp" alt="char-earth 4" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-b2686db906.webp" alt="char-earth 5" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-0b817a93c7.webp" alt="char-earth 6" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-7761df55a5.webp" alt="char-earth 7" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-c73d1d10e2.webp" alt="char-earth 8" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-e8a1948a26.webp" alt="char-earth 9" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-9d23c35885.webp" alt="char-earth 10" loading="lazy" decoding="async" draggable="false"></div></div><p class="galcap">Earth Mode — 6 position · ×10 characters</p>
     <div class="strip" data-strip><div class="striprow"><img src="assets/process/img-665660b410.webp" alt="stickers 1" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-5bb5b67797.webp" alt="stickers 2" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-56c225f9c3.webp" alt="stickers 3" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-7ecd0f6349.webp" alt="stickers 4" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-2f2061de09.webp" alt="stickers 5" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-1ef46da057.webp" alt="stickers 6" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-e17d280211.webp" alt="stickers 7" loading="lazy" decoding="async" draggable="false"><img src="assets/process/img-341ab5788f.webp" alt="stickers 8" loading="lazy" decoding="async" draggable="false"></div></div><p class="galcap">Earth Mode &#8212; expression stickers &#183; &#215;8 characters</p>
+    <div class="stage" data-model="assets/process/zeyo.glb">
+      <canvas aria-hidden="true"></canvas>
+      <p class="stagehint">Drag to turn</p>
+    </div>
+    <p class="galcap">ZEYO &#8212; the sheet, built out into three dimensions</p>
   </article>
 
   <article class="card single left free" data-card id="c05">
@@ -937,6 +962,86 @@
       strips.forEach(function(S){S.fit();if(S.ready)S.measure();});
     });
   }
+
+  /* ── 3D stage — three.js is fetched only when the stage comes near ─── */
+  (function(){
+    var el=document.querySelector('[data-model]');
+    if(!el||!window.WebGLRenderingContext)return;
+    var cv=el.querySelector('canvas'), started=false;
+
+    function boot(){
+      if(started)return;started=true;
+      Promise.all([
+        import('three'),
+        import('three/addons/loaders/GLTFLoader.js'),
+        import('three/addons/libs/meshopt_decoder.module.js'),
+        import('three/addons/environments/RoomEnvironment.js')
+      ]).then(function(m){
+        run(m[0],m[1].GLTFLoader,m[2].MeshoptDecoder,m[3].RoomEnvironment);
+      }).catch(function(e){console.warn('[stage]',e);});
+    }
+
+    function run(THREE,GLTFLoader,MeshoptDecoder,RoomEnvironment){
+      var r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,powerPreference:'high-performance'});
+      r.setPixelRatio(Math.min(innerWidth<760?1.6:2,devicePixelRatio||1));
+      r.toneMapping=THREE.ACESFilmicToneMapping; r.toneMappingExposure=1.05;
+      r.outputColorSpace=THREE.SRGBColorSpace;
+      var scene=new THREE.Scene();
+      var pmrem=new THREE.PMREMGenerator(r);
+      scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+      var key=new THREE.DirectionalLight(0xffffff,2.1); key.position.set(2.5,3,2.5); scene.add(key);
+      var rim=new THREE.DirectionalLight(0xbfd4ff,1.2); rim.position.set(-2.5,1.5,-2.2); scene.add(rim);
+      var cam=new THREE.PerspectiveCamera(26,1,0.1,100);
+      var pivot=new THREE.Group(); scene.add(pivot);
+
+      function size(){
+        var w=el.clientWidth,h=el.clientHeight;
+        if(!w||!h)return;
+        r.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix();
+      }
+
+      new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load(el.dataset.model,function(g){
+        var m=g.scene;
+        var box=new THREE.Box3().setFromObject(m), sz=box.getSize(new THREE.Vector3());
+        m.position.sub(box.getCenter(new THREE.Vector3()));
+        pivot.add(m);
+        size();
+        var d=sz.y/(2*Math.tan(26*Math.PI/360))*1.2;
+        cam.position.set(0,sz.y*0.04,d); cam.lookAt(0,-sz.y*0.02,0);
+        el.classList.add('live');
+        loop(0);
+      },undefined,function(e){console.warn('[stage] load',e);});
+
+      /* drag to turn; let go and it drifts back to turning on its own */
+      var spin=0, vel=0, drag=false, px=0, idle=reduced?0:0.24, last=0;
+      el.addEventListener('pointerdown',function(e){
+        drag=true;px=e.clientX;vel=0;el.classList.add('grabbing','touched');
+        try{el.setPointerCapture(e.pointerId);}catch(_){}
+      });
+      el.addEventListener('pointermove',function(e){
+        if(!drag)return;var dx=e.clientX-px;px=e.clientX;
+        spin+=dx*0.01; vel=Math.max(-9,Math.min(9,dx*0.6));
+      });
+      function up(){drag=false;el.classList.remove('grabbing');}
+      el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
+      addEventListener('resize',size);
+
+      function loop(t){
+        var dt=last?Math.min(0.05,(t-last)/1000):0; last=t;
+        if(!drag){vel+=(idle-vel)*Math.min(1,dt*1.6); spin+=vel*dt;}
+        pivot.rotation.y=spin;
+        r.render(scene,cam);
+        requestAnimationFrame(loop);
+      }
+    }
+
+    if('IntersectionObserver'in window){
+      var io=new IntersectionObserver(function(es){
+        es.forEach(function(en){if(en.isIntersecting){boot();io.disconnect();}});
+      },{rootMargin:'700px 0px'});
+      io.observe(el);
+    }else boot();
+  })();
 
   var cards=[].slice.call(document.querySelectorAll('[data-card]'));
   var reach=0;
