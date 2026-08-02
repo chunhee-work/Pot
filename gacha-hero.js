@@ -7,35 +7,87 @@
   var THREE_SRC = 'assets/gameui/three-219c2a1f8e.js';
   var MODEL = 'assets/gameui/gacha-logo-e2d628a514.glb';
 
+  /* Nothing here runs unless the address ends in ?dbg — it exists so a
+     device I cannot reach can say what it is doing. Open the page with
+     ?dbg and the panel reports it. */
+  var D = { step: 'idle' }, DBG = /[?&]dbg\b/.test(location.search);
+  function fail(why) { D.step = 'FAILED'; D.why = why; }
+  if (DBG) setInterval(function () {
+    var host = document.querySelector('gacha-hero'),
+        cv = host && host.querySelector('canvas[data-gmark]'),
+        im = host && host.querySelector('img[data-gstill]'),
+        p = document.getElementById('gdbg');
+    if (!p) {
+      p = document.createElement('pre'); p.id = 'gdbg';
+      p.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;margin:0;padding:10px 12px;' +
+        'max-width:calc(100vw - 16px);background:rgba(0,0,0,.86);color:#4ecdc4;font:11px/1.5 ui-monospace,' +
+        'Menlo,monospace;border:1px solid #4ecdc4;border-radius:8px;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(p);
+    }
+    p.textContent = [
+      'step      ' + D.step + (D.why ? ' — ' + D.why : ''),
+      'frames    ' + (D.ticks || 0) + '   spin ' + (D.spin || 0).toFixed(2) + '   ' +
+        ((D.ticks || 0) > 0 && D.moving ? 'TURNING' : 'NOT TURNING'),
+      'canvas    opacity ' + (cv ? getComputedStyle(cv).opacity : '-') +
+        '   still opacity ' + (im ? getComputedStyle(im).opacity : '-'),
+      'seen ' + D.seen + '  drag ' + D.drag + '  reduce-motion ' + D.reduced,
+      'ctx lost ' + (D.lost || 0) + '  restored ' + (D.restored || 0) + '  dpr ' + (devicePixelRatio || 1),
+      'gl        ' + (D.gl || '-'),
+      'model     ' + (D.model || '-'),
+      'ua        ' + navigator.userAgent.slice(0, 78),
+    ].join('\n');
+  }, 500);
+
+  /* The field is the whole section's sky, so the canvas is around 4900px
+     tall. Building 1500 radial gradients across that every frame cost 8ms on
+     a desktop and far more on a phone — enough on its own to hold the page
+     under 30fps, which is what made the mark in front of it look stopped.
+     The glow is one sprite now, drawn once and blitted per grain, over a
+     backing store at 0.65 scale. Soft blobs do not need real pixels. */
+  var GRAIN = 0.65;
+  function grainSprite() {
+    var S = 64, c = document.createElement('canvas'), g;
+    c.width = c.height = S;
+    g = c.getContext('2d').createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    g.addColorStop(0, 'rgba(190,246,240,1)');
+    g.addColorStop(0.30, 'rgba(190,246,240,1)');
+    g.addColorStop(0.34, 'rgba(120,229,219,.86)');
+    g.addColorStop(1, 'rgba(78,205,196,0)');
+    c.getContext('2d').fillStyle = g;
+    c.getContext('2d').fillRect(0, 0, S, S);
+    return c;
+  }
+
   function dust(cv) {
-    var x = cv.getContext('2d'), N = 1500, p = [], i;
+    var x = cv.getContext('2d'), N = 1500, p = [], i, spr = grainSprite();
     var rnd = function () { return Math.random(); };
     for (i = 0; i < N; i++) p.push({ x: rnd(), y: rnd(), r: 0.25 + rnd() * 0.6,
       a: 0.15 + rnd() * 0.75, s: 0.0007 + rnd() * 0.003, ph: rnd() * 6.2832 });
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var seen = true, raf;
+    var seen = true, raf = 0, prev = 0;
     if ('IntersectionObserver' in window)
       new IntersectionObserver(function (es) { es.forEach(function (e) {
-        seen = e.isIntersecting; if (seen) raf = requestAnimationFrame(draw); }); },
+        seen = e.isIntersecting; if (seen) { prev = 0; if (!raf) raf = requestAnimationFrame(draw); } }); },
         { rootMargin: '200px 0px' }).observe(cv);
     function draw(t) {
+      raf = 0;
       if (!seen) return;
-      var W = cv.clientWidth, H = cv.clientHeight;
+      var CW = cv.clientWidth, CH = cv.clientHeight;
+      var W = Math.round(CW * GRAIN), H = Math.round(CH * GRAIN);
       if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
       if (!W || !H) { raf = requestAnimationFrame(draw); return; }
+      /* the drift is per second, not per frame — tied to frames it crawls to
+         a stop on exactly the devices that are already struggling */
+      var dt = prev ? Math.min(0.25, (t - prev) / 1000) : 0; prev = t;
       x.clearRect(0, 0, W, H);
       for (i = 0; i < N; i++) {
         var q = p[i];
-        if (!reduced) { q.y -= q.s / 60; if (q.y < -0.02) q.y = 1.02; }
-        var tw = 0.55 + 0.45 * Math.sin(t / 1000 * 1.2 + q.ph);
-        var g = x.createRadialGradient(q.x * W, q.y * H, 0, q.x * W, q.y * H, q.r * 2.6);
-        g.addColorStop(0, 'rgba(120,229,219,' + (q.a * tw * 0.9).toFixed(3) + ')');
-        g.addColorStop(1, 'rgba(78,205,196,0)');
-        x.fillStyle = g;
-        x.beginPath(); x.arc(q.x * W, q.y * H, q.r * 2.6, 0, 6.2832); x.fill();
-        x.fillStyle = 'rgba(190,246,240,' + (q.a * tw).toFixed(3) + ')';
-        x.beginPath(); x.arc(q.x * W, q.y * H, q.r, 0, 6.2832); x.fill();
+        if (!reduced) { q.y -= q.s * dt; if (q.y < -0.02) q.y = 1.02; }
+        var d = q.r * 6.4 * GRAIN;
+        x.globalAlpha = q.a * (0.55 + 0.45 * Math.sin(t / 1000 * 1.2 + q.ph));
+        x.drawImage(spr, q.x * W - d / 2, q.y * H - d / 2, d, d);
       }
+      x.globalAlpha = 1;
       raf = requestAnimationFrame(draw);
     }
     raf = requestAnimationFrame(draw);
@@ -68,12 +120,25 @@
        never empty because of it. */
     var probe = null;
     try { probe = cv.getContext('webgl2') || cv.getContext('webgl'); } catch (e) {}
-    if (!probe) return;
-    cv.addEventListener('webglcontextlost', function (e) {
-      e.preventDefault();
-      cv.style.opacity = '0';
+    if (!probe) { fail('no webgl context'); return; }
+    D.gl = probe.getParameter(probe.VERSION) + ' · ' +
+      (probe.getParameter(probe.UNMASKED_RENDERER_WEBGL) || probe.getParameter(probe.RENDERER));
+    function showStill(on) {
       var s = host.querySelector('img[data-gstill]');
-      if (s) s.style.opacity = '1';
+      if (s) s.style.opacity = on ? '1' : '0';
+      cv.style.opacity = on ? '0' : '1';
+    }
+    /* iOS hands WebGL contexts back to the system under memory pressure and
+       this page holds several. Losing one used to be the end of it — the
+       still came up and stayed. Safari does restore the context when the
+       loss is cancelled, and three rebuilds its own state on that event, so
+       all this has to do is put the canvas back and start the loop again. */
+    cv.addEventListener('webglcontextlost', function (e) {
+      e.preventDefault(); D.lost = (D.lost || 0) + 1; showStill(true);
+    });
+    cv.addEventListener('webglcontextrestored', function () {
+      D.restored = (D.restored || 0) + 1;
+      if (live) { showStill(false); kick(); }
     });
     var T = window.__THREE__.THREE, GL = window.__THREE__.GLTFLoader,
         MD = window.__THREE__.MeshoptDecoder;
@@ -98,7 +163,7 @@
     function size() { var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
       r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
     addEventListener('resize', size);
-    var spin = 0.62, vel = 0, drag = false, px = 0, last = 0, live = false, seen = true;
+    var spin = 0.62, vel = 0, drag = false, px = 0, last = 0, live = false, seen = true, raf = 0;
     new GL().setMeshoptDecoder(MD).load(MODEL, function (g) {
       var m = g.scene, b = new T.Box3().setFromObject(m), s = b.getSize(new T.Vector3());
       m.position.sub(b.getCenter(new T.Vector3()));
@@ -111,14 +176,17 @@
       cam.position.set(0, 0, Math.max(s.x, s.y) / (2 * Math.tan(26 * Math.PI / 360)) * 2.15);
       cam.lookAt(0, 0, 0);
       host.setAttribute('data-live', '1');
-      cv.style.opacity = '1';
       var still = host.querySelector('img[data-gstill]');
-      if (still) { still.style.transition = 'opacity .8s'; still.style.opacity = '0'; }
-      live = true; requestAnimationFrame(loop);
-    });
+      if (still) still.style.transition = 'opacity .8s';
+      showStill(false);
+      live = true; D.step = 'live'; kick();
+    }, function (p) { if (p.total) D.model = Math.round(p.loaded / p.total * 100) + '%'; },
+       function (e) { fail('model: ' + (e && e.message ? e.message : e)); });
+    D.step = 'loading model';
     cv.style.cursor = 'grab';
     host.addEventListener('pointerdown', function (e) {
-      drag = true; px = e.clientX; vel = 0; host.setAttribute('data-touched', '1');
+      drag = true; px = e.clientX; vel = 0; dragAt = performance.now();
+      host.setAttribute('data-touched', '1');
       cv.style.cursor = 'grabbing';
       try { host.setPointerCapture(e.pointerId); } catch (_) {}
     });
@@ -129,13 +197,51 @@
     });
     function up() { drag = false; cv.style.cursor = 'grab'; }
     host.addEventListener('pointerup', up); host.addEventListener('pointercancel', up);
+    /* A finger that starts on the mark and ends as a page scroll does not
+       always give the element its own pointerup back. Losing that one event
+       leaves drag stuck on, and a stuck drag means the turn never resumes —
+       so the window gets to end a drag as well. */
+    ['pointerup', 'pointercancel', 'touchend', 'touchcancel', 'blur']
+      .forEach(function (n) { addEventListener(n, up, true); });
     if ('IntersectionObserver' in window)
       new IntersectionObserver(function (es) { es.forEach(function (e) {
-        seen = e.isIntersecting; if (seen && live) requestAnimationFrame(loop); }); },
+        seen = e.isIntersecting; if (seen && live) kick(); }); },
         { rootMargin: '150px 0px' }).observe(host);
+
+    /* Every way this can stop turning without anything throwing: the frame
+       loop dropped (iOS suspends rAF around scroll momentum and page
+       restores, and does not always hand it back), the observer's flag went
+       stale, or the drag above got stuck. The watchdog does not care which —
+       if no frame has been drawn since the last check and the hero is on
+       screen by its own measurement, it starts the loop again. */
+    var ticks = 0, seenTicks = -1, dragAt = 0;
+    setInterval(function () {
+      if (!live || document.visibilityState === 'hidden') { seenTicks = -1; return; }
+      if (drag && performance.now() - dragAt > 2500) up();
+      if (ticks !== seenTicks) { seenTicks = ticks; return; }
+      var box = host.getBoundingClientRect();
+      if (box.bottom > -200 && box.top < innerHeight + 200) { seen = true; raf = 0; kick(); }
+    }, 1500);
+    /* The frame is booked in one place and the token is the proof. Both the
+       model landing and the observer want to start the loop, and on a slow
+       device the gap between booking a frame and running it is long enough
+       for the second caller to book another — two loops, and the mark turns
+       at twice the speed it was written for. */
+    function kick() { if (!raf) { last = 0; raf = requestAnimationFrame(loop); } }
+
     function loop(t) {
+      raf = 0;
       if (!live || !seen) { last = 0; return; }
-      var dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
+      ticks++;
+      /* The ceiling on dt is a guard against one huge step after the page
+         comes back from the background. At 0.05 it was also capping every
+         frame slower than 20fps, so a phone running at 8 turned the mark at
+         two fifths speed and one running at 4 looked stopped altogether.
+         0.25 still swallows the return-from-background jump — 3.7° at most —
+         without punishing a device for being slow. */
+      var dt = last ? Math.min(0.25, (t - last) / 1000) : 0; last = t;
+      if (DBG) { D.moving = spin !== D.spin; D.ticks = ticks; D.spin = spin;
+        D.seen = seen; D.drag = drag; D.reduced = reduced; }
       /* Reduce-motion slows the turn rather than stopping it. What that
          setting exists to prevent is large-area movement — parallax, drift,
          zoom — which is why the dust behind holds still under it. One small
@@ -145,7 +251,7 @@
         vel += (target - vel) * Math.min(1, dt * 1.6); spin += vel * dt; }
       piv.rotation.y = spin;
       r.render(sc, cam);
-      requestAnimationFrame(loop);
+      raf = requestAnimationFrame(loop);
     }
   }
 
@@ -156,18 +262,22 @@
       this.d = (this.closest('section') || document).querySelector('canvas[data-gdust]');
       this.m = this.querySelector('canvas[data-gmark]');
       if (!this.d || !this.m) {
+        D.step = 'waiting for the canvases';
         if ((this._t = (this._t || 0) + 1) < 120) requestAnimationFrame(() => this.connectedCallback());
+        else fail('canvases never appeared');
         return;
       }
-      this._on = true;
+      this._on = true; D.step = 'armed';
       dust(this.d);
       var self = this;
       var go = function () {
         if (self._boot) return; self._boot = true;
+        D.step = 'loading three';
         if (window.__THREE__) return mark(self.m, self);
         var s = document.createElement('script');
         s.src = THREE_SRC;
-        s.onload = function () { try { mark(self.m, self); } catch (e) {} };
+        s.onload = function () { try { mark(self.m, self); } catch (e) { fail('three: ' + e.message); } };
+        s.onerror = function () { fail('three failed to load'); };
         document.head.appendChild(s);
       };
       if (!('IntersectionObserver' in window)) return go();
