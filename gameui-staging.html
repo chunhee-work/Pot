@@ -132,28 +132,6 @@ h2 b{font-weight:800}
 .veil.deep{background:linear-gradient(180deg,rgba(0,0,0,.18) 0%,rgba(0,0,0,.48) 48%,rgba(0,0,0,.88) 100%)}
 .num{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.24em;color:var(--faint)}
 
-/* A — grid */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,2vw,24px)}
-.cell{margin:0}
-.cell .box{aspect-ratio:3/4}
-.cell .num{position:absolute;top:12px;left:14px;z-index:2;color:rgba(245,245,242,.7)}
-.cell figcaption{padding:14px 2px 0}
-.cell h3{margin:0;font-size:15.5px;font-weight:700;letter-spacing:-.005em}
-.cell p{margin:7px 0 0;color:var(--dim);font-size:13.5px;line-height:1.55;text-wrap:pretty}
-
-/* B — rail */
-.rail{display:flex;gap:clamp(12px,1.6vw,20px);overflow-x:auto;padding:34px 2px 8px;
-  scroll-snap-type:x mandatory;scrollbar-width:none;
-  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 54px),transparent);
-          mask-image:linear-gradient(90deg,#000 calc(100% - 54px),transparent)}
-.rail::-webkit-scrollbar{display:none}
-.tile{margin:0;flex:0 0 clamp(215px,23vw,290px);scroll-snap-align:start;transform:translateY(var(--lift))}
-.tile .box.tall{aspect-ratio:9/16;border-color:color-mix(in srgb,var(--accent) 28%,transparent)}
-.over{position:absolute;inset:auto 0 0 0;padding:clamp(14px,1.6vw,20px);z-index:2}
-.over h3{margin:8px 0 0;font-size:17px;font-weight:800;letter-spacing:-.01em}
-.over p{margin:8px 0 0;color:rgba(245,245,242,.78);font-size:12.5px;line-height:1.5;text-wrap:pretty}
-.over .num{color:var(--accent)}
-
 /* C — sequence */
 .seq{display:flex;flex-direction:column;gap:clamp(16px,2.4vw,30px)}
 .srow{margin:0;padding:0;border:0}
@@ -182,12 +160,10 @@ h2 b{font-weight:800}
 .holdin p{margin:12px 0 0;color:var(--faint);font-size:13px}
 
 @media (max-width:880px){
-  .grid{grid-template-columns:repeat(2,1fr)}
   .srow,.srow.flip>.box{grid-template-columns:1fr;order:0}
   .srow .box.wide16{aspect-ratio:16/10}
   .box.banner,.box.hold{aspect-ratio:4/3}
 }
-@media (max-width:520px){ .grid{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -282,64 +258,14 @@ h2 b{font-weight:800}
     <p class="lede" style="margin-top:18px">There is no “before” for this one — the product had no
       onboarding at all. It opened on a sign-in box. These six screens and the sign-in behind them
       were built from nothing, and they are the argument the product makes for itself before it
-      asks for an email. <b>Three ways to lay them out — pick one and I will keep it.</b></p>
+      asks for an email. <b>Six screens, then the sign-in they all lead to.</b></p>
+
+    
+
+    
 
     <div class="variant">
-      <p class="vhead"><b>Layout A · grid</b><span>Three across, portrait boxes, copy underneath. Calmest; reads as a set.</span></p>
-      <div class="grid">
-<figure class="cell"><div class="box"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s1-b08cdaef.webp" data-webm="assets/gameui/s1-7fb34644.webm" data-mp4="assets/gameui/s1-a43e5da7.mp4"></video><span class="veil"></span>
-      <span class="num">01</span></div>
-      <figcaption><h3>Collect @Name Cards</h3><p>Open gacha packs to pull from 100 real-world icons — athletes, artists, investors, founders. Five rarities, a unique serial on every card.</p></figcaption></figure>
-<figure class="cell"><div class="box"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s2-b0457498.webp" data-webm="assets/gameui/s2-6287aacc.webm" data-mp4="assets/gameui/s2-3959d11a.mp4"></video><span class="veil"></span>
-      <span class="num">02</span></div>
-      <figcaption><h3>Battle 5v5</h3><p>Deploy your top five into turn-based battles. ATK, DEF and HP decide it. Win bits, climb the leaderboard, protect your rank.</p></figcaption></figure>
-<figure class="cell"><div class="box"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s3-eca6dfe8.webp" data-webm="assets/gameui/s3-73921758.webm" data-mp4="assets/gameui/s3-e2ded493.mp4"></video><span class="veil"></span>
-      <span class="num">03</span></div>
-      <figcaption><h3>Forge</h3><p>Combine duplicates to upgrade their rarity. Sacrifice commons to craft rares, rares to craft ultra rares. Every forge makes the deck stronger.</p></figcaption></figure>
-<figure class="cell"><div class="box"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s4-0c965479.webp" data-webm="assets/gameui/s4-5df6aba4.webm" data-mp4="assets/gameui/s4-5d8420b7.mp4"></video><span class="veil"></span>
-      <span class="num">04</span></div>
-      <figcaption><h3>Trade on the Marketplace</h3><p>List what you do not need, buy what you want. Bits-based P2P trading with a 5% fee. Spot deals, snipe UR+ drops.</p></figcaption></figure>
-<figure class="cell"><div class="box"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s5-1d2f8b87.webp" data-webm="assets/gameui/s5-92d8b618.webm" data-mp4="assets/gameui/s5-7d898ee0.mp4"></video><span class="veil"></span>
-      <span class="num">05</span></div>
-      <figcaption><h3>Immortalisation</h3><p>Immortalise a card to own it forever and claim Stewardship over the iconic name. On-chain, verifiable, forever yours.</p></figcaption></figure>
-<figure class="cell"><div class="box"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/pack-c48c367b.webp" data-webm="assets/gameui/pack-23d8bd84.webm" data-mp4="assets/gameui/pack-eb8cd90a.mp4"></video><span class="veil"></span>
-      <span class="num">06</span></div>
-      <figcaption><h3>Try a demo pack</h3><p>The tour ends where the product begins — one pack, guaranteed one of each rarity, before an account is ever asked for.</p></figcaption></figure>
-</div>
-    </div>
-
-    <div class="variant">
-      <p class="vhead"><b>Layout B · rail</b><span>One swipeable row, staggered, copy over the footage. Most filmic; closest to the real flow.</span></p>
-      <div class="rail" data-rail>
-<figure class="tile" style="--lift:0px;--accent:#4ECDC4">
-      <div class="box tall"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s1-b08cdaef.webp" data-webm="assets/gameui/s1-7fb34644.webm" data-mp4="assets/gameui/s1-a43e5da7.mp4"></video><span class="veil deep"></span>
-        <div class="over"><span class="num">01</span><h3>Collect @Name Cards</h3><p>Open gacha packs to pull from 100 real-world icons — athletes, artists, investors, founders. Five rarities, a unique serial on every card.</p></div>
-      </div></figure>
-<figure class="tile" style="--lift:30px;--accent:#FF5A5F">
-      <div class="box tall"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s2-b0457498.webp" data-webm="assets/gameui/s2-6287aacc.webm" data-mp4="assets/gameui/s2-3959d11a.mp4"></video><span class="veil deep"></span>
-        <div class="over"><span class="num">02</span><h3>Battle 5v5</h3><p>Deploy your top five into turn-based battles. ATK, DEF and HP decide it. Win bits, climb the leaderboard, protect your rank.</p></div>
-      </div></figure>
-<figure class="tile" style="--lift:0px;--accent:#FF8A4C">
-      <div class="box tall"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s3-eca6dfe8.webp" data-webm="assets/gameui/s3-73921758.webm" data-mp4="assets/gameui/s3-e2ded493.mp4"></video><span class="veil deep"></span>
-        <div class="over"><span class="num">03</span><h3>Forge</h3><p>Combine duplicates to upgrade their rarity. Sacrifice commons to craft rares, rares to craft ultra rares. Every forge makes the deck stronger.</p></div>
-      </div></figure>
-<figure class="tile" style="--lift:30px;--accent:#F5C518">
-      <div class="box tall"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s4-0c965479.webp" data-webm="assets/gameui/s4-5df6aba4.webm" data-mp4="assets/gameui/s4-5d8420b7.mp4"></video><span class="veil deep"></span>
-        <div class="over"><span class="num">04</span><h3>Trade on the Marketplace</h3><p>List what you do not need, buy what you want. Bits-based P2P trading with a 5% fee. Spot deals, snipe UR+ drops.</p></div>
-      </div></figure>
-<figure class="tile" style="--lift:0px;--accent:#F5C518">
-      <div class="box tall"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s5-1d2f8b87.webp" data-webm="assets/gameui/s5-92d8b618.webm" data-mp4="assets/gameui/s5-7d898ee0.mp4"></video><span class="veil deep"></span>
-        <div class="over"><span class="num">05</span><h3>Immortalisation</h3><p>Immortalise a card to own it forever and claim Stewardship over the iconic name. On-chain, verifiable, forever yours.</p></div>
-      </div></figure>
-<figure class="tile" style="--lift:30px;--accent:#8ED9D2">
-      <div class="box tall"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/pack-c48c367b.webp" data-webm="assets/gameui/pack-23d8bd84.webm" data-mp4="assets/gameui/pack-eb8cd90a.mp4"></video><span class="veil deep"></span>
-        <div class="over"><span class="num">06</span><h3>Try a demo pack</h3><p>The tour ends where the product begins — one pack, guaranteed one of each rarity, before an account is ever asked for.</p></div>
-      </div></figure>
-</div>
-    </div>
-
-    <div class="variant">
-      <p class="vhead"><b>Layout C · sequence</b><span>One per row, alternating sides. Slowest and most readable; the copy gets room.</span></p>
+      <p class="vhead"><b>The flow</b><span>One screen per row, alternating sides. The boxes are landscape and waiting on the recordings.</span></p>
       <div class="seq">
 <figure class="srow" style="--accent:#4ECDC4">
       <div class="box wide16"><video class="v " muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/s1-b08cdaef.webp" data-webm="assets/gameui/s1-7fb34644.webm" data-mp4="assets/gameui/s1-a43e5da7.mp4"></video><span class="veil"></span></div>
@@ -372,8 +298,8 @@ h2 b{font-weight:800}
   </div></figure>
       <figure class="slot" id="model-slot" aria-label="Reserved for the pack model">
   <div class="box hold">
-    <div class="holdin"><span class="tag">Reserved</span>
-      <p>The pack, in three dimensions — dropped in here when the model arrives.</p></div>
+    <div class="holdin"><span class="tag">Model in hand</span>
+      <p>The logo at its full half-million triangles, 3.64 MB. Waiting on a viewer.</p></div>
   </div></figure>
     </div>
   </section>
