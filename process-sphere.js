@@ -6,7 +6,7 @@
 (function () {
   if (customElements.get('process-sphere')) return;
 
-  const INTRO = 'assets/process/intro-69cf014726.mp3';
+  const INTRO = 'assets/process/intro-04358c6d22.mp3';
   const BGM = 'assets/process/bgm-0ac7bdea7b.mp3';
   const DEPART = 900;      /* a backstop; the scatter normally leaves first */
   const SCATTER = 0.7;     /* seconds of particles before the page hands over */
