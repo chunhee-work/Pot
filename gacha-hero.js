@@ -5,7 +5,7 @@
 (function () {
   if (customElements.get('gacha-hero')) return;
   var THREE_SRC = 'assets/gameui/three-219c2a1f8e.js';
-  var MODEL = 'assets/gameui/gacha-logo-22e7cf0f05.glb';
+  var MODEL = 'assets/gameui/gacha-logo-e2d628a514.glb';
 
   function dust(cv) {
     var x = cv.getContext('2d'), N = 1500, p = [], i;
@@ -136,7 +136,12 @@
     function loop(t) {
       if (!live || !seen) { last = 0; return; }
       var dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
-      if (!drag) { var target = reduced ? 0 : 0.26;
+      /* Reduce-motion slows the turn rather than stopping it. What that
+         setting exists to prevent is large-area movement — parallax, drift,
+         zoom — which is why the dust behind holds still under it. One small
+         object turning at a constant rate in a fixed frame is not that, and
+         a mark frozen mid-rotation reads as a page that failed to load. */
+      if (!drag) { var target = reduced ? 0.10 : 0.26;
         vel += (target - vel) * Math.min(1, dt * 1.6); spin += vel * dt; }
       piv.rotation.y = spin;
       r.render(sc, cam);
@@ -168,7 +173,7 @@
       if (!('IntersectionObserver' in window)) return go();
       new IntersectionObserver(function (es, io) {
         if (es.some(function (e) { return e.isIntersecting; })) { io.disconnect(); go(); }
-      }, { rootMargin: '500px 0px' }).observe(this);
+      }, { rootMargin: '1400px 0px' }).observe(this);
     }
   }
   customElements.define('gacha-hero', GachaHero);
