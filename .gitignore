@@ -6,3 +6,4 @@ _react-dom.js
 _three/
 /process
 testsite/
+node_modules/
