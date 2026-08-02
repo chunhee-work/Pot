@@ -99,7 +99,8 @@
   class GachaHero extends HTMLElement {
     connectedCallback() {
       if (this._on) return;
-      this.d = this.querySelector('canvas[data-gdust]');
+      /* the dust is the whole section's sky now, not the hero's own */
+      this.d = (this.closest('section') || document).querySelector('canvas[data-gdust]');
       this.m = this.querySelector('canvas[data-gmark]');
       if (!this.d || !this.m) {
         if ((this._t = (this._t || 0) + 1) < 120) requestAnimationFrame(() => this.connectedCallback());
