@@ -226,7 +226,6 @@
 </style>
 
 <div class="bgvid" aria-hidden="true"><canvas id="stars"></canvas></div>
-<audio id="sfx" preload="auto" src="assets/process/audio-69cf014726.mp3"></audio>
 <audio id="bgm" loop preload="none" src="assets/process/audio-0ac7bdea7b.mp3"></audio>
 
 <div class="topbar"><a class="back" href="/">&#8592; Back to portfolio</a></div>
@@ -717,44 +716,29 @@
     setTimeout(function(){document.getElementById('c02').classList.add('on');},220);
     setTimeout(onScroll,400);
   }
-  /* click → the intro clip fires instantly, the score takes over when it ends */
-  var audioOn=false,bgmOn=false;
+  /* The sphere and the intro clip live on the home page; the click that fired
+     them lands here, so this page only has to bring the score in. Arriving by
+     navigation carries no gesture with it, so a blocked play() waits for the
+     visitor's first move rather than being lost. */
+  var bgmOn=false;
   function startBgm(){
     if(bgmOn)return;bgmOn=true;
     var a=document.getElementById('bgm');if(!a)return;
     a.volume=0;
-    var p=a.play();if(p&&p.catch)p.catch(function(){});
     var t0=performance.now();
     (function fade(n){
       var k=Math.max(0,Math.min(1,(n-t0)/1800));
       a.volume=0.85*k;
       if(k<1)requestAnimationFrame(fade);
     })(t0);
+    var p=a.play();
+    if(p&&p.catch)p.catch(function(){
+      var go=function(){a.play();['pointerdown','keydown','wheel','touchstart'].forEach(
+        function(ev){removeEventListener(ev,go);});};
+      ['pointerdown','keydown','wheel','touchstart'].forEach(
+        function(ev){addEventListener(ev,go,{once:false,passive:true});});
+    });
   }
-  var HANDOVER=1000;  /* the score swells in over the clip's tail */
-  function startAudio(){
-    if(audioOn)return;audioOn=true;
-    var s=document.getElementById('sfx');
-    if(!s){startBgm();return;}
-    s.volume=1;
-    s.addEventListener('ended',startBgm,{once:true});
-    var p=s.play();
-    if(p&&p.catch)p.catch(startBgm);
-    setTimeout(startBgm,HANDOVER);
-  }
-  function launch(){
-    if(mode==='snap'||opened&&snapDone)return;
-    startAudio();
-    if(reduced){snapDone=true;scene.classList.add('gone');openStages();return;}
-    var r=wrap.getBoundingClientRect();
-    blast=true;wrap.classList.add('blast');
-    CX=(r.left+r.width/2)*DPR;CY=(r.top+r.height/2)*DPR;R=r.width*DPR*0.40;
-    mode='snap';snapT=0;scene.classList.add('snapped');
-    setTimeout(function(){openStages();
-      window.scrollTo({top:stages.offsetTop-40,behavior:'smooth'});},780);
-  }
-  wrap.addEventListener('click',launch);
-  wrap.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();launch();}});
 
   /* ── metal thread: enters each box top, exits its bottom ─────────── */
   var svg=document.getElementById('thread'),
@@ -961,6 +945,13 @@
   addEventListener('scroll',function(){requestAnimationFrame(onScroll);},{passive:true});
   addEventListener('resize',function(){if(opened){buildThread();sizeRims();onScroll();}});
   addEventListener('load',function(){if(opened)sizeRims();});
+
+  /* this page is the destination, not the opening: the sphere and the intro
+     clip already played on the home page, so show the line straight away */
+  scene.classList.add('gone');
+  snapDone=true;
+  openStages();
+  startBgm();
 
   /* flowing highlight on the metal thread */
   (function flow(){
