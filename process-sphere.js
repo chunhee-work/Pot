@@ -8,9 +8,8 @@
 
   const INTRO = 'assets/process/intro.mp3';
   const BGM = 'assets/process/bgm.mp3';
-  const HANDOVER = 1000;   /* the score comes in a second after the click */
-  const DEPART = 1650;     /* the clip is cut to finish inside the transition */
-  const SCATTER = 0.85;    /* seconds of particles before the field takes over */
+  const DEPART = 900;      /* a backstop; the scatter normally leaves first */
+  const SCATTER = 0.7;     /* seconds of particles before the page hands over */
   const rand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 
   /* ── starfield ────────────────────────────────────────────────────── */
@@ -208,34 +207,11 @@
 
     launch(href) {
       if (this.mode === 'snap') return;
+      this.t0 = performance.now();
 
-      /* A navigation carries no user gesture with it and kills whatever is
-         playing, so the whole cue runs here, on the page where the click
-         happened: the clip from the click, the score a second later, and the
-         departure held back until the clip has actually finished. The score's
-         start time rides across in sessionStorage so /process picks it up
-         where this page left off instead of restarting it. */
-      try {
-        const clip = new Audio(INTRO);
-        clip.volume = 1;
-        const cp = clip.play();
-        if (cp && cp.catch) cp.catch(function () {});
-
-        setTimeout(function () {
-          const bgm = new Audio(BGM);
-          bgm.loop = true; bgm.volume = 0;
-          const bp = bgm.play();
-          if (bp && bp.catch) bp.catch(function () {});
-          try { sessionStorage.setItem('bgm-started', String(Date.now())); } catch (e) {}
-          const t0 = performance.now();
-          (function fade(n) {
-            const k = Math.max(0, Math.min(1, (n - t0) / 1800));
-            bgm.volume = 0.85 * k;
-            if (k < 1) requestAnimationFrame(fade);
-          })(t0);
-        }, HANDOVER);
-      } catch (e) {}
-
+      /* The cue belongs to the destination now: a navigation kills whatever is
+         playing, so anything started here would be cut off mid-swell. This page
+         only owes the visitor the scatter, and then to get out of the way. */
       if (this.reduced) { location.href = href; return; }
       const r = this.getBoundingClientRect();
       this.href = href;
@@ -248,7 +224,7 @@
       this.R = r.width * this.DPR * 0.40;
       this.mode = 'snap'; this.snapT = 0;
       const stars = document.querySelector('process-stars');
-      if (stars && stars.warp) setTimeout(() => stars.warp(), 600);
+      if (stars && stars.warp) stars.warp();
       this.bail = setTimeout(() => { location.href = href; }, DEPART);
     }
 
@@ -303,7 +279,13 @@
 
       if (this.mode === 'snap') {
         this.snapT += dt;
-        if (alive === 0 || this.snapT > SCATTER) { this.done = true; return; }
+        if (alive === 0 || this.snapT > SCATTER) {
+          this.done = true;
+          clearTimeout(this.bail);
+          try { window.__depart = Math.round(performance.now() - this.t0); } catch (e) {}
+          location.href = this.href;
+          return;
+        }
       }
       this.raf = requestAnimationFrame(this.frame);
     }
