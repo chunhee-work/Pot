@@ -371,7 +371,7 @@ h2 b{font-weight:800}
 (function () {
   var stage = document.getElementById('stage3d');
   if (!stage || !('IntersectionObserver' in window)) return;
-  var THREE_SRC = 'assets/gameui/three-219c2a1f8e.js';
+  var THREE_SRC = 'assets/gameui/three-ec08179080.js';
   var MODEL = 'assets/gameui/gacha-logo-e2d628a514.glb';
   var started = false;
 
@@ -388,8 +388,9 @@ h2 b{font-weight:800}
   }, { rootMargin: '500px 0px' }).observe(stage);
 
   function boot() {
-    var T = window.__THREE__.THREE, GL = window.__THREE__.GLTFLoader,
-        MD = window.__THREE__.MeshoptDecoder, RE = window.__THREE__.RoomEnvironment;
+    var G = window.__GACHA3__ || {};
+    var T = G.THREE, GL = G.GLTFLoader, MD = G.MeshoptDecoder, RE = G.RoomEnvironment;
+    if (!T || !GL || !MD) return;
     var cv = document.getElementById('cv3d');
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 

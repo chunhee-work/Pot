@@ -4,7 +4,7 @@
    is fetched until the section is close. */
 (function () {
   if (customElements.get('gacha-hero')) return;
-  var THREE_SRC = 'assets/gameui/three-219c2a1f8e.js';
+  var THREE_SRC = 'assets/gameui/three-ec08179080.js';
   var MODEL = 'assets/gameui/gacha-logo-e2d628a514.glb';
 
   /* Nothing here runs unless the address ends in ?dbg — it exists so a
@@ -162,10 +162,10 @@
       D.restored = (D.restored || 0) + 1;
       if (live) { showStill(false); kick(); }
     });
-    var W = window.__THREE__ || {};
+    var W = window.__GACHA3__ || {};
     var T = W.THREE, GL = W.GLTFLoader, MD = W.MeshoptDecoder;
     if (!T || !GL || !MD) {
-      fail('three bundle missing ' + (!T ? 'THREE' : !GL ? 'GLTFLoader' : 'MeshoptDecoder'));
+      fail('bundle missing ' + (!T ? 'THREE' : !GL ? 'GLTFLoader' : 'MeshoptDecoder'));
       return;
     }
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -309,7 +309,7 @@
     var d = (host.closest('section') || document).querySelector('canvas[data-gdust]'),
         cv = host.querySelector('canvas[data-gmark]');
     if (d && d !== DUSTCV) { DUSTCV = d; dust(d); }
-    if (cv && window.__THREE__ && !(CUR && CUR.cv === cv && cv.isConnected)) boot(host, cv);
+    if (cv && window.__GACHA3__ && !(CUR && CUR.cv === cv && cv.isConnected)) boot(host, cv);
   }
   setInterval(supervise, 2000);
 
@@ -331,15 +331,26 @@
       var go = function () {
         if (self._boot) return; self._boot = true;
         D.step = 'loading three';
-        /* Both ways in have to be guarded. The already-loaded path used to
-           call straight through, so anything it threw escaped and left the
-           section half-built with nothing to say for itself. */
-        if (window.__THREE__) return boot(self, self.m);
-        var s = document.createElement('script');
-        s.src = THREE_SRC;
-        s.onload = function () { boot(self, self.m); };
-        s.onerror = function () { fail('three failed to load'); };
-        document.head.appendChild(s);
+        /* Not window.__THREE__. Three writes the string "160" into that
+           global as its own duplicate-import guard, partway through any
+           build — including the copy the Land of Hope section imports from
+           unpkg. Whichever of the two got there first, this saw a truthy
+           value, skipped loading the bundle it actually needs, and then
+           found no THREE on it. Hence a mark that rendered a still and
+           nothing else. The bundle publishes its own namespace now.
+           Both ways in are guarded, so a throw is reported rather than lost. */
+        if (window.__GACHA3__) return boot(self, self.m);
+        var s = document.querySelector('script[data-gacha3]');
+        if (!s) {
+          s = document.createElement('script');
+          s.src = THREE_SRC; s.setAttribute('data-gacha3', '');
+          s.onerror = function () { fail('three failed to load'); };
+          document.head.appendChild(s);
+        }
+        s.addEventListener('load', function () {
+          if (!window.__GACHA3__) return fail('bundle loaded but published nothing');
+          boot(self, self.m);
+        });
       };
       if (!('IntersectionObserver' in window)) return go();
       new IntersectionObserver(function (es, io) {
