@@ -11,7 +11,11 @@
      device I cannot reach can say what it is doing. Open the page with
      ?dbg and the panel reports it. */
   var D = { step: 'idle' }, DBG = /[?&]dbg\b/.test(location.search);
-  function fail(why) { D.step = 'FAILED'; D.why = why; }
+  function fail(why) { D.step = 'FAILED'; D.why = String(why); }
+  addEventListener('error', function (e) {
+    if (D.step !== 'live') fail((e.message || 'error') + ' @' +
+      String(e.filename || '').split('/').pop() + ':' + e.lineno);
+  });
   if (DBG) setInterval(function () {
     var host = document.querySelector('gacha-hero'),
         cv = host && host.querySelector('canvas[data-gmark]'),
@@ -33,7 +37,8 @@
       'seen ' + D.seen + '  drag ' + D.drag + '  reduce-motion ' + D.reduced,
       'ctx lost ' + (D.lost || 0) + '  restored ' + (D.restored || 0) + '  dpr ' + (devicePixelRatio || 1),
       'gl        ' + (D.gl || '-'),
-      'model     ' + (D.model || '-'),
+      'model     ' + (D.model || '-') + '   heroes ' + document.querySelectorAll('gacha-hero').length +
+        '/' + document.querySelectorAll('canvas[data-gmark]').length + '  boots ' + (D.boots || 0),
       'ua        ' + navigator.userAgent.slice(0, 78),
     ].join('\n');
   }, 500);
@@ -71,7 +76,7 @@
         { rootMargin: '200px 0px' }).observe(cv);
     function draw(t) {
       raf = 0;
-      if (!seen) return;
+      if (!seen || !cv.isConnected) return;
       var CW = cv.clientWidth, CH = cv.clientHeight;
       var W = Math.round(CW * GRAIN), H = Math.round(CH * GRAIN);
       if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
@@ -113,11 +118,28 @@
     return new T.PMREMGenerator(r).fromScene(s, 0.03).texture;
   }
 
+  /* The runtime can rebuild this section's markup, which hands the element a
+     brand new canvas and boots the whole thing a second time. The renderer
+     from the first pass is then drawing into a node nobody can see, still
+     holding a WebGL context — and iOS budgets those tightly enough that the
+     second one gets refused. Whatever came before is torn down first. */
+  var CUR = null;
+  function retire() {
+    if (!CUR) return;
+    var old = CUR; CUR = null;
+    try { old.stop(); } catch (e) {}
+    try { old.r.dispose(); } catch (e) {}
+    try { old.r.forceContextLoss(); } catch (e) {}
+  }
+
   function mark(cv, host) {
+    if (CUR && CUR.cv !== cv) retire();
+    if (CUR && CUR.cv === cv) return;   // already running on this canvas
     /* iOS keeps a small budget of live WebGL contexts and this page already
        spends several. If one cannot be had, or the system takes it back
        later, the still underneath is what the visitor sees — the section is
        never empty because of it. */
+    D.step = 'webgl context';
     var probe = null;
     try { probe = cv.getContext('webgl2') || cv.getContext('webgl'); } catch (e) {}
     if (!probe) { fail('no webgl context'); return; }
@@ -140,15 +162,22 @@
       D.restored = (D.restored || 0) + 1;
       if (live) { showStill(false); kick(); }
     });
-    var T = window.__THREE__.THREE, GL = window.__THREE__.GLTFLoader,
-        MD = window.__THREE__.MeshoptDecoder;
+    var W = window.__THREE__ || {};
+    var T = W.THREE, GL = W.GLTFLoader, MD = W.MeshoptDecoder;
+    if (!T || !GL || !MD) {
+      fail('three bundle missing ' + (!T ? 'THREE' : !GL ? 'GLTFLoader' : 'MeshoptDecoder'));
+      return;
+    }
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    D.step = 'renderer';
     var r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
     r.setPixelRatio(Math.min(innerWidth < 760 ? 1.5 : 2, devicePixelRatio || 1));
     r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.20;
     r.outputColorSpace = T.SRGBColorSpace;
     var sc = new T.Scene();
+    D.step = 'environment';
     sc.environment = studio(T, r);
+    D.step = 'scene';
     /* The beam stays fixed in the world and pointed at the origin — the mark
        turns through it, so each fold lights as it comes round and falls dark
        as it leaves. The softbox behind it is what puts the sweep of highlight
@@ -179,7 +208,7 @@
       var still = host.querySelector('img[data-gstill]');
       if (still) still.style.transition = 'opacity .8s';
       showStill(false);
-      live = true; D.step = 'live'; kick();
+      live = true; D.step = 'live'; attempts = 0; kick();
     }, function (p) { if (p.total) D.model = Math.round(p.loaded / p.total * 100) + '%'; },
        function (e) { fail('model: ' + (e && e.message ? e.message : e)); });
     D.step = 'loading model';
@@ -215,13 +244,20 @@
        if no frame has been drawn since the last check and the hero is on
        screen by its own measurement, it starts the loop again. */
     var ticks = 0, seenTicks = -1, dragAt = 0;
-    setInterval(function () {
+    var beat = setInterval(function () {
+      /* the runtime swapped the markup out from under us — hand the context
+         back rather than sit on it */
+      if (!cv.isConnected) { retire(); return; }
       if (!live || document.visibilityState === 'hidden') { seenTicks = -1; return; }
       if (drag && performance.now() - dragAt > 2500) up();
       if (ticks !== seenTicks) { seenTicks = ticks; return; }
       var box = host.getBoundingClientRect();
       if (box.bottom > -200 && box.top < innerHeight + 200) { seen = true; raf = 0; kick(); }
     }, 1500);
+    CUR = { cv: cv, r: r, stop: function () {
+      live = false; clearInterval(beat);
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    } };
     /* The frame is booked in one place and the token is the proof. Both the
        model landing and the observer want to start the loop, and on a slow
        device the gap between booking a frame and running it is long enough
@@ -255,6 +291,28 @@
     }
   }
 
+  var DUSTCV = null, attempts = 0;
+  function boot(host, cv) {
+    if (attempts > 5) return;              // budget for boots that never went live
+    attempts++; D.boots = (D.boots || 0) + 1;
+    try { mark(cv, host); } catch (e) { fail('mark: ' + (e && e.message ? e.message : e)); }
+  }
+
+  /* Custom-element callbacks are not a reliable place to notice that the
+     runtime swapped the section's markup: a moved element gets no second
+     connectedCallback, and a replaced one leaves the first renderer holding
+     a context nobody can see. This watches the document instead — whatever
+     canvas is on the page right now is the one that gets driven. */
+  function supervise() {
+    var host = document.querySelector('gacha-hero');
+    if (!host) return;
+    var d = (host.closest('section') || document).querySelector('canvas[data-gdust]'),
+        cv = host.querySelector('canvas[data-gmark]');
+    if (d && d !== DUSTCV) { DUSTCV = d; dust(d); }
+    if (cv && window.__THREE__ && !(CUR && CUR.cv === cv && cv.isConnected)) boot(host, cv);
+  }
+  setInterval(supervise, 2000);
+
   class GachaHero extends HTMLElement {
     connectedCallback() {
       if (this._on) return;
@@ -268,15 +326,18 @@
         return;
       }
       this._on = true; D.step = 'armed';
-      dust(this.d);
+      DUSTCV = this.d; dust(this.d);
       var self = this;
       var go = function () {
         if (self._boot) return; self._boot = true;
         D.step = 'loading three';
-        if (window.__THREE__) return mark(self.m, self);
+        /* Both ways in have to be guarded. The already-loaded path used to
+           call straight through, so anything it threw escaped and left the
+           section half-built with nothing to say for itself. */
+        if (window.__THREE__) return boot(self, self.m);
         var s = document.createElement('script');
         s.src = THREE_SRC;
-        s.onload = function () { try { mark(self.m, self); } catch (e) { fail('three: ' + e.message); } };
+        s.onload = function () { boot(self, self.m); };
         s.onerror = function () { fail('three failed to load'); };
         document.head.appendChild(s);
       };
