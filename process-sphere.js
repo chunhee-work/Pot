@@ -9,7 +9,8 @@
   const INTRO = 'assets/process/intro.mp3';
   const BGM = 'assets/process/bgm.mp3';
   const HANDOVER = 1000;   /* the score comes in a second after the click */
-  const DEPART = 4250;     /* and the clip is allowed to finish before we leave */
+  const DEPART = 1650;     /* the clip is cut to finish inside the transition */
+  const SCATTER = 0.85;    /* seconds of particles before the field takes over */
   const rand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 
   /* ── starfield ────────────────────────────────────────────────────── */
@@ -70,7 +71,7 @@
       this.last = t;
       this.size();
       if (!this.visible && this.boostTo === 1) { this.raf = requestAnimationFrame(this.loop); return; }
-      this.boost += (this.boostTo - this.boost) * Math.min(1, dt * 0.9);
+      this.boost += (this.boostTo - this.boost) * Math.min(1, dt * 2.4);
       const ctx = this.ctx, W = this.cv.width, H = this.cv.height;
       if (!W || !H) { this.raf = requestAnimationFrame(this.loop); return; }
       ctx.clearRect(0, 0, W, H);
@@ -140,10 +141,15 @@
       this.visible = true;
       if ('IntersectionObserver' in window) {
         this.visible = false;
-        this.io = new IntersectionObserver((es) => es.forEach((en) => { this.visible = en.isIntersecting; }),
-          { rootMargin: '200px 0px' });
+        this.io = new IntersectionObserver((es) => es.forEach((en) => {
+          this.visible = en.isIntersecting;
+          if (en.isIntersecting) this.warmDestination();
+        }), { rootMargin: '200px 0px' });
         this.io.observe(this);
+      } else {
+        this.warmDestination();
       }
+      this.addEventListener('pointerenter', () => this.warmDestination());
       this.frame = this.frame.bind(this);
       this.size();          /* never leave the backing store at its 300x150 default */
       requestAnimationFrame(this.frame);
@@ -156,6 +162,20 @@
       removeEventListener('pageshow', this.onShow);
       this.removeEventListener('mousemove', this.onMove);
       this.removeEventListener('mouseleave', this.onLeave);
+    }
+
+    /* pull the destination and the clip into cache before the click needs them */
+    warmDestination() {
+      if (this._warmed) return;
+      this._warmed = true;
+      const a = this.closest('a[data-sphere-portal]');
+      const href = a && a.getAttribute('href');
+      [href, INTRO].forEach((u) => {
+        if (!u) return;
+        const l = document.createElement('link');
+        l.rel = 'prefetch'; l.href = u;
+        document.head.appendChild(l);
+      });
     }
 
     reset() {
@@ -228,7 +248,7 @@
       this.R = r.width * this.DPR * 0.40;
       this.mode = 'snap'; this.snapT = 0;
       const stars = document.querySelector('process-stars');
-      if (stars && stars.warp) setTimeout(() => stars.warp(), 900);
+      if (stars && stars.warp) setTimeout(() => stars.warp(), 600);
       this.bail = setTimeout(() => { location.href = href; }, DEPART);
     }
 
@@ -283,7 +303,7 @@
 
       if (this.mode === 'snap') {
         this.snapT += dt;
-        if (alive === 0 || this.snapT > 1.15) { this.done = true; return; }
+        if (alive === 0 || this.snapT > SCATTER) { this.done = true; return; }
       }
       this.raf = requestAnimationFrame(this.frame);
     }
