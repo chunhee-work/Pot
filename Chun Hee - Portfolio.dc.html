@@ -274,6 +274,49 @@ nav[data-metal] [data-navscroll][data-edge="lr"]{-webkit-mask-image:linear-gradi
 nav[data-metal] [data-navscroll][data-edge="l"]{-webkit-mask-image:linear-gradient(90deg,transparent,#000 56px);mask-image:linear-gradient(90deg,transparent,#000 56px)}
 nav[data-metal] [data-navscroll][data-edge="none"]{-webkit-mask-image:none;mask-image:none}
 }
+
+.gu-wrap{max-width:1200px;margin:0 auto;padding:clamp(60px,8vw,110px) clamp(22px,4vw,56px) 0}
+.gu-h{font-weight:200;font-size:clamp(28px,3.6vw,44px);letter-spacing:-.02em;line-height:1.06;margin:clamp(56px,8vw,96px) 0 0;color:#f5f5f2}
+.gu-h:first-child{margin-top:0}
+.gu-h b{font-weight:800}
+.gu-lede{max-width:640px;margin:20px 0 0;color:#9fb8b4;font-size:16px;font-weight:300;line-height:1.65;text-wrap:pretty}
+.gu-lede b{color:#f5f5f2;font-weight:700}
+.gu-pair{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2.2vw,28px);margin-top:clamp(30px,4vw,48px);align-items:start}
+.gu-tag{display:flex;align-items:baseline;gap:10px;margin:0 0 12px;font-size:12.5px;color:#9fb8b4}
+.gu-tag span{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#5f7a76}
+.gu-tag.gu-now span{color:#4ECDC4}
+.gu-frame{position:relative;border:1px solid rgba(245,245,242,.12);border-radius:14px;overflow:hidden;background:#000;aspect-ratio:1240/1204}
+.gu-frame img,.gu-frame .gu-v{width:100%;height:100%;object-fit:cover;display:block}
+.gu-frame.gu-lit{border-color:rgba(78,205,196,.34);box-shadow:0 0 44px rgba(78,205,196,.10)}
+.gu-note{margin:14px 0 0;color:#5f7a76;font-size:13px;line-height:1.55;text-wrap:pretty}
+.gu-rows{margin-top:clamp(24px,3.4vw,40px);border-top:1px solid rgba(245,245,242,.09)}
+.gu-row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1fr) minmax(0,1.25fr);gap:clamp(14px,2.4vw,34px);padding:clamp(20px,2.6vw,30px) 0;border-bottom:1px solid rgba(245,245,242,.09)}
+.gu-row h3{margin:0;font-size:16.5px;font-weight:700;letter-spacing:-.005em;line-height:1.3;color:#f5f5f2}
+.gu-was,.gu-why{margin:0;font-size:14.5px;line-height:1.6}
+.gu-was{color:#5f7a76}
+.gu-was s{text-decoration:none}
+.gu-why{color:#f5f5f2;font-weight:300}
+.gu-why b{font-weight:700}
+.gu-seq{display:flex;flex-direction:column;gap:clamp(16px,2.4vw,30px);margin-top:clamp(30px,4vw,48px)}
+.gu-srow{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(16px,2.6vw,36px);align-items:center}
+.gu-srow.gu-flip>.gu-box{order:2}
+.gu-box{position:relative;overflow:hidden;border-radius:14px;background:#000;aspect-ratio:16/10;border:1px solid rgba(78,205,196,.2);border-color:color-mix(in srgb,var(--gu-a) 24%,transparent)}
+.gu-box .gu-v{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.gu-veil{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(0,0,0,.45))}
+.gu-num{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;font-weight:700;letter-spacing:.24em;color:var(--gu-a)}
+.gu-srow h3{margin:10px 0 0;font-size:clamp(19px,2.2vw,27px);font-weight:800;letter-spacing:-.015em;color:#f5f5f2}
+.gu-srow p{margin:10px 0 0;color:#9fb8b4;font-size:14.5px;font-weight:300;line-height:1.6;max-width:46ch;text-wrap:pretty}
+.gu-srow p b{color:#f5f5f2;font-weight:700}
+gacha-hero[data-touched] .gu-drag{opacity:0}
+@media (max-width:880px){
+.gu-pair{grid-template-columns:1fr;gap:30px}
+.gu-row{grid-template-columns:1fr;gap:8px;padding:22px 0}
+.gu-was::before{content:'Was — ';color:#5f7a76;font-weight:700}
+.gu-why::before{content:'Why — ';color:#5f7a76;font-weight:700}
+.gu-srow,.gu-srow.gu-flip>.gu-box{grid-template-columns:1fr;order:0}
+gacha-hero>div{left:6vw !important;max-width:80% !important;top:auto !important;bottom:8vh !important;transform:none !important}
+gacha-hero canvas[data-gmark]{width:100% !important;right:0 !important;opacity:.5}
+}
 landofhope-3d{background:transparent}
 landofhope-3d canvas{background:transparent}
 </style>
@@ -282,6 +325,8 @@ landofhope-3d canvas{background:transparent}
 <script src="nav-metal.js"></script>
 <script src="process-sphere.js"></script>
 <script src="section-video.js"></script>
+<script src="gacha-hero.js"></script>
+<script src="gacha-clips.js"></script>
 </helmet>
 
 <svg data-grain="" style="position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:70;opacity:.05" aria-hidden="true"><filter id="omGrain"><feTurbulence type="fractalNoise" sc-camel-base-frequency="0.85" sc-camel-num-octaves="2"></feTurbulence></filter><rect width="100%" height="100%" filter="url(#omGrain)" opacity="0.6"></rect></svg>
@@ -565,7 +610,19 @@ landofhope-3d canvas{background:transparent}
 </section>
 
 <section id="gacha" data-screen-label="Gacha screens" style="background:#0a0a0a;padding:0;position:relative">
-  <div style="padding:9rem 0;position:relative;z-index:2;overflow:hidden">
+  
+  <gacha-hero data-live="" style="position:relative;display:block;height:100svh;min-height:560px;overflow:hidden;background:#000;cursor:grab;touch-action:pan-y">
+    <canvas data-gdust="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;display:block"></canvas>
+    <span aria-hidden="true" style="position:absolute;right:6%;top:50%;width:44vw;height:44vw;transform:translateY(-50%);border-radius:50%;z-index:1;pointer-events:none;background:radial-gradient(circle,rgba(78,205,196,.18),rgba(78,205,196,0) 70%)"></span>
+    <canvas data-gmark="" aria-hidden="true" style="position:absolute;right:-4%;top:0;width:58%;height:100%;z-index:2;display:block"></canvas>
+    <div style="position:absolute;z-index:3;left:7vw;top:50%;transform:translateY(-50%);max-width:44%">
+      <p style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:#4ECDC4;margin:0">The Product — UI/UX I Designed</p>
+      <h2 style="font-weight:200;font-size:clamp(38px,5.4vw,76px);letter-spacing:-.025em;line-height:.98;margin:18px 0 0;color:#f5f5f2">Gacha, screen <b style="font-weight:800">by screen.</b></h2>
+      <p style="color:#9fb8b4;font-size:16px;font-weight:300;line-height:1.65;margin:22px 0 0;max-width:46ch;text-wrap:pretty">The live game at <b style="color:#f5f5f2;font-weight:700">gacha.thechillgallery.com</b> — the mark, the packs and every screen behind them. Designed and prototyped with Claude Code, adopted by engineering as the working spec.</p>
+      <p style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4a6a66;margin:30px 0 0">Drag the mark to turn it</p>
+    </div>
+  </gacha-hero>
+<div style="padding:9rem 0;position:relative;z-index:2;overflow:hidden">
     <section-video src="assets/gacha-bg.mp4" src-webm="assets/gacha-bg.webm" style="position:absolute;inset:0;z-index:0;pointer-events:none;display:block"><video muted="" loop="" playsinline="" preload="none" poster="assets/gacha-bg-poster.webp" aria-hidden="true" style="width:100%;height:100%;object-fit:cover;display:block"></video></section-video>
     <div aria-hidden="true" style="position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(10,10,10,.86) 0%,rgba(10,10,10,.62) 42%,rgba(10,10,10,.30) 72%,rgba(10,10,10,.24) 100%),linear-gradient(180deg,#0a0a0a 0%,rgba(10,10,10,.34) 30%,rgba(10,10,10,.44) 62%,#0a0a0a 100%)"></div>
     <div style="max-width:1200px;margin:0 auto;padding:0 clamp(22px,4vw,56px);position:relative;z-index:2">
@@ -574,108 +631,33 @@ landofhope-3d canvas{background:transparent}
       <p data-reveal="" data-d="1" style="max-width:640px;margin-top:24px;color:#a3a39c;font-size:16.5px;font-weight:300;text-wrap:pretty">The live game at <b style="color:#f5f5f2;font-weight:700">gacha.thechillgallery.com</b> — UI systems I designed and prototyped with Claude Code, adopted by engineering as the working spec. Scroll to reveal, click any screen to zoom.</p>
     </div>
   </div>
-
-  <div data-gch="" style="position:relative;height:300svh">
-    <div style="position:sticky;top:0;height:100svh;overflow:hidden;background:#0a0a0a">
-      <div data-gbg="" style="position:absolute;inset:-25%;z-index:0;background:radial-gradient(45% 45% at 30% 35%,rgba(245,245,242,.10),transparent 70%),radial-gradient(40% 40% at 72% 62%,rgba(245,245,242,.07),transparent 70%),#0a0a0a;animation:drift 22s ease-in-out infinite"></div>
-      <div style="position:absolute;inset:0;background:#050505;opacity:.4;z-index:1;pointer-events:none"></div>
-      <div style="position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(4.5rem,8vh,6rem) 4vw 3rem;pointer-events:none">
-        <div>
-          <span style="color:rgba(245,245,242,.55);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase">Home · Vault · Packs · Reveal</span>
-          <div style="overflow:hidden;margin-top:10px"><h3 data-gline="" style="color:#f5f5f2;text-transform:uppercase;font-weight:800;font-size:clamp(30px,7vw,96px);line-height:.94;letter-spacing:-.01em;transform:translateY(105%);will-change:transform">Collect the Cards</h3></div>
-        </div>
-        <span data-gcap="" style="color:rgba(245,245,242,.55);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;align-self:flex-end">Chapter 01 / 03</span>
-      </div>
-      <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:clamp(10px,2vw,26px)">
-        <div data-gitem="" data-sx="-420" data-sy="-180" data-sr="-14" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-home.jpg" data-lb-no="GACHA — COLLECT THE CARDS" data-lb-name="Home" src="assets/g-home.jpg" alt="Home" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Home</div>
-        </div>
-        <div data-gitem="" data-sx="-150" data-sy="240" data-sr="9" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-vault.jpg" data-lb-no="GACHA — COLLECT THE CARDS" data-lb-name="The Vault" src="assets/g-vault.jpg" alt="The Vault" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">The Vault</div>
-        </div>
-        <div data-gitem="" data-sx="180" data-sy="-260" data-sr="12" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-packs.jpg" data-lb-no="GACHA — COLLECT THE CARDS" data-lb-name="Open Packs" src="assets/g-packs.jpg" alt="Open Packs" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Open Packs</div>
-        </div>
-        <div data-gitem="" data-sx="440" data-sy="160" data-sr="-10" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-reveal.jpg" data-lb-no="GACHA — COLLECT THE CARDS" data-lb-name="Card Reveal" src="assets/g-reveal.jpg" alt="Card Reveal" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Card Reveal</div>
-        </div>
-      </div>
+  <div class="gu-wrap">
+    <h2 class="gu-h">The pack screen, <b>redrawn.</b></h2>
+    <p class="gu-lede">The screen the whole product turns on — if opening a pack does not feel like an event here, nothing later can rescue it. This is what it was, and what it became.</p>
+    <div class="gu-pair">
+      <div><p class="gu-tag"><span>Before</span> the shipped build</p>
+        <div class="gu-frame"><img src="assets/gameui/packs-before-f95c9a88a9.jpg" width="1131" height="1098" loading="lazy" decoding="async" alt="The earlier pack screen: a small pack, a single Open Pack button, and most of a screen holding nothing."></div>
+        <p class="gu-note">One pack, one button, one collapsed row of numbers — and beneath it, most of a screen holding nothing at all.</p></div>
+      <div><p class="gu-tag gu-now"><span>After</span> live now</p>
+        <div class="gu-frame gu-lit"><video class="gu-v" muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/packs-after-210a9a6933.webp" data-webm="assets/gameui/packs-after-d4fbaac8b7.webm" data-mp4="assets/gameui/packs-after-aa3b2c8802.mp4"></video></div>
+        <p class="gu-note">The refills became a ring you can see and touch. The empty half became the panel that governs it.</p></div>
     </div>
-  </div>
 
-  <div data-gch="" style="position:relative;height:300svh">
-    <div style="position:sticky;top:0;height:100svh;overflow:hidden;background:#0a0a0a">
-      <div data-gbg="" style="position:absolute;inset:-25%;z-index:0;background:radial-gradient(45% 45% at 68% 30%,rgba(245,245,242,.10),transparent 70%),radial-gradient(40% 40% at 26% 68%,rgba(245,245,242,.07),transparent 70%),#0a0a0a;animation:drift 26s ease-in-out infinite"></div>
-      <div style="position:absolute;inset:0;background:#050505;opacity:.4;z-index:1;pointer-events:none"></div>
-      <div style="position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(4.5rem,8vh,6rem) 4vw 3rem;pointer-events:none">
-        <div>
-          <span style="color:rgba(245,245,242,.55);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase">Battle · Leaderboard · Skills · Forge</span>
-          <div style="overflow:hidden;margin-top:10px"><h3 data-gline="" style="color:#f5f5f2;text-transform:uppercase;font-weight:800;font-size:clamp(30px,7vw,96px);line-height:.94;letter-spacing:-.01em;transform:translateY(105%);will-change:transform">Compete for Glory</h3></div>
-        </div>
-        <span data-gcap="" style="color:rgba(245,245,242,.55);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;align-self:flex-end">Chapter 02 / 03</span>
-      </div>
-      <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:clamp(10px,2vw,26px)">
-        <div data-gitem="" data-sx="-380" data-sy="220" data-sr="11" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-battle.jpg" data-lb-no="GACHA — COMPETE FOR GLORY" data-lb-name="Battle Arena" src="assets/g-battle.jpg" alt="Battle Arena" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Battle Arena</div>
-        </div>
-        <div data-gitem="" data-sx="-160" data-sy="-250" data-sr="-12" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-leaderboard.jpg" data-lb-no="GACHA — COMPETE FOR GLORY" data-lb-name="Leaderboard" src="assets/g-leaderboard.jpg" alt="Leaderboard" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Leaderboard</div>
-        </div>
-        <div data-gitem="" data-sx="200" data-sy="250" data-sr="-9" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-skills.jpg" data-lb-no="GACHA — COMPETE FOR GLORY" data-lb-name="Skill Trees" src="assets/g-skills.jpg" alt="Skill Trees" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Skill Trees</div>
-        </div>
-        <div data-gitem="" data-sx="450" data-sy="-190" data-sr="13" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-forge.jpg" data-lb-no="GACHA — COMPETE FOR GLORY" data-lb-name="The Forge" src="assets/g-forge.jpg" alt="The Forge" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">The Forge</div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <h2 class="gu-h">Four decisions, <b>and what each one prevents.</b></h2>
+    <div class="gu-rows"><div class="gu-row"><h3>Refills became a ring</h3><p class="gu-was">A number in a collapsed strip — <s>Refills: 0/10</s> — that you read rather than used.</p><p class="gu-why">A count is something you check. <b>Ten bolts around the pack are something you spend.</b> Tapping one returns a pack, so the resource and the action are the same object.</p></div><div class="gu-row"><h3>The dead half became the panel</h3><p class="gu-was">Content stopped just under halfway down. The rest was black.</p><p class="gu-why">A hero screen that ends in nothing reads as unfinished, and it trains the player not to look down. <b>Energy, boosts and both spend actions now live in that space.</b></p></div><div class="gu-row"><h3>One action became two</h3><p class="gu-was">A single <s>Open Pack (Free)</s>.</p><p class="gu-why"><b>Use Refills (1)</b> and <b>Use all Refills (10)</b> are for two different people — the one savouring a pull and the one clearing a stack before work.</p></div><div class="gu-row"><h3>The pack got its weight back</h3><p class="gu-was">Small, flat, adrift in the middle of the frame.</p><p class="gu-why">It is the product. <b>Rim light, depth and roughly twice the area</b> make it the largest thing on the screen.</p></div></div>
 
-  <div data-gch="" style="position:relative;height:300svh">
-    <div style="position:sticky;top:0;height:100svh;overflow:hidden;background:#0a0a0a">
-      <div data-gbg="" style="position:absolute;inset:-25%;z-index:0;background:radial-gradient(45% 45% at 50% 28%,rgba(245,245,242,.10),transparent 70%),radial-gradient(40% 40% at 80% 74%,rgba(245,245,242,.06),transparent 70%),#0a0a0a;animation:drift 20s ease-in-out infinite"></div>
-      <div style="position:absolute;inset:0;background:#050505;opacity:.4;z-index:1;pointer-events:none"></div>
-      <div style="position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(4.5rem,8vh,6rem) 4vw 3rem;pointer-events:none">
-        <div>
-          <span style="color:rgba(245,245,242,.55);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase">Codex · Ledger · Settings · Guide</span>
-          <div style="overflow:hidden;margin-top:10px"><h3 data-gline="" style="color:#f5f5f2;text-transform:uppercase;font-weight:800;font-size:clamp(30px,7vw,96px);line-height:.94;letter-spacing:-.01em;transform:translateY(105%);will-change:transform">Manage Your Vault</h3></div>
-        </div>
-        <span data-gcap="" style="color:rgba(245,245,242,.55);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;align-self:flex-end">Chapter 03 / 03</span>
-      </div>
-      <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:clamp(10px,2vw,26px)">
-        <div data-gitem="" data-sx="-460" data-sy="140" data-sr="13" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-codex.jpg" data-lb-no="GACHA — MANAGE YOUR VAULT" data-lb-name="Codex" src="assets/g-codex.jpg" alt="Codex" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Codex</div>
-        </div>
-        <div data-gitem="" data-sx="-170" data-sy="-230" data-sr="-11" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-ledger.jpg" data-lb-no="GACHA — MANAGE YOUR VAULT" data-lb-name="Public Ledger" src="assets/g-ledger.jpg" alt="Public Ledger" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Public Ledger</div>
-        </div>
-        <div data-gitem="" data-sx="170" data-sy="230" data-sr="10" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-settings.jpg" data-lb-no="GACHA — MANAGE YOUR VAULT" data-lb-name="Settings" src="assets/g-settings.jpg" alt="Settings" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Settings</div>
-        </div>
-        <div data-gitem="" data-sx="430" data-sy="-170" data-sr="-13" style="text-align:center;will-change:transform">
-          <div style="background:#f5f5f0;padding:.4em;box-shadow:0 20px 45px rgba(0,0,0,.5);display:inline-block"><img loading="lazy" data-lb="assets/g-guide.jpg" data-lb-no="GACHA — MANAGE YOUR VAULT" data-lb-name="The Gallery Guide" src="assets/g-guide.jpg" alt="The Gallery Guide" style="width:min(19vw,210px);aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in"></div>
-          <div style="margin-top:10px;color:rgba(245,245,242,.55);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">The Gallery Guide</div>
-        </div>
-      </div>
-    </div>
+    <h2 class="gu-h">Before the <b>account.</b></h2>
+    <p class="gu-lede">There is no “before” for these — the product opened on a sign-in box and nothing else. Between them they make the whole case: <b>let them hold a pack before asking them for anything.</b></p>
+    <div class="gu-seq"><div class="gu-srow" style="--gu-a:#4ECDC4">
+      <div class="gu-box"><video class="gu-v" muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/pack2-f7d2ed7b.webp" data-webm="assets/gameui/pack2-5dd4f512.webm" data-mp4="assets/gameui/pack2-c53ab403.mp4"></video><span class="gu-veil"></span></div>
+      <div><span class="gu-num">01</span><h3>Nothing is asked for first</h3><p>A pack in an empty hall, one line under it — <b>guaranteed one of each rarity</b> — and <b>Tap to open</b>. No email, no account, no wallet. The demo pack is the argument, and it is made before the ask rather than behind it.</p></div></div><div class="gu-srow gu-flip" style="--gu-a:#F5C518">
+      <div class="gu-box"><video class="gu-v" muted loop playsinline preload="none" aria-hidden="true" poster="assets/gameui/signin2-6b77dc11.webp" data-webm="assets/gameui/signin2-24778e87.webm" data-mp4="assets/gameui/signin2-bb1c61fd.mp4"></video><span class="gu-veil"></span></div>
+      <div><span class="gu-num">02</span><h3>And when it is, the product is still playing</h3><p>The auth card sits <b>inside the product</b> rather than in front of it. Email or Telegram, nothing else — a Telegram-first product saying so by what it leaves out.</p></div></div></div>
   </div>
-
-  <div style="position:relative;z-index:2;background:#0a0a0a;padding-top:8rem">
-    <div style="max-width:1200px;margin:0 auto;padding:1rem clamp(22px,4vw,56px) 7rem;position:relative;z-index:2">
+<div style="max-width:1200px;margin:0 auto;padding:1rem clamp(22px,4vw,56px) 7rem;position:relative;z-index:2">
       <a href="https://gacha.thechillgallery.com/#/" target="_blank" rel="noopener" data-hpair="" data-hin="background:#111110;color:#f5f4f0;transform:translate(2px,-1px)" data-hout="background:#f5f4f0;color:#111110;transform:none" style="display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:1.5px solid #f5f4f0;background:#f5f4f0;color:#111110;font-weight:700;font-size:14px;padding:11px 11px 11px 24px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s,border-color .4s" style-hover="background:transparent;color:#f5f4f0">Visit the live site <span data-hchild="" style="width:32px;height:32px;border-radius:50%;background:#111110;color:#f5f4f0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s">↗</span></a>
     </div>
-  </div>
+  
 </section>
 
 <section id="process" data-screen-label="Process" style="position:relative;padding:0 0 clamp(150px,20vw,280px);background:#0a0a09;overflow:hidden;min-height:100svh;display:flex;flex-direction:column;justify-content:center">
