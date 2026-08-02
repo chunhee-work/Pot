@@ -41,6 +41,26 @@
     raf = requestAnimationFrame(draw);
   }
 
+  /* A neutral grey studio rather than three's RoomEnvironment. That room has
+     coloured walls, and every polished face was picking their green up out of
+     the reflection — worst inside the C, where the recess sees nothing else.
+     Three white panels instead, aimed from the same upper-left as the beam,
+     so what the metal reflects and what lights it agree. */
+  function studio(T, r) {
+    var s = new T.Scene();
+    s.add(new T.Mesh(new T.SphereGeometry(6, 24, 16),
+      new T.MeshBasicMaterial({ side: T.BackSide, color: 0x0d0d0d })));
+    function panel(w, h, x, y, z, i) {
+      var p = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ color: 0xffffff }));
+      p.position.set(x, y, z); p.lookAt(0, 0, 0);
+      p.material.color.multiplyScalar(i); s.add(p);
+    }
+    panel(6, 6, -3.2, 3.4, 3.0, 1.0);    // key softbox
+    panel(5, 5, 3.4, -1.0, 2.2, 0.34);   // fill
+    panel(7, 4, -1.0, -2.6, -3.2, 0.20); // low bounce
+    return new T.PMREMGenerator(r).fromScene(s, 0.03).texture;
+  }
+
   function mark(cv, host) {
     /* iOS keeps a small budget of live WebGL contexts and this page already
        spends several. If one cannot be had, or the system takes it back
@@ -56,24 +76,24 @@
       if (s) s.style.opacity = '1';
     });
     var T = window.__THREE__.THREE, GL = window.__THREE__.GLTFLoader,
-        MD = window.__THREE__.MeshoptDecoder, RE = window.__THREE__.RoomEnvironment;
+        MD = window.__THREE__.MeshoptDecoder;
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
     r.setPixelRatio(Math.min(innerWidth < 760 ? 1.5 : 2, devicePixelRatio || 1));
-    r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.18;
+    r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.20;
     r.outputColorSpace = T.SRGBColorSpace;
     var sc = new T.Scene();
-    sc.environment = new T.PMREMGenerator(r).fromScene(new RE(), 0.04).texture;
-    /* One beam, fixed in the world, always pointed at the origin — the mark
+    sc.environment = studio(T, r);
+    /* The beam stays fixed in the world and pointed at the origin — the mark
        turns through it, so each fold lights as it comes round and falls dark
-       as it leaves. Ambient is what kills that, so the environment is pulled
-       almost all the way down; what is left is only enough that the dark side
-       still has a shape rather than a hole. */
-    sc.add(new T.AmbientLight(0xc6ccd0, 0.05));
-    var spot = new T.SpotLight(0xfff3e2, 170, 0, 0.26, 0.40, 1.6);
-    spot.position.set(-2.6, 4.2, 3.4); spot.target.position.set(0, 0, 0);
+       as it leaves. The softbox behind it is what puts the sweep of highlight
+       across the flat faces; without it the metal reads as grey card. */
+    sc.add(new T.AmbientLight(0xd6dbde, 0.14));
+    var spot = new T.SpotLight(0xfff6ea, 45, 0, 0.34, 0.50, 1.5);
+    spot.position.set(-2.6, 4.0, 3.4); spot.target.position.set(0, 0, 0);
     sc.add(spot); sc.add(spot.target);
-    var rim = new T.DirectionalLight(0xaebccc, 0.24); rim.position.set(-2.8, 0.6, -2.2); sc.add(rim);
+    var fill = new T.DirectionalLight(0xdce6ee, 0.55); fill.position.set(2.6, -0.6, 2.0); sc.add(fill);
+    var rim = new T.DirectionalLight(0xaebccc, 0.5); rim.position.set(-2.8, 0.4, -2.4); sc.add(rim);
     var cam = new T.PerspectiveCamera(26, 1, 0.1, 100), piv = new T.Group(); sc.add(piv);
     function size() { var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
       r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
@@ -82,10 +102,10 @@
     new GL().setMeshoptDecoder(MD).load(MODEL, function (g) {
       var m = g.scene, b = new T.Box3().setFromObject(m), s = b.getSize(new T.Vector3());
       m.position.sub(b.getCenter(new T.Vector3()));
-      /* the environment is a lit room; at full strength it floods every face
-         and there is no beam left to see */
       m.traverse(function (o) { if (o.isMesh && o.material) {
-        o.material.envMapIntensity = 0.05; o.material.needsUpdate = true; } });
+        o.material.envMapIntensity = 1.10;
+        o.material.roughness = 0.62;      // brushed, not mirrored — a mirror at
+        o.material.needsUpdate = true; } }); // this size is just noise
       piv.add(m); piv.rotation.x = 0.09;
       size();
       cam.position.set(0, 0, Math.max(s.x, s.y) / (2 * Math.tan(26 * Math.PI / 360)) * 2.15);
