@@ -353,6 +353,9 @@
         bgm.loop = true; bgm.volume = 0;
         const bp = bgm.play();
         if (bp && bp.catch) bp.catch(function () {});
+        /* the destination arrives into this same document, so its mute control
+           has to be able to reach the score that is already sounding here */
+        window.__score = bgm;
         const t0 = performance.now();
         (function fade(n) {
           const k = Math.max(0, Math.min(1, (n - t0) / 1800));

@@ -36,6 +36,23 @@
         letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-decoration:none}
   .back:hover{color:var(--ink)}
 
+  /* The score follows the visitor in from the home page, so the control for
+     it has to travel too — fixed, because the page is six stages long and a
+     mute you have to scroll back up to reach is not a mute. */
+  .snd{position:fixed;top:22px;right:clamp(20px,4vw,40px);z-index:60;
+       width:38px;height:38px;display:grid;place-items:center;border-radius:999px;
+       border:1px solid var(--line);background:rgba(10,10,9,.55);color:var(--muted);
+       cursor:pointer;padding:0;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+       transition:color .3s var(--E),border-color .3s var(--E),background .3s var(--E)}
+  .snd:hover{color:var(--ink);border-color:var(--lineup);background:rgba(245,244,240,.08)}
+  .snd:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  .snd svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;
+           stroke-linecap:round;stroke-linejoin:round;display:block}
+  .snd .off{display:none}
+  .snd[aria-pressed="true"]{color:var(--faint)}
+  .snd[aria-pressed="true"] .on{display:none}
+  .snd[aria-pressed="true"] .off{display:block}
+
   /* ── opening scene ─────────────────────────────────────────────────── */
   .scene{position:relative;min-height:86svh;display:flex;flex-direction:column;
          align-items:center;justify-content:center;gap:clamp(26px,4svh,44px);
@@ -230,6 +247,10 @@
 <audio id="bgm" loop preload="none" src="assets/process/bgm-0ac7bdea7b.mp3"></audio>
 
 <div class="topbar"><a class="back" href="/">&#8592; Back to portfolio</a></div>
+<button class="snd" id="snd" type="button" aria-pressed="false" aria-label="Turn the music off" title="Music">
+  <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+  <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6"/><path d="m21 9-5 6"/></svg>
+</button>
 
 <section class="scene" id="scene">
   <h1>How it's <b>made.</b></h1>
@@ -978,6 +999,36 @@
   addEventListener('scroll',function(){requestAnimationFrame(onScroll);},{passive:true});
   addEventListener('resize',function(){if(opened){buildThread();sizeRims();onScroll();}});
   addEventListener('load',function(){if(opened)sizeRims();});
+
+
+  /* ── the music switch ─────────────────────────────────────────────
+     Two ways the score can be sounding: carried in from the home page,
+     where it lives on window.__score and this document never started one
+     of its own, or started here by startBgm on a direct visit. The switch
+     owns the intent and keeps whichever one exists in step with it,
+     including a score that only starts after the first press. muted is the
+     lever rather than volume, because volume is read-only on iOS. */
+  (function () {
+    var btn = document.getElementById('snd');
+    if (!btn) return;
+    var off = false;
+    function score() { return window.__score || document.getElementById('bgm'); }
+    function apply() {
+      var a = score();
+      if (!a) return;
+      if (a.muted !== off) a.muted = off;
+      if (!off && a.paused && a.currentTime > 0) {
+        var p = a.play(); if (p && p.catch) p.catch(function () {});
+      }
+    }
+    btn.addEventListener('click', function () {
+      off = !off;
+      btn.setAttribute('aria-pressed', off ? 'true' : 'false');
+      btn.setAttribute('aria-label', off ? 'Turn the music on' : 'Turn the music off');
+      apply();
+    });
+    setInterval(apply, 500);
+  })();
 
   /* this page is the destination, not the opening: the sphere and the intro
      clip already played on the home page, so show the line straight away */
