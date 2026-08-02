@@ -13,30 +13,60 @@
   const rand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 
   /* ── the clip, waiting ────────────────────────────────────────────────
-     A prefetch hint never reaches the clip on Safari, which has never
-     implemented rel=prefetch, and on iOS no media file is fetched at all
-     until a gesture asks for one — that wait is what sits between pressing
-     the sphere and hearing it. So the clip is loaded and unlocked on the
-     first touch anywhere on the page, which on a page this long happens
-     well before the sphere is reached: played silently, stopped, rewound.
-     The click then only has to start something already in memory. */
-  let clip = null;
-  function primeClip() {
-    if (clip) return clip;
-    clip = new Audio(INTRO);
-    clip.preload = 'auto';
-    clip.muted = true;
-    try { clip.load(); } catch (e) {}
-    const p = clip.play();
-    const ready = function () {
-      clip.pause();
-      try { clip.currentTime = 0; } catch (e) {}
-      clip.muted = false;
-    };
-    if (p && p.then) p.then(ready, function () { clip.muted = false; });
-    else ready();
+     iOS does not download a media file until a gesture asks for one, and
+     scrolling is not a gesture — so a visitor who simply reads down the page
+     and taps the sphere arrives with nothing buffered, and hears the fetch.
+     preload does not move it and neither does rel=prefetch, which Safari has
+     never implemented.
+
+     A plain fetch answers to none of that. The clip is pulled as bytes and
+     handed to the element as a blob, so by the time the sphere is pressed
+     there is no network left in the path at all — only a decode that has
+     already happened. The silent play below is a separate errand: on iOS an
+     element is only cleared for sound by a real activation, so any tap that
+     does arrive is spent unlocking it. */
+  let clip = null, clipUrl = null, fetching = false;
+
+  function cueEl() {
+    if (!clip) { clip = new Audio(clipUrl || INTRO); clip.preload = 'auto'; }
     return clip;
   }
+
+  function fetchClip() {
+    if (clipUrl || fetching) return;
+    fetching = true;
+    fetch(INTRO, { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.blob() : null; })
+      .then(function (blob) {
+        if (!blob) { fetching = false; return; }
+        clipUrl = URL.createObjectURL(blob);
+        const a = cueEl();
+        if (a.paused) { a.src = clipUrl; try { a.load(); } catch (e) {} }
+      })
+      .catch(function () { fetching = false; });
+  }
+
+  function unlockClip() {
+    const a = cueEl();
+    if (a.__open) return;
+    a.muted = true;
+    const p = a.play();
+    const done = function () {
+      a.pause();
+      try { a.currentTime = 0; } catch (e) {}
+      a.muted = false; a.__open = true;
+    };
+    if (p && p.then) p.then(done, function () { a.muted = false; });
+    else done();
+  }
+
+  function primeClip() { fetchClip(); unlockClip(); return cueEl(); }
+
+  /* the bytes need no permission, so they are pulled once the page is done
+     competing for bandwidth; the unlock waits for something to unlock with */
+  if (document.readyState === 'complete') fetchClip();
+  else addEventListener('load', fetchClip, { once: true });
+
   const PRIME_ON = ['pointerdown', 'touchstart', 'keydown'];
   function onFirstTouch() {
     PRIME_ON.forEach((e) => removeEventListener(e, onFirstTouch, true));
@@ -301,9 +331,12 @@
          *this* document instead of being navigated to. Nothing unloads, so
          nothing stops: the clip plays itself out and the score follows it. */
       try {
-        /* already loaded and already unlocked, so this starts on the press
-           rather than after a fetch */
-        const cue = primeClip();
+        /* The element itself, already holding the bytes — not primeClip(),
+           whose silent unlock would pause this play a tick after it started.
+           This press is its own authorisation; there is nothing left to
+           unlock and nothing left to fetch. */
+        const cue = cueEl();
+        cue.__open = true;
         cue.muted = false; cue.volume = 1;
         try { cue.currentTime = 0; } catch (e) {}
         const cp = cue.play();
