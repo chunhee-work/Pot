@@ -165,4 +165,41 @@ function mountMetalRim(host, opts) {
 }
 
   window.mountMetalRim = mountMetalRim;
+
+/* ── which way the row can still go ───────────────────────────────────
+   Below ~620px the seven items are wider than the pill, and a rounded edge
+   cutting a word in half reads as a mistake rather than as an invitation.
+   The stylesheet fades whichever edge has more behind it; this only has to
+   say which. The CSS default is a right-hand fade, so the resting state is
+   already correct if this never runs. */
+(function () {
+  const EDGE = 6;              // a couple of pixels of slack for sub-pixel scroll
+  function mark(row) {
+    const over = row.scrollWidth - row.clientWidth;
+    if (over <= EDGE) { row.dataset.edge = 'none'; return; }
+    const left = row.scrollLeft > EDGE;
+    const right = row.scrollLeft < over - EDGE;
+    row.dataset.edge = left && right ? 'lr' : left ? 'l' : 'r';
+  }
+
+  function watch() {
+    document.querySelectorAll('nav[data-metal] [data-navscroll]').forEach((row) => {
+      if (row.__edged) return;
+      row.__edged = true;
+      const update = () => mark(row);
+      row.addEventListener('scroll', update, { passive: true });
+      if (typeof ResizeObserver === 'function') new ResizeObserver(update).observe(row);
+      else addEventListener('resize', update);
+      update();
+    });
+  }
+
+  /* the runtime builds the nav from its own template, so the row can arrive
+     after this file does — and can be replaced later by a re-render */
+  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', watch);
+  else watch();
+  addEventListener('load', watch);
+  let tries = 0;
+  (function poll() { watch(); if (++tries < 90) requestAnimationFrame(poll); })();
+})();
 })();
