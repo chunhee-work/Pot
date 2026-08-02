@@ -42,6 +42,19 @@
   }
 
   function mark(cv, host) {
+    /* iOS keeps a small budget of live WebGL contexts and this page already
+       spends several. If one cannot be had, or the system takes it back
+       later, the still underneath is what the visitor sees — the section is
+       never empty because of it. */
+    var probe = null;
+    try { probe = cv.getContext('webgl2') || cv.getContext('webgl'); } catch (e) {}
+    if (!probe) return;
+    cv.addEventListener('webglcontextlost', function (e) {
+      e.preventDefault();
+      cv.style.opacity = '0';
+      var s = host.querySelector('img[data-gstill]');
+      if (s) s.style.opacity = '1';
+    });
     var T = window.__THREE__.THREE, GL = window.__THREE__.GLTFLoader,
         MD = window.__THREE__.MeshoptDecoder, RE = window.__THREE__.RoomEnvironment;
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -78,6 +91,9 @@
       cam.position.set(0, 0, Math.max(s.x, s.y) / (2 * Math.tan(26 * Math.PI / 360)) * 2.15);
       cam.lookAt(0, 0, 0);
       host.setAttribute('data-live', '1');
+      cv.style.opacity = '1';
+      var still = host.querySelector('img[data-gstill]');
+      if (still) { still.style.transition = 'opacity .8s'; still.style.opacity = '0'; }
       live = true; requestAnimationFrame(loop);
     });
     cv.style.cursor = 'grab';
@@ -125,7 +141,8 @@
         if (self._boot) return; self._boot = true;
         if (window.__THREE__) return mark(self.m, self);
         var s = document.createElement('script');
-        s.src = THREE_SRC; s.onload = function () { mark(self.m, self); };
+        s.src = THREE_SRC;
+        s.onload = function () { try { mark(self.m, self); } catch (e) {} };
         document.head.appendChild(s);
       };
       if (!('IntersectionObserver' in window)) return go();
