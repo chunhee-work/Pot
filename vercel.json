@@ -1,15 +1,31 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/", "destination": "/Chun%20Hee%20-%20Portfolio.dc.html" },
-    { "source": "/process", "destination": "/process.dc.html" },
-    { "source": "/work", "destination": "/work.dc.html" }
+    {
+      "source": "/",
+      "destination": "/Chun%20Hee%20-%20Portfolio.dc.html"
+    },
+    {
+      "source": "/process",
+      "destination": "/process.dc.html"
+    },
+    {
+      "source": "/work",
+      "destination": "/work.dc.html"
+    },
+    {
+      "source": "/gameui-staging",
+      "destination": "/gameui-staging.html"
+    }
   ],
   "headers": [
     {
       "source": "/assets/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     }
   ]
