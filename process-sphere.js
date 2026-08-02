@@ -12,6 +12,38 @@
   const SCATTER = 0.7;     /* seconds of particles before the page hands over */
   const rand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 
+  /* ── the clip, waiting ────────────────────────────────────────────────
+     A prefetch hint never reaches the clip on Safari, which has never
+     implemented rel=prefetch, and on iOS no media file is fetched at all
+     until a gesture asks for one — that wait is what sits between pressing
+     the sphere and hearing it. So the clip is loaded and unlocked on the
+     first touch anywhere on the page, which on a page this long happens
+     well before the sphere is reached: played silently, stopped, rewound.
+     The click then only has to start something already in memory. */
+  let clip = null;
+  function primeClip() {
+    if (clip) return clip;
+    clip = new Audio(INTRO);
+    clip.preload = 'auto';
+    clip.muted = true;
+    try { clip.load(); } catch (e) {}
+    const p = clip.play();
+    const ready = function () {
+      clip.pause();
+      try { clip.currentTime = 0; } catch (e) {}
+      clip.muted = false;
+    };
+    if (p && p.then) p.then(ready, function () { clip.muted = false; });
+    else ready();
+    return clip;
+  }
+  const PRIME_ON = ['pointerdown', 'touchstart', 'keydown'];
+  function onFirstTouch() {
+    PRIME_ON.forEach((e) => removeEventListener(e, onFirstTouch, true));
+    primeClip();
+  }
+  PRIME_ON.forEach((e) => addEventListener(e, onFirstTouch, { capture: true, passive: true }));
+
   /* ── starfield ────────────────────────────────────────────────────── */
   class ProcessStars extends HTMLElement {
     connectedCallback() {
@@ -216,18 +248,18 @@
       }
     }
 
-    /* pull the destination and the clip into cache before the click needs them */
+    /* pull the destination into cache before the click needs it */
     warmDestination() {
       if (this._warmed) return;
       this._warmed = true;
       const a = this.closest('a[data-sphere-portal]');
       const href = a && a.getAttribute('href');
-      [href, INTRO].forEach((u) => {
-        if (!u) return;
+      if (href) {
         const l = document.createElement('link');
-        l.rel = 'prefetch'; l.href = u;
+        l.rel = 'prefetch'; l.href = href;
         document.head.appendChild(l);
-      });
+      }
+      primeClip();
     }
 
     reset() {
@@ -269,9 +301,12 @@
          *this* document instead of being navigated to. Nothing unloads, so
          nothing stops: the clip plays itself out and the score follows it. */
       try {
-        const clip = new Audio(INTRO);
-        clip.volume = 1;
-        const cp = clip.play();
+        /* already loaded and already unlocked, so this starts on the press
+           rather than after a fetch */
+        const cue = primeClip();
+        cue.muted = false; cue.volume = 1;
+        try { cue.currentTime = 0; } catch (e) {}
+        const cp = cue.play();
         if (cp && cp.catch) cp.catch(function () {});
 
         /* The score starts on the same click, not a second behind it. Holding
