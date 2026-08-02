@@ -47,14 +47,20 @@
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
     r.setPixelRatio(Math.min(innerWidth < 760 ? 1.5 : 2, devicePixelRatio || 1));
-    r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.15;
+    r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.18;
     r.outputColorSpace = T.SRGBColorSpace;
     var sc = new T.Scene();
     sc.environment = new T.PMREMGenerator(r).fromScene(new RE(), 0.04).texture;
-    var k = new T.DirectionalLight(0xffffff, 2.1); k.position.set(2.4, 3, 2.6); sc.add(k);
-    /* the rim is the pack's own teal, so the metal edges catch the same light */
-    var rim = new T.DirectionalLight(0x4ECDC4, 2.6); rim.position.set(-2.6, 1, -2); sc.add(rim);
-    var fill = new T.DirectionalLight(0x7ae0d8, 1.1); fill.position.set(1.2, -2, 1.5); sc.add(fill);
+    /* One beam, fixed in the world, always pointed at the origin — the mark
+       turns through it, so each fold lights as it comes round and falls dark
+       as it leaves. Ambient is what kills that, so the environment is pulled
+       almost all the way down; what is left is only enough that the dark side
+       still has a shape rather than a hole. */
+    sc.add(new T.AmbientLight(0xbfd0d8, 0.035));
+    var spot = new T.SpotLight(0xfff3e2, 170, 0, 0.26, 0.40, 1.6);
+    spot.position.set(-2.6, 4.2, 3.4); spot.target.position.set(0, 0, 0);
+    sc.add(spot); sc.add(spot.target);
+    var rim = new T.DirectionalLight(0x8fb6d8, 0.22); rim.position.set(-2.8, 0.6, -2.2); sc.add(rim);
     var cam = new T.PerspectiveCamera(26, 1, 0.1, 100), piv = new T.Group(); sc.add(piv);
     function size() { var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
       r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
@@ -63,6 +69,10 @@
     new GL().setMeshoptDecoder(MD).load(MODEL, function (g) {
       var m = g.scene, b = new T.Box3().setFromObject(m), s = b.getSize(new T.Vector3());
       m.position.sub(b.getCenter(new T.Vector3()));
+      /* the environment is a lit room; at full strength it floods every face
+         and there is no beam left to see */
+      m.traverse(function (o) { if (o.isMesh && o.material) {
+        o.material.envMapIntensity = 0.10; o.material.needsUpdate = true; } });
       piv.add(m); piv.rotation.x = 0.09;
       size();
       cam.position.set(0, 0, Math.max(s.x, s.y) / (2 * Math.tan(26 * Math.PI / 360)) * 1.5);
