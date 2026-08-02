@@ -314,8 +314,16 @@ gacha-hero[data-touched] .gu-drag{opacity:0}
 .gu-was::before{content:'Was — ';color:#5f7a76;font-weight:700}
 .gu-why::before{content:'Why — ';color:#5f7a76;font-weight:700}
 .gu-srow,.gu-srow.gu-flip>.gu-box{grid-template-columns:1fr;order:0}
-gacha-hero>div{left:6vw !important;max-width:80% !important;top:auto !important;bottom:8vh !important;transform:none !important}
-gacha-hero canvas[data-gmark]{width:100% !important;right:0 !important;opacity:.5}
+/* On a phone there is no room to stand the mark beside the copy, so it
+   takes the upper half outright and the copy takes the lower. Half opacity
+   behind the text was the wrong answer twice over — it made the mark
+   invisible and the text hard to read. */
+gacha-hero canvas[data-gmark]{width:100% !important;right:0 !important;top:5% !important;
+  height:50% !important;opacity:1 !important}
+gacha-hero>div{left:7vw !important;right:7vw !important;max-width:none !important;
+  top:auto !important;bottom:7vh !important;transform:none !important}
+gacha-hero>span{right:50% !important;top:30% !important;width:86vw !important;height:86vw !important;
+  transform:translate(50%,-50%) !important}
 }
 
 .gu-tag{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 12px;margin:0 0 14px}
