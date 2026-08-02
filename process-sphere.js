@@ -6,8 +6,13 @@
 (function () {
   if (customElements.get('process-sphere')) return;
 
-  const INTRO = 'assets/process/intro.mp3';
-  const BGM = 'assets/process/bgm.mp3';
+  const INTRO = 'assets/process/intro-69cf014726.mp3';
+  const BGM = 'assets/process/bgm-0ac7bdea7b.mp3';
+  /* WebKit — Safari on both platforms, and every browser on iOS, which are all
+     WebKit underneath and share its two rules: a play() outside the gesture's
+     own task is refused, and volume is read-only, so only muted can hold a
+     sound back. Blink is left on the path it already handles correctly. */
+  const WEBKIT = /apple/i.test(navigator.vendor || '');
   const DEPART = 900;      /* a backstop; the scatter normally leaves first */
   const SCATTER = 0.7;     /* seconds of particles before the page hands over */
   const rand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -274,18 +279,32 @@
         const cp = clip.play();
         if (cp && cp.catch) cp.catch(function () {});
 
-        setTimeout(function () {
+        if (WEBKIT) {
+          /* WebKit hands out its permission to the element, in the gesture's own
+             task — a play() a second later is a stranger to it and gets refused,
+             and the score would arrive whenever the visitor next touched
+             something. So it starts here, silenced, and the second's wait is
+             served by unmuting rather than by delaying the play(). It also gets
+             its download a second earlier, which is most of the wait on a phone. */
           const bgm = new Audio(BGM);
-          bgm.loop = true; bgm.volume = 0;
+          bgm.loop = true; bgm.muted = true;
           const bp = bgm.play();
           if (bp && bp.catch) bp.catch(function () {});
-          const t0 = performance.now();
-          (function fade(n) {
-            const k = Math.max(0, Math.min(1, (n - t0) / 1800));
-            bgm.volume = 0.85 * k;
-            if (k < 1) requestAnimationFrame(fade);
-          })(t0);
-        }, 1000);
+          setTimeout(function () { bgm.muted = false; }, 1000);
+        } else {
+          setTimeout(function () {
+            const bgm = new Audio(BGM);
+            bgm.loop = true; bgm.volume = 0;
+            const bp = bgm.play();
+            if (bp && bp.catch) bp.catch(function () {});
+            const t0 = performance.now();
+            (function fade(n) {
+              const k = Math.max(0, Math.min(1, (n - t0) / 1800));
+              bgm.volume = 0.85 * k;
+              if (k < 1) requestAnimationFrame(fade);
+            })(t0);
+          }, 1000);
+        }
       } catch (e) {}
 
       if (this.reduced) { location.href = href; return; }
