@@ -7,19 +7,23 @@
   if (customElements.get('process-sphere')) return;
 
   const INTRO = 'assets/process/intro.mp3';
+  const BGM = 'assets/process/bgm.mp3';
+  const HANDOVER = 1000;   /* the score comes in a second after the click */
+  const DEPART = 4250;     /* and the clip is allowed to finish before we leave */
   const rand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 
   /* ── starfield ────────────────────────────────────────────────────── */
   class ProcessStars extends HTMLElement {
     connectedCallback() {
-      if (this._booted) return;
+      if (this._booted) { this.dead = false; requestAnimationFrame(this.loop); return; }
+      this.cv = this.querySelector('canvas');
+      if (!this.cv) {
+        if ((this._tries = (this._tries || 0) + 1) < 120) requestAnimationFrame(() => this.connectedCallback());
+        return;
+      }
       this._booted = true;
       this.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      this.style.cssText += ';display:block;position:absolute;inset:0;overflow:hidden;pointer-events:none';
-      this.cv = document.createElement('canvas');
-      this.cv.style.cssText = 'width:100%;height:100%;display:block';
-      this.cv.setAttribute('aria-hidden', 'true');
-      this.appendChild(this.cv);
+      this.boost = 1; this.boostTo = 1;
       this.ctx = this.cv.getContext('2d');
       this.DPR = Math.min(1.5, devicePixelRatio || 1);
       this.N = 620; this.seed = 0; this.last = 0; this.st = [];
@@ -36,10 +40,14 @@
         this.io.observe(this);
       }
       this.loop = this.loop.bind(this);
+      this.size();          /* never leave the backing store at its 300x150 default */
       requestAnimationFrame(this.loop);
     }
 
-    disconnectedCallback() { this.dead = true; cancelAnimationFrame(this.raf); if (this.io) this.io.disconnect(); }
+    disconnectedCallback() { this.dead = true; cancelAnimationFrame(this.raf); }
+
+    /* the sphere has gone; push through the field so the wait reads as travel */
+    warp() { this.boostTo = 9; }
 
     spawn(s, init) {
       this.seed++;
@@ -60,8 +68,9 @@
       if (this.dead) return;
       const dt = this.last ? Math.min(0.05, (t - this.last) / 1000) : 0;
       this.last = t;
-      if (!this.visible) { this.raf = requestAnimationFrame(this.loop); return; }
       this.size();
+      if (!this.visible && this.boostTo === 1) { this.raf = requestAnimationFrame(this.loop); return; }
+      this.boost += (this.boostTo - this.boost) * Math.min(1, dt * 0.9);
       const ctx = this.ctx, W = this.cv.width, H = this.cv.height;
       if (!W || !H) { this.raf = requestAnimationFrame(this.loop); return; }
       ctx.clearRect(0, 0, W, H);
@@ -79,7 +88,7 @@
       ctx.fillStyle = '#fff';
       const VZ = 0.0145;
       for (const s of this.st) {
-        if (dt && !this.reduced) s.z -= VZ * dt;
+        if (dt && !this.reduced) s.z -= VZ * dt * this.boost;
         const kk = FOV / Math.max(0.02, s.z);
         const px = CX + s.x * kk, py = CY + s.y * kk;
         if (s.z <= 0.05 || px < -30 || px > W + 30 || py < -30 || py > H + 30) { this.spawn(s, false); continue; }
@@ -100,16 +109,19 @@
 
   class ProcessSphere extends HTMLElement {
     connectedCallback() {
-      if (this._booted) return;
+      if (this._booted) {
+        if (this.mode !== 'snap') { this.done = false; requestAnimationFrame(this.frame); }
+        addEventListener('pageshow', this.onShow);
+        return;
+      }
+      this.canvas = this.querySelector('canvas');
+      if (!this.canvas) {
+        if ((this._tries = (this._tries || 0) + 1) < 120) requestAnimationFrame(() => this.connectedCallback());
+        return;
+      }
       this._booted = true;
       this.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      this.style.cssText += ';display:block;position:relative;cursor:pointer';
-
-      this.canvas = document.createElement('canvas');
-      this.baseCss = 'width:100%;height:100%;display:block';
-      this.canvas.style.cssText = this.baseCss;
-      this.canvas.setAttribute('aria-hidden', 'true');
-      this.appendChild(this.canvas);
+      this.baseCss = this.canvas.getAttribute('style') || 'width:100%;height:100%;display:block';
       this.ctx = this.canvas.getContext('2d');
       this.DPR = Math.min(2, devicePixelRatio || 1);
       this.reset();
@@ -133,6 +145,7 @@
         this.io.observe(this);
       }
       this.frame = this.frame.bind(this);
+      this.size();          /* never leave the backing store at its 300x150 default */
       requestAnimationFrame(this.frame);
     }
 
@@ -176,13 +189,31 @@
     launch(href) {
       if (this.mode === 'snap') return;
 
-      /* the click is the gesture that lets audio play at all — fire it here,
-         on this page, rather than hoping the next one is allowed to */
+      /* A navigation carries no user gesture with it and kills whatever is
+         playing, so the whole cue runs here, on the page where the click
+         happened: the clip from the click, the score a second later, and the
+         departure held back until the clip has actually finished. The score's
+         start time rides across in sessionStorage so /process picks it up
+         where this page left off instead of restarting it. */
       try {
-        const a = new Audio(INTRO);
-        a.volume = 1;
-        const p = a.play();
-        if (p && p.catch) p.catch(function () {});
+        const clip = new Audio(INTRO);
+        clip.volume = 1;
+        const cp = clip.play();
+        if (cp && cp.catch) cp.catch(function () {});
+
+        setTimeout(function () {
+          const bgm = new Audio(BGM);
+          bgm.loop = true; bgm.volume = 0;
+          const bp = bgm.play();
+          if (bp && bp.catch) bp.catch(function () {});
+          try { sessionStorage.setItem('bgm-started', String(Date.now())); } catch (e) {}
+          const t0 = performance.now();
+          (function fade(n) {
+            const k = Math.max(0, Math.min(1, (n - t0) / 1800));
+            bgm.volume = 0.85 * k;
+            if (k < 1) requestAnimationFrame(fade);
+          })(t0);
+        }, HANDOVER);
       } catch (e) {}
 
       if (this.reduced) { location.href = href; return; }
@@ -196,16 +227,17 @@
       this.CY = (r.top + r.height / 2) * this.DPR;
       this.R = r.width * this.DPR * 0.40;
       this.mode = 'snap'; this.snapT = 0;
-      this.bail = setTimeout(() => { location.href = href; }, 1800);
+      const stars = document.querySelector('process-stars');
+      if (stars && stars.warp) setTimeout(() => stars.warp(), 900);
+      this.bail = setTimeout(() => { location.href = href; }, DEPART);
     }
 
     frame(now) {
       if (this.done) return;
       const dt = this.last ? Math.min(0.05, (now - this.last) / 1000) : 0;
       this.last = now;
-      if (!this.visible && this.mode !== 'snap') { this.raf = requestAnimationFrame(this.frame); return; }
-
       this.size();
+      if (!this.visible && this.mode !== 'snap') { this.raf = requestAnimationFrame(this.frame); return; }
       const ctx = this.ctx, cv = this.canvas, DPR = this.DPR;
       if (!cv.width) { this.raf = requestAnimationFrame(this.frame); return; }
       if (!this.reduced && this.mode !== 'snap') this.rot += dt * 0.22;
@@ -251,12 +283,7 @@
 
       if (this.mode === 'snap') {
         this.snapT += dt;
-        if (alive === 0 || this.snapT > 1.15) {
-          this.done = true;
-          clearTimeout(this.bail);
-          location.href = this.href;
-          return;
-        }
+        if (alive === 0 || this.snapT > 1.15) { this.done = true; return; }
       }
       this.raf = requestAnimationFrame(this.frame);
     }

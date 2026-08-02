@@ -668,19 +668,19 @@ landofhope-3d canvas{background:transparent}
   </div>
 </section>
 
-<section id="process" data-screen-label="Process" style="position:relative;padding:0;background:#0a0a09;overflow:hidden">
-  <process-stars></process-stars>
+<section id="process" data-screen-label="Process" style="position:relative;padding:0;background:#0a0a09;overflow:hidden;min-height:100svh;display:flex;flex-direction:column;justify-content:center">
+  <process-stars style="display:block;position:absolute;inset:0;overflow:hidden;pointer-events:none"><canvas aria-hidden="true" style="width:100%;height:100%;display:block"></canvas></process-stars>
   <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#0a0a09 0%,rgba(10,10,9,0) 16%),radial-gradient(120% 90% at 50% 8%,rgba(10,10,9,.10),rgba(10,10,9,.55) 82%)"></div>
 
-  <div style="position:relative;z-index:2;min-height:86svh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(26px,4svh,44px);padding:clamp(3rem,7vw,7rem) 20px clamp(3rem,6vw,6rem)">
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(26px,4svh,44px);padding:20px">
     <h2 data-reveal="" style="margin:0;font-weight:200;font-size:clamp(34px,5.4vw,64px);letter-spacing:-.025em;line-height:1.02;text-align:center;color:#f5f4f0">How it's <b style="font-weight:800">made.</b></h2>
     <a href="/process" data-sphere-portal="" aria-label="Open the production line" style="display:flex;flex-direction:column;align-items:center;gap:clamp(26px,4svh,44px);text-decoration:none;color:inherit">
-      <process-sphere style="display:block;width:min(52svh,420px);aspect-ratio:1"></process-sphere>
+      <process-sphere style="display:block;position:relative;cursor:pointer;width:min(52svh,420px);aspect-ratio:1"><canvas aria-hidden="true" style="width:100%;height:100%;display:block"></canvas></process-sphere>
       <span data-hpair="" data-hin="color:#f5f4f0" data-hout="color:#6d6c64" style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#6d6c64;transition:color .4s">Click to learn more</span>
     </a>
   </div>
 
-  <div style="position:relative;z-index:2;height:clamp(90px,13vw,190px);background:linear-gradient(180deg,rgba(10,10,9,0) 0%,#0a0a09 42%,#f5f4f0 100%)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:3;pointer-events:none;height:clamp(90px,13vw,190px);background:linear-gradient(180deg,rgba(10,10,9,0) 0%,#0a0a09 42%,#f5f4f0 100%)"></div>
 </section>
 
 <section id="contact" data-screen-label="Contact" style="position:relative;padding:clamp(5rem,9vw,8.5rem) 0 4rem">

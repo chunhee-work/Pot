@@ -226,7 +226,7 @@
 </style>
 
 <div class="bgvid" aria-hidden="true"><canvas id="stars"></canvas></div>
-<audio id="bgm" loop preload="none" src="assets/process/audio-0ac7bdea7b.mp3"></audio>
+<audio id="bgm" loop preload="none" src="assets/process/bgm.mp3"></audio>
 
 <div class="topbar"><a class="back" href="/">&#8592; Back to portfolio</a></div>
 
@@ -724,13 +724,32 @@
   function startBgm(){
     if(bgmOn)return;bgmOn=true;
     var a=document.getElementById('bgm');if(!a)return;
-    a.volume=0;
-    var t0=performance.now();
-    (function fade(n){
-      var k=Math.max(0,Math.min(1,(n-t0)/1800));
-      a.volume=0.85*k;
-      if(k<1)requestAnimationFrame(fade);
-    })(t0);
+    /* the score began on the home page, a second after the click that sent the
+       visitor here — pick it up where it got to rather than starting over */
+    var began=0;try{began=+sessionStorage.getItem('bgm-started')||0;}catch(e){}
+    var carried=began?(Date.now()-began)/1000:0;
+    if(carried>0.4&&carried<3600){
+      a.volume=0.85;
+      /* the file has not loaded yet, so a seek now is dropped — hold it until
+         the element actually knows how long the track is */
+      var seeked=false;
+      var seek=function(){
+        if(seeked||!isFinite(a.duration)||!a.duration)return;
+        seeked=true;try{a.currentTime=carried%a.duration;}catch(e){}
+      };
+      a.addEventListener('loadedmetadata',seek);
+      a.addEventListener('canplay',seek);
+      a.addEventListener('playing',seek);
+      seek();
+    }else{
+      a.volume=0;
+      var t0=performance.now();
+      (function fade(n){
+        var k=Math.max(0,Math.min(1,(n-t0)/1800));
+        a.volume=0.85*k;
+        if(k<1)requestAnimationFrame(fade);
+      })(t0);
+    }
     var p=a.play();
     if(p&&p.catch)p.catch(function(){
       var go=function(){a.play();['pointerdown','keydown','wheel','touchstart'].forEach(
