@@ -178,7 +178,14 @@
      the sphere is laid out in vw and lands at very different sizes, and a
      fixed 175px that reads as a pool of light on a wide screen swallows the
      whole thing on a narrow one. */
-  const GLOW_REACH = 0.68, GLOW_HALO = 11, GLOW_PEAK = 0.42, GLOW_FALLOFF = 1.5, GLOW_AMBIENT = 0.07;
+  const GLOW_REACH = 0.68, GLOW_HALO = 11, GLOW_PEAK = 0.42, GLOW_FALLOFF = 1.5;
+  /* The pool of light between the dots used to be one big disc drawn at the
+     cursor. The canvas is only a tenth wider than the sphere, so near the rim
+     that disc ran off the edge and the canvas cut it square — the outline in
+     the middle of the glow. It comes off the dots now: a second, much wider
+     and much fainter halo on the ones the cursor is over. Same wash, except
+     it is shaped by where the dots are and cannot wander off the canvas. */
+  const POOL_HALO = 26, POOL_PEAK = 0.055, POOL_FROM = 0.30;
   let GSPR = null;
   function glowSprite() {
     if (GSPR) return GSPR;
@@ -219,8 +226,9 @@
       this.hot = 0;
       if (this.hoverOK) {
         glowSprite();
-        this.gx = new Float32Array(N); this.gy = new Float32Array(N);
-        this.gr = new Float32Array(N); this.ga = new Float32Array(N);
+        /* two entries a dot at most — the halo and the wider pool behind it */
+        this.gx = new Float32Array(N * 2); this.gy = new Float32Array(N * 2);
+        this.gr = new Float32Array(N * 2); this.ga = new Float32Array(N * 2);
       }
       this.onMove = (e) => { const r = this.getBoundingClientRect();
         this.mouse.x = e.clientX - r.left; this.mouse.y = e.clientY - r.top; };
@@ -476,10 +484,27 @@
           const gd = Math.hypot(sx / DPR - this.mouse.x, sy / DPR - this.mouse.y);
           if (gd < reach) {
             const near = Math.pow(1 - gd / reach, GLOW_FALLOFF);
-            this.gx[gn] = sx + p.ox; this.gy[gn] = sy + p.oy;
-            this.gr[gn] = rad * GLOW_HALO;
-            this.ga[gn] = GLOW_PEAK * near * this.hot * p.al * (0.35 + 0.65 * front);
+            const gx = sx + p.ox, gy = sy + p.oy;
+            /* A halo wider than the room it has left would be cut square
+               by the canvas, and that straight line is the whole complaint.
+               Held to what fits it shrinks — but a shrunk halo at full
+               strength is a bright pip against the edge, which reads just as
+               wrong. So it dims by the same fraction it shrinks: a dot with
+               no room contributes nothing, and the glow falls away from the
+               rim instead of stopping at it. */
+            const room = Math.min(gx, gy, cv.width - gx, cv.height - gy);
+            const base = GLOW_PEAK * near * this.hot * p.al * (0.35 + 0.65 * front);
+            let want = rad * GLOW_HALO, fit = Math.min(1, room / want);
+            this.gx[gn] = gx; this.gy[gn] = gy;
+            this.gr[gn] = want * fit; this.ga[gn] = base * fit * fit;
             gn++;
+            if (near > POOL_FROM) {
+              want = rad * POOL_HALO; fit = Math.min(1, room / want);
+              this.gx[gn] = gx; this.gy[gn] = gy;
+              this.gr[gn] = want * fit;
+              this.ga[gn] = POOL_PEAK * (near - POOL_FROM) / (1 - POOL_FROM) * this.hot * fit * fit;
+              gn++;
+            }
           }
         }
       }
@@ -490,11 +515,6 @@
          leaves their cores exactly as crisp as they were. */
       if (gn) {
         ctx.globalCompositeOperation = 'lighter';
-        const mx = this.mouse.x * DPR, my = this.mouse.y * DPR, ar = reach * 1.15 * DPR;
-        const amb = ctx.createRadialGradient(mx, my, 0, mx, my, ar);
-        amb.addColorStop(0, 'rgba(255,255,255,' + (GLOW_AMBIENT * this.hot).toFixed(4) + ')');
-        amb.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = amb; ctx.fillRect(mx - ar, my - ar, ar * 2, ar * 2);
         for (let i = 0; i < gn; i++) {
           const w = this.gr[i];
           ctx.globalAlpha = Math.min(1, this.ga[i]);
