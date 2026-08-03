@@ -169,6 +169,31 @@
   /* ── particle sphere ──────────────────────────────────────────────── */
   const N = 2400;
 
+  /* Hovering lights the dots the cursor is over. Reach, halo size and peak
+     are the SOFTBOX setting: a wide, soft, low bloom rather than a hard ring,
+     which is what reads as light rather than as a highlight.
+     One sprite, blitted per dot — 2400 live gradients a frame is not
+     affordable, and this only runs at all while a fine pointer is inside. */
+  /* The reach is a fraction of the sphere's own radius, not a pixel count —
+     the sphere is laid out in vw and lands at very different sizes, and a
+     fixed 175px that reads as a pool of light on a wide screen swallows the
+     whole thing on a narrow one. */
+  const GLOW_REACH = 0.68, GLOW_HALO = 11, GLOW_PEAK = 0.42, GLOW_FALLOFF = 1.5, GLOW_AMBIENT = 0.07;
+  let GSPR = null;
+  function glowSprite() {
+    if (GSPR) return GSPR;
+    const S = 64, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.22, 'rgba(255,255,255,.55)');
+    g.addColorStop(0.55, 'rgba(255,255,255,.14)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, S, S);
+    return (GSPR = c);
+  }
+
   class ProcessSphere extends HTMLElement {
     connectedCallback() {
       if (this._booted) {
@@ -188,6 +213,15 @@
       this.DPR = Math.min(2, devicePixelRatio || 1);
       this.reset();
 
+      /* no hover to speak of on a touch screen, so none of the glow work
+         is even set up there */
+      this.hoverOK = matchMedia('(hover: hover) and (pointer: fine)').matches;
+      this.hot = 0;
+      if (this.hoverOK) {
+        glowSprite();
+        this.gx = new Float32Array(N); this.gy = new Float32Array(N);
+        this.gr = new Float32Array(N); this.ga = new Float32Array(N);
+      }
       this.onMove = (e) => { const r = this.getBoundingClientRect();
         this.mouse.x = e.clientX - r.left; this.mouse.y = e.clientY - r.top; };
       this.onLeave = () => { this.mouse.x = -1e4; this.mouse.y = -1e4; };
@@ -395,6 +429,13 @@
       const cR = Math.cos(this.rot), sR = Math.sin(this.rot);
       let alive = 0;
 
+      /* eased so the bloom arrives and leaves rather than snapping on */
+      const want = (this.hoverOK && this.mode !== 'snap' && this.mouse.x > -1e3) ? 1 : 0;
+      this.hot += (want - this.hot) * Math.min(1, dt * 6);
+      const lit = this.hot > 0.012;
+      const reach = this.R / this.DPR * GLOW_REACH;
+      let gn = 0;
+
       for (let i = 0; i < N; i++) {
         const p = this.pts[i];
         const x = p.x * cR + p.z * sR, z = -p.x * sR + p.z * cR, y = p.y;
@@ -428,8 +469,40 @@
         ctx.fillStyle = '#fff';
         const rad = p.s * DPR * (0.55 + 0.75 * front) * persp;
         ctx.beginPath(); ctx.arc(sx + p.ox, sy + p.oy, rad, 0, 6.2832); ctx.fill();
+
+        /* the positions are already worked out here, so the glow list is
+           gathered in this pass and painted in one additive sweep after */
+        if (lit) {
+          const gd = Math.hypot(sx / DPR - this.mouse.x, sy / DPR - this.mouse.y);
+          if (gd < reach) {
+            const near = Math.pow(1 - gd / reach, GLOW_FALLOFF);
+            this.gx[gn] = sx + p.ox; this.gy[gn] = sy + p.oy;
+            this.gr[gn] = rad * GLOW_HALO;
+            this.ga[gn] = GLOW_PEAK * near * this.hot * p.al * (0.35 + 0.65 * front);
+            gn++;
+          }
+        }
       }
       ctx.globalAlpha = 1;
+
+      /* Additive, so overlapping halos build up the way light does — and
+         because additive is order-independent, painting it over the dots
+         leaves their cores exactly as crisp as they were. */
+      if (gn) {
+        ctx.globalCompositeOperation = 'lighter';
+        const mx = this.mouse.x * DPR, my = this.mouse.y * DPR, ar = reach * 1.15 * DPR;
+        const amb = ctx.createRadialGradient(mx, my, 0, mx, my, ar);
+        amb.addColorStop(0, 'rgba(255,255,255,' + (GLOW_AMBIENT * this.hot).toFixed(4) + ')');
+        amb.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = amb; ctx.fillRect(mx - ar, my - ar, ar * 2, ar * 2);
+        for (let i = 0; i < gn; i++) {
+          const w = this.gr[i];
+          ctx.globalAlpha = Math.min(1, this.ga[i]);
+          ctx.drawImage(GSPR, this.gx[i] - w, this.gy[i] - w, w * 2, w * 2);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+      }
 
       if (this.mode === 'snap') {
         this.snapT += dt;

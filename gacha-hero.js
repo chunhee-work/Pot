@@ -163,17 +163,31 @@
     var sc = new T.Scene();
     D.step = 'scene';
     var cam = new T.PerspectiveCamera(26, 1, 0.1, 100), piv = new T.Group(); sc.add(piv);
-    function size() { var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
-      r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+    var HALF = Math.tan(26 * Math.PI / 360), box = null;
+    /* The camera used to be placed once, on load, from the mark's height
+       alone. A narrow window makes the frame narrow but not shorter, so the
+       mark kept its full height and ran straight off both sides — and since
+       nothing recomputed on resize, it stayed cut off. Now the distance is
+       whichever of the two fits: the height rule that set the size everyone
+       has already seen, or far enough back that the mark's widest moment in
+       the turn still clears the sides. Recomputed every resize, so dragging
+       the window narrower shrinks the mark instead of cropping it. */
+    function size() {
+      var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+      r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
+      if (!box) return;
+      var byHeight = Math.max(box.x, box.y) / (2 * HALF) * 2.15;
+      var byWidth = Math.hypot(box.x, box.z) * 1.16 / (2 * HALF * cam.aspect);
+      cam.position.set(0, 0, Math.max(byHeight, byWidth));
+      cam.lookAt(0, 0, 0);
+    }
     addEventListener('resize', size);
     var spin = 0.62, vel = 0, drag = false, px = 0, last = 0, live = false, seen = true, raf = 0;
     new GL().setMeshoptDecoder(MD).load(MODEL, function (g) {
       var m = g.scene, b = new T.Box3().setFromObject(m), s = b.getSize(new T.Vector3());
       m.position.sub(b.getCenter(new T.Vector3()));
       piv.add(m); piv.rotation.x = 0.09;
-      size();
-      cam.position.set(0, 0, Math.max(s.x, s.y) / (2 * Math.tan(26 * Math.PI / 360)) * 2.15);
-      cam.lookAt(0, 0, 0);
+      box = s; size();
       host.setAttribute('data-live', '1');
       var still = host.querySelector('img[data-gstill]');
       if (still) still.style.transition = 'opacity .8s';
