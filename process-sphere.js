@@ -220,21 +220,38 @@
       this.DPR = Math.min(2, devicePixelRatio || 1);
       this.reset();
 
-      /* no hover to speak of on a touch screen, so none of the glow work
-         is even set up there */
-      this.hoverOK = matchMedia('(hover: hover) and (pointer: fine)').matches;
+      /* Whether anything here can hover is answered by what turns up, not by
+         a media query. (hover: hover) and (pointer: fine) describe a device's
+         *primary* input, and an iPad's primary input is a finger — so both
+         read false the whole time an Apple Pencil is hovering over the glass,
+         which is exactly the case this is for. A pointer that reports itself
+         as anything other than touch can hover; the first one to arrive turns
+         the glow on and pays for its buffers. A device that only ever sees
+         fingers allocates nothing, same as before. */
+      this.hoverOK = false;
       this.hot = 0;
-      if (this.hoverOK) {
+      this.arm = () => {
+        if (this.hoverOK) return;
+        this.hoverOK = true;
         glowSprite();
         /* two entries a dot at most — the halo and the wider pool behind it */
         this.gx = new Float32Array(N * 2); this.gy = new Float32Array(N * 2);
         this.gr = new Float32Array(N * 2); this.ga = new Float32Array(N * 2);
-      }
+      };
       this.onMove = (e) => { const r = this.getBoundingClientRect();
-        this.mouse.x = e.clientX - r.left; this.mouse.y = e.clientY - r.top; };
+        this.mouse.x = e.clientX - r.left; this.mouse.y = e.clientY - r.top;
+        if (!e.pointerType || e.pointerType !== 'touch') this.arm(); };
       this.onLeave = () => { this.mouse.x = -1e4; this.mouse.y = -1e4; };
-      this.addEventListener('mousemove', this.onMove);
-      this.addEventListener('mouseleave', this.onLeave);
+      if (window.PointerEvent) {
+        this.addEventListener('pointermove', this.onMove);
+        this.addEventListener('pointerleave', this.onLeave);
+      } else {
+        this.addEventListener('mousemove', this.onMove);
+        this.addEventListener('mouseleave', this.onLeave);
+      }
+      /* a pencil lifted away from the glass, or the tab losing focus, both
+         end the hover without necessarily giving the element its own leave */
+      addEventListener('blur', this.onLeave);
 
       /* coming back through the history cache restores the page mid-scatter —
          the sphere has to be rebuilt or the visitor lands on an empty screen */
@@ -263,6 +280,9 @@
       cancelAnimationFrame(this.raf);
       if (this.io) this.io.disconnect();
       removeEventListener('pageshow', this.onShow);
+      removeEventListener('blur', this.onLeave);
+      this.removeEventListener('pointermove', this.onMove);
+      this.removeEventListener('pointerleave', this.onLeave);
       this.removeEventListener('mousemove', this.onMove);
       this.removeEventListener('mouseleave', this.onLeave);
     }
