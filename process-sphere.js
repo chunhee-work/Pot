@@ -541,6 +541,23 @@
   customElements.define('process-stars', ProcessStars);
   customElements.define('process-sphere', ProcessSphere);
 
+  /* A tap you can feel when the sphere is pressed.
+     navigator.vibrate is Android's; Safari has never shipped it, on any
+     iOS, so on an iPhone this line does nothing at all. What does work
+     there is a switch: since iOS 17.4 toggling <input type="checkbox"
+     switch> plays the system's own light tap, and toggling one that
+     nobody can see borrows that tap for anything. Neither call can throw
+     into the press, and a desktop simply has nothing to buzz. */
+  function haptic() {
+    try { if (navigator.vibrate) navigator.vibrate([11, 24, 32]); } catch (e) {}
+    try {
+      /* click(), not checked = — the tap belongs to the switch's activation
+         behaviour, which setting the property straight out never runs */
+      const sw = document.querySelector('input[data-haptic]');
+      if (sw) sw.click();
+    } catch (e) {}
+  }
+
   /* the sphere sits inside a real anchor, so it still works without script */
   addEventListener('click', function (e) {
     const a = e.target.closest && e.target.closest('a[data-sphere-portal]');
@@ -548,6 +565,7 @@
     const sphere = a.querySelector('process-sphere');
     if (!sphere || !sphere.launch) return;
     e.preventDefault();
+    haptic();
     sphere.launch(a.getAttribute('href'));
   }, true);
 })();
