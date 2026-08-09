@@ -20,7 +20,14 @@
 
   var FOV = 28;
   var FIT = 1.28;        // the old fit's margin, unchanged
-  var DROP = 0.2807;     // camera height as a share of its distance — 15.68°
+  /* The old lockup was lit live, so looking up at it from 15.68° below cost
+     nothing. This one is baked, and the bake puts the silver on the letters'
+     top faces — from underneath you get their undersides, which are the dark
+     ones. Measured across the tilt, the lit pixels run 94 at 15.7° below and
+     122 at 8° above, a 30% swing with nothing else changed. So the camera
+     comes up over the lockup instead, which is where the file's own silver
+     is. Positive DROP looks up, negative looks down. */
+  var DROP = -0.1405;    // camera height as a share of its distance — 8° above
   var SPIN_RANGE = 0.35, SPIN_SPEED = 0.00025;
 
   function load(cb) {
