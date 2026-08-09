@@ -16,18 +16,11 @@
 (function () {
   if (customElements.get('landofhope-3d')) return;
   var BUNDLE = 'assets/gameui/three-ec08179080.js';
-  var MODEL = 'assets/landofhope-91d686481a.glb';
+  var MODEL = 'assets/landofhope-736112f786.glb';
 
   var FOV = 28;
   var FIT = 1.28;        // the old fit's margin, unchanged
-  /* The old lockup was lit live, so looking up at it from 15.68° below cost
-     nothing. This one is baked, and the bake puts the silver on the letters'
-     top faces — from underneath you get their undersides, which are the dark
-     ones. Measured across the tilt, the lit pixels run 94 at 15.7° below and
-     122 at 8° above, a 30% swing with nothing else changed. So the camera
-     comes up over the lockup instead, which is where the file's own silver
-     is. Positive DROP looks up, negative looks down. */
-  var DROP = -0.1405;    // camera height as a share of its distance — 8° above
+  var DROP = 0.2807;     // camera height as a share of its distance — 15.68° below
   var SPIN_RANGE = 0.35, SPIN_SPEED = 0.00025;
 
   function load(cb) {
@@ -83,9 +76,20 @@
       r.setClearColor(0x000000, 0);
       r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       r.toneMapping = T.ACESFilmicToneMapping;
-      r.toneMappingExposure = 1.20;   // what the model was authored against
+      r.toneMappingExposure = 1.05;
 
       var sc = new T.Scene();
+      /* Polished metal is only ever as good as what it has to reflect, so the
+         room and the four lights come back exactly as the extruded lockup had
+         them. The shadow catcher does not: the camera sits below the plane it
+         used to fall on, so it was costing a 2048px shadow map to render
+         something nobody could see. */
+      sc.environment = new T.PMREMGenerator(r).fromScene(new G.RoomEnvironment(), 0.04).texture;
+      var key = new T.DirectionalLight(0xffffff, 2.4); key.position.set(-2, 7, 5); sc.add(key);
+      var streak = new T.DirectionalLight(0xffffff, 1.6); streak.position.set(-6, 1.5, 4); sc.add(streak);
+      var rim = new T.DirectionalLight(0xffffff, 1.0); rim.position.set(5, 2, -5); sc.add(rim);
+      var fill = new T.DirectionalLight(0xffffff, 0.45); fill.position.set(0, -4, 5); sc.add(fill);
+      sc.add(new T.AmbientLight(0xffffff, 0.22));
       var cam = new T.PerspectiveCamera(FOV, 16 / 7, 0.1, 100);
       var group = new T.Group(); sc.add(group);
       var half = Math.tan(FOV * Math.PI / 360), box = null;
@@ -110,13 +114,17 @@
       this.ro.observe(this);
 
       var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var spin = 0, drag = false, px = 0, dragAt = 0, spinT0 = null, seen = true;
+      var spin = 0, drag = false, px = 0, dragAt = 0, spinT0 = null, seen = true, panning = true;
       var live = false, raf = 0, ticks = 0, seenTicks = -1;
 
       cv.style.cursor = 'grab';
       cv.style.touchAction = 'pan-y';
       cv.addEventListener('pointerdown', function (e) {
         drag = true; px = e.clientX; dragAt = performance.now();
+        /* Once it has been turned by hand it stays where it was left. The pan
+           is there to catch the eye of someone who has not touched it; taking
+           it back the moment they let go would undo the thing they just did. */
+        panning = false;
         cv.style.cursor = 'grabbing';
         try { cv.setPointerCapture(e.pointerId); } catch (_) {}
       });
@@ -154,7 +162,7 @@
         raf = 0;
         if (self.dead || !live || !seen) return;
         ticks++;
-        if (!drag && !reduced && spinT0 !== null)
+        if (panning && !drag && !reduced && spinT0 !== null)
           spin = Math.sin((performance.now() - spinT0) * SPIN_SPEED) * SPIN_RANGE;
         group.rotation.y = spin;
         r.render(sc, cam);
@@ -165,6 +173,9 @@
         if (self.dead) return;
         var m = g.scene, b = new T.Box3().setFromObject(m), s = b.getSize(new T.Vector3());
         m.position.sub(b.getCenter(new T.Vector3()));
+        m.traverse(function (o) { if (o.isMesh && o.material) {
+          o.material.envMapIntensity = 1.5;   // as the old chrome ran it
+          o.material.needsUpdate = true; } });
         group.add(m);
         box = s; place();
         live = true; kick();
