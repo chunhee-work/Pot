@@ -205,7 +205,9 @@
     });
     host.addEventListener('pointermove', function (e) {
       if (!drag) return;
-      var dx = e.clientX - px; px = e.clientX;
+      /* the stuck-drag timeout below counts from the last movement, not from
+         the press — a slow, deliberate turn is a drag, not a stuck one */
+      var dx = e.clientX - px; px = e.clientX; dragAt = performance.now();
       spin += dx * 0.01; vel = Math.max(-9, Math.min(9, dx * 0.6));
     });
     function up() { drag = false; cv.style.cursor = 'grab'; }

@@ -114,26 +114,31 @@
       this.ro.observe(this);
 
       var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var spin = 0, drag = false, px = 0, dragAt = 0, spinT0 = null, seen = true, panning = true;
+      var spin = 0, drag = false, px = 0, dragAt = 0, spinT0 = null, seen = true;
+      var base = 0;
       var live = false, raf = 0, ticks = 0, seenTicks = -1;
 
       cv.style.cursor = 'grab';
       cv.style.touchAction = 'pan-y';
       cv.addEventListener('pointerdown', function (e) {
         drag = true; px = e.clientX; dragAt = performance.now();
-        /* Once it has been turned by hand it stays where it was left. The pan
-           is there to catch the eye of someone who has not touched it; taking
-           it back the moment they let go would undo the thing they just did. */
-        panning = false;
+        spinT0 = null;                 // the pan yields while a hand is on it
         cv.style.cursor = 'grabbing';
         try { cv.setPointerCapture(e.pointerId); } catch (_) {}
       });
       cv.addEventListener('pointermove', function (e) {
         if (!drag) return;
-        var dx = e.clientX - px; px = e.clientX;
+        var dx = e.clientX - px; px = e.clientX; dragAt = performance.now();
         spin += dx * 0.006;
       });
-      function up() { drag = false; cv.style.cursor = 'grab'; }
+      /* Letting go neither snaps it back nor freezes it. The angle it was
+         left at becomes the middle of the sweep and the pan picks up again
+         from there, so it drifts on from where the hand left it instead of
+         travelling back to where it started. */
+      function up() {
+        if (drag) { base = spin; spinT0 = performance.now(); }
+        drag = false; cv.style.cursor = 'grab';
+      }
       cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
       ['pointerup', 'pointercancel', 'touchend', 'touchcancel', 'blur']
         .forEach(function (n) { addEventListener(n, up, true); });
@@ -162,8 +167,8 @@
         raf = 0;
         if (self.dead || !live || !seen) return;
         ticks++;
-        if (panning && !drag && !reduced && spinT0 !== null)
-          spin = Math.sin((performance.now() - spinT0) * SPIN_SPEED) * SPIN_RANGE;
+        if (!drag && !reduced && spinT0 !== null)
+          spin = base + Math.sin((performance.now() - spinT0) * SPIN_SPEED) * SPIN_RANGE;
         group.rotation.y = spin;
         r.render(sc, cam);
         raf = requestAnimationFrame(loop);
