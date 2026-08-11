@@ -220,14 +220,19 @@
       this.DPR = Math.min(2, devicePixelRatio || 1);
       this.reset();
 
-      /* Whether anything here can hover is answered by what turns up, not by
-         a media query. (hover: hover) and (pointer: fine) describe a device's
-         *primary* input, and an iPad's primary input is a finger — so both
-         read false the whole time an Apple Pencil is hovering over the glass,
-         which is exactly the case this is for. A pointer that reports itself
-         as anything other than touch can hover; the first one to arrive turns
-         the glow on and pays for its buffers. A device that only ever sees
-         fingers allocates nothing, same as before. */
+      /* Whatever is pointing at the sphere lights it — mouse, pencil or
+         finger. Media queries were the wrong instrument for this twice over:
+         (hover: hover) and (pointer: fine) describe a device's *primary*
+         input, so an iPad reads false as a finger the whole time a Pencil is
+         hovering over the glass; and a finger dragging across the sphere is
+         pointing at it just as plainly as a cursor is, even though no phone
+         will ever claim to hover. So the first pointer of any kind to arrive
+         turns the glow on and pays for its buffers, and a device nobody ever
+         touches the sphere on allocates nothing.
+
+         A touch only reports itself while it is down, which is the whole
+         behaviour on a phone: the light follows the finger and goes out when
+         it lifts. */
       this.hoverOK = false;
       this.hot = 0;
       this.arm = () => {
@@ -240,11 +245,18 @@
       };
       this.onMove = (e) => { const r = this.getBoundingClientRect();
         this.mouse.x = e.clientX - r.left; this.mouse.y = e.clientY - r.top;
-        if (!e.pointerType || e.pointerType !== 'touch') this.arm(); };
+        this.arm(); };
       this.onLeave = () => { this.mouse.x = -1e4; this.mouse.y = -1e4; };
       if (window.PointerEvent) {
+        /* down as well as move, so a finger that lands and holds still lights
+           it rather than waiting to be dragged */
+        this.addEventListener('pointerdown', this.onMove, { passive: true });
         this.addEventListener('pointermove', this.onMove);
         this.addEventListener('pointerleave', this.onLeave);
+        /* a finger lifts, or the page takes the gesture over as a scroll —
+           either way the light goes with it */
+        this.addEventListener('pointerup', this.onLeave, { passive: true });
+        this.addEventListener('pointercancel', this.onLeave);
       } else {
         this.addEventListener('mousemove', this.onMove);
         this.addEventListener('mouseleave', this.onLeave);
@@ -281,8 +293,11 @@
       if (this.io) this.io.disconnect();
       removeEventListener('pageshow', this.onShow);
       removeEventListener('blur', this.onLeave);
+      this.removeEventListener('pointerdown', this.onMove);
       this.removeEventListener('pointermove', this.onMove);
       this.removeEventListener('pointerleave', this.onLeave);
+      this.removeEventListener('pointerup', this.onLeave);
+      this.removeEventListener('pointercancel', this.onLeave);
       this.removeEventListener('mousemove', this.onMove);
       this.removeEventListener('mouseleave', this.onLeave);
     }
