@@ -138,28 +138,30 @@ function getLayout(ctx, S) {
   const { u, W, H } = S, cy = H / 2;
   L = { cy, stats: [] };
   if (!S.portrait) {
+    // designed on 16:9; a squarer window scales the whole card down to fit
+    const v = u * Math.min(1, W / H / (16 / 9));
     // one line of name on the thread, the knot as its full stop; the numbers
     // above in a row whose last column stands over the knot; role and
     // address below the thread
-    const xL = 13 * u;
-    const nameO = { size: 18.5 * u, weight: 900, tracking: -0.03 };
+    const xL = 13 * v;
+    const nameO = { size: 18.5 * v, weight: 900, tracking: -0.03 };
     const nameW = measure(ctx, 'CHUN HEE', nameO);
-    L.name = [{ str: 'CHUN HEE', x: xL, y: cy - 2.8 * u, thread: true }];
+    L.name = [{ str: 'CHUN HEE', x: xL, y: cy - 2.8 * v, thread: true }];
     L.nameO = nameO;
-    L.k = 1.85 * u;
-    const knotL = xL + nameW + 4.4 * u;
+    L.k = 1.85 * v;
+    const knotL = xL + nameW + 4.4 * v;
     L.knotX = knotL + (PIVOT - KMINX) * L.k;
-    const numO = { size: 8.6 * u, weight: 800, tracking: -0.02 };
-    const labO = { size: 1.6 * u, weight: 600, tracking: 0.18 };
-    const ny = cy - 28 * u, colW = (knotL - xL) / 3;
+    const numO = { size: 8.6 * v, weight: 800, tracking: -0.02 };
+    const labO = { size: 1.75 * v, weight: 600, tracking: 0.17 };
+    const ny = cy - 28 * v, colW = (knotL - xL) / 3;
     STATS.forEach((st, j) => L.stats.push({
-      x: xL + j * colW, y: ny, numO, unitO: { size: 3.4 * u, weight: 500, tracking: 0 },
-      lab: { x: xL + j * colW, y: ny + 4.9 * u, o: labO }
+      x: xL + j * colW, y: ny, numO, unitO: { size: 3.4 * v, weight: 500, tracking: 0 },
+      lab: { x: xL + j * colW, y: ny + 4.9 * v, o: labO }
     }));
-    L.role = [{ str: ROLE, x: xL, y: cy + 8.4 * u }];
-    L.roleO = { size: 1.7 * u, weight: 600, tracking: 0.16 };
-    L.email = { x: xL, y: cy + 16.2 * u, o: { size: 3.5 * u, weight: 500, tracking: -0.005 } };
-    L.foot = { x: W - xL, y: H * 0.84, o: { size: 1.35 * u, weight: 700, tracking: 0.1, align: 'right' } };
+    L.role = [{ str: ROLE, x: xL, y: cy + 8.4 * v }];
+    L.roleO = { size: 1.85 * v, weight: 600, tracking: 0.15 };
+    L.email = { x: xL, y: cy + 16.2 * v, o: { size: 3.5 * v, weight: 500, tracking: -0.005 } };
+    L.foot = { x: W - xL, y: H * 0.84, o: { size: 1.35 * v, weight: 700, tracking: 0.1, align: 'right' } };
   } else {
     // two lines of name, the knot after HEE on the thread; the numbers
     // stacked above, the role and the address below
@@ -206,12 +208,12 @@ function knotFrame(S, t, L) {
   const c = t - CINCH;
   if (c > 0) s -= 0.07 * Math.exp(-6 * c) * Math.sin(TAU * 2.4 * c);
   s *= 1 - 0.035 * (bump(t - 2 * BEAT, 0.05) + bump(t - 3 * BEAT, 0.05)) - 0.085 * bump(t - SLAM, 0.045);
-  s *= 1 + 0.12 * seg(t, 4.40, 4.64, inOutQuad);
+  s *= 1 + 0.12 * seg(t, 4.42, 4.62, inOutQuad);
 
   // a slow, living wobble in the loops while the knot holds
-  const wob = 0.16 * seg(t, 0.3, 0.8) * (1 - seg(t, 4.4, 4.7));
+  const wob = 0.16 * seg(t, 0.3, 0.8) * (1 - seg(t, 4.42, 4.66));
   // the settle after the pull: the line overshoots flat by a hair and comes back
-  const settle = 0.06 * Math.sin(Math.PI * seg(t, 4.74, 4.9, inOutQuad));
+  const settle = 0.06 * Math.sin(Math.PI * seg(t, 4.74, 4.88, inOutQuad));
   const px_ = new Float64Array(NK), py_ = new Float64Array(NK);
   for (let i = 0; i < NK; i++) {
     const f = KM[i] / KM[NK - 1];
@@ -225,9 +227,9 @@ function knotFrame(S, t, L) {
     } else {
       // pulled from the right: the far end straightens first and the pull
       // runs back through the knot
-      const a = 4.44 + 0.16 * (1 - f);
-      gx = 1 - inOutCubic(clamp((t - a) / 0.26));
-      gy = 1 - inOutCubic(clamp((t - a - 0.02) / 0.22)) - settle;
+      const a = 4.48 + 0.12 * (1 - f);
+      gy = 1 - inOutCubic(clamp((t - a) / 0.2)) - settle;
+      gx = 1 - inOutCubic(clamp((t - a - 0.05) / 0.22));
     }
     let kx = PIVOT + s * (KNOT[i][0] - PIVOT), ky = s * KNOT[i][1];
     if (!ON_LINE[i]) { kx += wob * noise1(t * 0.9 + i * 0.61, 3); ky += wob * noise1(t * 0.9 + i * 0.61, 11); }
@@ -265,7 +267,7 @@ function linePts(ctx, pts) {
 function drawKnot(ctx, S, t, L) {
   const P = knotFrame(S, t, L);
   const { X, Y, U, n } = P, cy = L.cy;
-  const wk = 1 + 0.7 * (seg(t, 0.1, 0.6, inOutCubic) - seg(t, 4.5, 4.86, inOutCubic));
+  const wk = 1 + 0.7 * (seg(t, 0.14, 0.6, inOutCubic) - seg(t, 4.5, 4.86, inOutCubic));
   const w = S.lw * wk;
   const glow = 1 + 0.55 * Math.sin(Math.PI * seg(t, 4.56, T_OUT, inOutQuad));
   thread(ctx, S, c => {
@@ -279,7 +281,7 @@ function drawKnot(ctx, S, t, L) {
   const gxK = L.knotX + (KMINX - PIVOT) * L.k, gxR = L.knotX + (KMAXX - PIVOT) * L.k;
   comet(ctx, S, t, 0.08, 0.31, -0.02 * S.W, gxK, cy, w);
   comet(ctx, S, t, 0.08, 0.31, 1.02 * S.W, gxR, cy, w);
-  comet(ctx, S, t, 4.5, 4.9, L.knotX, 1.1 * S.W, cy, w);
+  comet(ctx, S, t, 4.52, 4.88, L.knotX, 1.1 * S.W, cy, w);
 
   // a glint that runs along the knot when it cinches, on the bar line, and once in the hold
   for (const [g0, gd] of [[0.5, 0.75], [SLAM, 0.6], [3.5, 1.1]]) {
@@ -347,15 +349,15 @@ function bandPath(ctx, pts, hw) {
 
 // ── type ────────────────────────────────────────────────────────────────
 /** a line that rises (rise > 0: from below) inside a clip band, and sinks back out */
-function sillText(ctx, S, str, x, y, o, reveal, sink, band) {
+function sillText(ctx, S, str, x, y, o, reveal, sink, band, stagger = 0.3) {
   if (reveal <= 0) return;
-  const n = [...str].length, R = o.rise;
+  const n = [...str].length, R = o.rise, sg = stagger;
   ctx.save();
   ctx.beginPath(); ctx.rect(0, band[0], S.W, band[1] - band[0]); ctx.clip();
   text(ctx, S, str, x, y, {
     ...o, reveal,
     glyph: sink > 0
-      ? (i => ({ alpha: 1, dy: R * inCubic(clamp(sink * 1.6 - 0.6 * (n > 1 ? i / (n - 1) : 0))) }))
+      ? (i => ({ alpha: 1, dy: R * inCubic(clamp(sink * (1 + sg) - sg * (n > 1 ? i / (n - 1) : 0))) }))
       : () => ({ alpha: 1 })
   });
   ctx.restore();
@@ -383,6 +385,7 @@ function odometer(ctx, S, str, x, y, o, v, vel, color, dy) {
     else { const p10 = Math.pow(10, c), vv = Math.max(0, v), q = Math.floor(vv / p10); pos = q + Math.max(0, vv - q * p10 - (p10 - 1)); }
     const x1 = i < n - 1 ? Lt.xs[i + 1] - tr : Lt.width;
     const cx = x + (Lt.xs[i] + x1) / 2;
+    if (Math.abs(pos - Math.round(pos)) < 1e-3) pos = Math.round(pos);
     const passes = ghosts.map(([k, a]) => [pos - dd * k * (c === 0 ? 1 : 0.1), a]).concat([[pos, 1]]);
     for (const [p, a] of passes) {
       const b = Math.floor(p), f = p - b;
@@ -405,7 +408,7 @@ function statValue(st, j, t) {
   const a = SLAM - 0.36;
   if (t < SLAM) return -1 + (st.roll + 1) * inQuart(clamp((t - a) / 0.36));
   const h = t - SLAM;
-  return st.roll + 0.09 * Math.exp(-11 * h) * Math.sin(TAU * 3 * h);
+  return h > 0.6 ? st.roll : st.roll + 0.09 * Math.exp(-11 * h) * Math.sin(TAU * 3 * h);
 }
 
 function mixHex(a, b, f) {
@@ -419,7 +422,7 @@ function drawStats(ctx, S, t, L) {
   STATS.forEach((st, j) => {
     const g = L.stats[j], t0 = (j + 1) * BEAT;
     if (t < t0 - 0.4) return;
-    const out = seg(t, 4.22 + j * 0.05, 4.48 + j * 0.05, inCubic);
+    const out = seg(t, 4.3 + j * 0.05, 4.56 + j * 0.05, inCubic);
     const v = statValue(st, j, t);
     const vel = st.hero && t >= SLAM ? 0 : (v - statValue(st, j, t - 1 / 60)) * 60;
     const numAsc = layout(ctx, st.num, g.numO).ascent;
@@ -454,32 +457,33 @@ function drawStats(ctx, S, t, L) {
 function drawLockup(ctx, S, t, L) {
   const u = S.u, cy = L.cy, lw = S.lw * 1.7;
   // the name rises out of the thread (the line on it) or out of its own sill
-  const sinkName = seg(t, 4.40, 4.70, inOutQuad);
+  const sinkName = seg(t, 4.46, 4.74, inOutQuad);
   L.name.forEach((ln, i) => {
     const Lt = layout(ctx, ln.str, L.nameO);
-    const t0 = SLAM + 0.08 + i * 0.1;
+    const t0 = SLAM + 0.04 + i * 0.1;
     const bottom = ln.thread ? cy - lw * 0.6 : ln.y + Lt.descent * 0.4;
     const rise = bottom - ln.y + Lt.ascent + 0.3 * u;
-    sillText(ctx, S, ln.str, ln.x, ln.y, { ...L.nameO, color: PAL.ink, rise, window: 0.55, ease: siteE },
-      seg(t, t0, t0 + 0.72), sinkName, [0, bottom]);
+    sillText(ctx, S, ln.str, ln.x, ln.y, { ...L.nameO, color: PAL.ink, rise, window: 0.5, ease: siteE },
+      seg(t, t0, t0 + 0.6), sinkName, [0, bottom]);
   });
   // the role and the address drop from the thread
   const top = cy + lw * 0.6;
-  const sinkLow = seg(t, 4.42, 4.70, inOutQuad);
+  const sinkLow = seg(t, 4.48, 4.74, inOutQuad);
   L.role.forEach((ln, i) => {
-    const t0 = SLAM + 0.2 + i * 0.06;
-    const rise = -(ln.y - top + 0.3 * u);
+    const t0 = SLAM + 0.16 + i * 0.06;
+    const rise = -(ln.y - top + layout(ctx, ln.str, L.roleO).descent + 0.3 * u);
     sillText(ctx, S, ln.str, ln.x, ln.y, { ...L.roleO, color: PAL.dim, rise, window: 0.3, ease: outExpo },
-      seg(t, t0, t0 + 0.5), sinkLow, [top, S.H]);
+      seg(t, t0, t0 + 0.45), sinkLow, [top, S.H], 0);
   });
   {
-    const e = L.email, t0 = SLAM + 0.36;
-    const rise = -(e.y - top + 0.3 * u);
-    sillText(ctx, S, EMAIL, e.x, e.y, { ...e.o, color: PAL.ink, rise, window: 0.35, ease: outExpo },
-      seg(t, t0, t0 + 0.55), sinkLow, [top, S.H]);
+    // the address rises from its own sill, just after the role has dropped
+    const e = L.email, t0 = SLAM + 0.3, el = layout(ctx, EMAIL, e.o);
+    const band = [e.y - el.ascent * 1.35, e.y + el.descent + 0.25 * u];
+    sillText(ctx, S, EMAIL, e.x, e.y, { ...e.o, color: PAL.ink, rise: band[1] - e.y + el.ascent * 1.35, window: 0.45, ease: siteE },
+      seg(t, t0, t0 + 0.5), sinkLow, band, 0.08);
   }
   // the footer, quietly
-  const f = L.foot, fa = seg(t, SLAM + 0.55, SLAM + 1.0, outCubic) * (1 - seg(t, 4.3, 4.55));
+  const f = L.foot, fa = seg(t, SLAM + 0.55, SLAM + 1.0, outCubic) * (1 - seg(t, 4.36, 4.6));
   if (fa > 0) text(ctx, S, FOOT, f.x, f.y, { ...f.o, color: PAL.faint, alpha: fa, reveal: 1, rise: 0 });
 }
 
@@ -492,7 +496,7 @@ function lens(S, t, L) {
     const e = decay(h, 0.085);
     fx.ab += 0.42 * e; fx.shake += 0.5 * u * e;
     // the shock leaves the knot, which tugs tight as the one lands
-    fx.warp = h / 0.7; fx.warpX = L.knotX / S.W; fx.warpY = 0.5 - 2.5 * L.k / S.H;
+    fx.warp = 0.16 + 0.84 * (h / 0.7); fx.warpX = L.knotX / S.W; fx.warpY = 0.5 - 2.5 * L.k / S.H;
   }
 }
 
