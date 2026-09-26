@@ -22,11 +22,11 @@
      3.20–3.425  off the last E, the needle lifts and takes aim again
      3.425–3.50  the second stab: through the line on the bar (quiver, lens hit)
      3.50–4.10   "from needle & thread," drops from behind the line, word by word
-     3.95–4.75   a sheen crosses the stitches while it holds
+     3.50–5.375  the camera leans in a touch while it holds; a sheen crosses the stitches 3.95–4.75
      4.95–5.375  tension: the copy leaves, stitches cinch and tremble, needle draws back
-     5.375–5.70  the pull: needle whips out right, the name stretches edge to edge
-                 and flattens into the line; it snaps taut at 5.70 and twangs
-     5.70–5.915  the twang dies; 5.915–6.00 rest                                     */
+     5.375–5.84  the pull: the needle whips out right, the name stretches edge to
+                 edge, then flattens into the line — snapping taut at 5.84
+     5.84–5.915  the twang is damped out; 5.915–6.00 rest                                     */
 import {
   PAL, clamp, lerp, invlerp, smoothstep, noise1, TAU,
   outExpo, outCubic, inCubic, inOutCubic, inQuad, outQuad, inOutQuad, inQuart, siteE,
@@ -56,9 +56,10 @@ const T = {
   leadOut: [3.2, 3.38, 3.425, 3.5, 3.535],   // lifts off the E and aims · holds · stabs · pierces the line (bar) · stops dead
   tag: [3.50, 4.10],
   sheen: [3.95, 4.75],
-  tension: 4.95, pull: 5.375, snap: 5.70,
+  drift: [3.5],
+  tension: 4.95, pull: 5.375, snap: 5.84,
   tagOut: [5.0, 5.33], browOut: [4.98, 5.3],
-  fade: [5.80, 5.90],
+  fade: [5.855, 5.91],
   end: 5.915
 };
 const ZMAX = 1.9;
@@ -230,7 +231,7 @@ function geometry(ctx, S) {
     xd, xu, dD, thD, leadIn, sUp, focusX: (P ? 0.46 : 0.4) * W,
     xe, dE, thE, depth, E0,
     nL: Math.min(...rows.map(r => r.nL)), nR: Math.max(...rows.map(r => r.nR)), nTop: topY,
-    brow: { y: topY - (P ? 6.4 : 5.6) * u, size: (P ? 2.6 : 2.0) * u },
+    brow: { y: topY - (P ? 6.6 : 5.8) * u, size: (P ? 2.7 : 2.15) * u },
     tag: { y: cy + (P ? 11.4 : 9.2) * u, size: (P ? 5.5 : 4.4) * u }
   };
   // the lead-in carries the stab's speed in and hands the sewing its first, slow speed
@@ -284,9 +285,15 @@ function stitchesOf(p, P, ratio) {
 }
 
 // ── the camera: leans in on the thread for the stab, pulls back to sew ─────
+/* world x = fx lands on screen x = sx, scaled by z about the line; so the line itself never moves */
 function cam(G, t, o) {
-  const a = inOutQuad(invlerp(T.zoomIn[0], T.zoomIn[1], t)) * (1 - inOutCubic(invlerp(T.zoomOut[0], T.zoomOut[1], t)));
-  o.z = 1 + (ZMAX - 1) * a; o.sx = lerp(G.xd, G.focusX, a);
+  if (t < T.drift[0]) {
+    const a = inOutQuad(invlerp(T.zoomIn[0], T.zoomIn[1], t)) * (1 - inOutCubic(invlerp(T.zoomOut[0], T.zoomOut[1], t)));
+    o.z = 1 + (ZMAX - 1) * a; o.fx = G.xd; o.sx = lerp(G.xd, G.focusX, a);
+  } else {                     // a slow lean in while it holds, yanked back by the pull
+    const a = inOutQuad(invlerp(T.drift[0], T.pull, t)) * (1 - outCubic(invlerp(T.pull, T.pull + 0.2, t)));
+    o.z = 1 + 0.035 * a; o.fx = o.sx = G.W / 2;
+  }
   return o;
 }
 
@@ -301,7 +308,7 @@ function pose(G, t, o) {
   const P0x = G.xd - G.dD[0] * 3.4 * u, P0y = cy - G.dD[1] * 3.4 * u;
   if (t < T.cock[0]) {                                          // slides in along the thread
     cam(G, T.slide[0], _c);
-    const x0 = G.xd + (-1.5 * u - _c.sx) / _c.z;                 // just off the left edge of the frame
+    const x0 = _c.fx + (-1.5 * u - _c.sx) / _c.z;                // just off the left edge of the frame
     o.x = lerp(x0, xp, outExpo(invlerp(T.slide[0], T.slide[1], t))); o.y = cy; o.a = 0; return o;
   }
   if (t < T.stab[0]) {                                          // wind-up: lifts and takes aim
@@ -525,8 +532,8 @@ export default {
 
     // ── world: everything the camera sees ──
     ctx.save();
-    if (z > 1.0001) { ctx.translate(C.sx, cy); ctx.scale(z, z); ctx.translate(-G.xd, -cy); }
-    const wx0 = G.xd + (-0.02 * W - C.sx) / z, wx1 = G.xd + (1.02 * W - C.sx) / z;
+    if (z > 1.0001) { ctx.translate(C.sx, cy); ctx.scale(z, z); ctx.translate(-C.fx, -cy); }
+    const wx0 = C.fx + (-0.02 * W - C.sx) / z, wx1 = C.fx + (1.02 * W - C.sx) / z;
 
     // the line
     const dm = lineShape(S, G, t, wx0, wx1);
@@ -681,10 +688,10 @@ export default {
       fx.warp = lerp(0.55, 1, outQuad(k)); fx.warpX = G.xe / W; fx.warpY = 0.5;
     }
     if (t >= T.pull && t < T.pull + 0.25) fx.ab = 0.16 * (1 - outCubic(invlerp(T.pull, T.pull + 0.25, t)));
-    if (t >= T.snap && t < T.snap + 0.14) {
-      const k = invlerp(T.snap, T.snap + 0.14, t);
-      fx.ab = Math.max(fx.ab, 0.14 * (1 - k));
-      fx.shake = 0.18 * u * Math.pow(1 - k, 2);
+    if (t >= T.snap && t < T.snap + 0.06) {
+      const k = invlerp(T.snap, T.snap + 0.06, t);
+      fx.ab = 0.12 * (1 - k);
+      fx.shake = 0.14 * u * Math.pow(1 - k, 2);
     }
   }
 };
