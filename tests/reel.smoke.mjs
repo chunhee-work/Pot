@@ -121,6 +121,11 @@ async function open(vw, vh, dpr = 1, opts = {}) {
   const voices = await page.evaluate(() => window.__reel.audio.voices);
   const wantVoices = await page.evaluate(() => window.__reel.cueCount);
   check('sound: the cast voices are loaded once sound is on', wantVoices > 0 && voices >= Math.min(wantVoices, 12), `${voices} voice buffers for ${wantVoices} cues`);
+  const f0 = await page.evaluate(() => window.__reel.audio.fired);
+  await page.evaluate(() => { window.__reel.seek(24.2); window.__reel.play(); });
+  await page.waitForTimeout(2600);
+  const f1 = await page.evaluate(() => ({ fired: window.__reel.audio.fired, t: window.__reel.t }));
+  check('sound: voice lines fire as the cast arrives', f1.fired - f0 >= 1, `${f1.fired - f0} fired, playhead 24.2 → ${f1.t.toFixed(2)}`);
   await page.keyboard.press('m');
   await page.evaluate(() => window.__reel.pause());
 

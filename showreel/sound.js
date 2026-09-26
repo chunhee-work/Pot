@@ -26,8 +26,8 @@ export function createSound({ duration, chapters }) {
   let on = false, playing = false;
   let el = null, ac = null, master = null, scoreGain = null;
   let lastT = null, duckUntil = 0;
-  const buffers = {};
-  let voicesLoading = null;
+  const buffers = {}, onsets = {};
+  let voicesLoading = null, speaking = null, fired = 0;
 
   function ensure() {
     if (el) return;
@@ -51,7 +51,13 @@ export function createSound({ duration, chapters }) {
         const r = await fetch(VOICE(n));
         if (!r.ok) throw new Error(r.status);
         const data = await r.arrayBuffer();
-        buffers[n] = await new Promise((res, rej) => ac.decodeAudioData(data, res, rej));
+        const buf = await new Promise((res, rej) => ac.decodeAudioData(data, res, rej));
+        // each line opens on 0.1–0.3 s of air; start at the first syllable so it lands on the beat
+        const d = buf.getChannelData(0); let peak = 0;
+        for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > peak) peak = v; }
+        let i = 0; while (i < d.length && Math.abs(d[i]) < peak * 0.08) i++;
+        onsets[n] = Math.max(0, i / buf.sampleRate - 0.015);
+        buffers[n] = buf;
       } catch (e) { console.warn('[reel] voice', n, e); }
     }));
   }
@@ -79,10 +85,18 @@ export function createSound({ duration, chapters }) {
     lastT = t;
   }
 
+  function hush(at) {
+    // the next voice cuts the last one off, as in a roll call
+    if (!speaking) return;
+    const { src, g } = speaking; speaking = null;
+    g.gain.cancelScheduledValues(at); g.gain.setValueAtTime(g.gain.value, at); g.gain.linearRampToValueAtTime(0, at + 0.04);
+    try { src.stop(at + 0.05); } catch (_) {}
+  }
   function fire(voice) {
     const buf = buffers[voice];
     if (!buf || !ac) return;
     const now = ac.currentTime;
+    hush(now);
     const src = ac.createBufferSource(); src.buffer = buf;
     const g = ac.createGain();
     g.gain.setValueAtTime(0, now);
@@ -90,7 +104,10 @@ export function createSound({ duration, chapters }) {
     g.gain.setValueAtTime(0.95, now + SNIP - 0.25);
     g.gain.linearRampToValueAtTime(0, now + SNIP);
     src.connect(g); g.connect(master);
-    src.start(now, 0, SNIP);
+    src.start(now, onsets[voice] || 0, SNIP);
+    speaking = { src, g };
+    fired++;
+    src.onended = () => { if (speaking && speaking.src === src) speaking = null; };
     duckUntil = now + SNIP;
   }
 
@@ -107,15 +124,17 @@ export function createSound({ duration, chapters }) {
     /** where the score actually is (for the tests) */
     get position() { return el ? el.currentTime : null; },
     get voicesReady() { return Object.keys(buffers).length; },
+    get voicesFired() { return fired; },
     setOn(v, t, isPlaying) {
       on = !!v;
       if (on) { ensure(); loadVoices(); if (isPlaying) { playing = true; start(t); } }
-      else if (el) el.pause();
+      else { if (el) el.pause(); if (ac) hush(ac.currentTime); }
     },
     play(t) { playing = true; if (on) start(t); },
-    pause() { playing = false; if (el) el.pause(); lastT = null; },
+    pause() { playing = false; if (el) el.pause(); if (ac) hush(ac.currentTime); lastT = null; },
     seek(t) {
       lastT = null;
+      if (ac) hush(ac.currentTime);
       if (!el || !on) return;
       el.currentTime = t;
       if (scoreGain) { scoreGain.gain.cancelScheduledValues(ac.currentTime); scoreGain.gain.setValueAtTime(0, ac.currentTime); }
@@ -123,9 +142,11 @@ export function createSound({ duration, chapters }) {
     },
     tick(t) {
       if (!on || !playing || !el) { lastT = t; return; }
-      // voices: only for cues crossed by ordinary forward playback
-      if (lastT !== null && t > lastT && t - lastT < 0.25) {
-        for (const q of cues) if (q.t > lastT && q.t <= t) fire(q.voice);
+      // voices: only for cues crossed by ordinary forward playback (a seek or a
+      // loop resets lastT); a slow frame may cross one late, but a line more
+      // than a third of a second stale is dropped rather than played off the beat
+      if (lastT !== null && t > lastT) {
+        for (const q of cues) if (q.t > lastT && q.t <= t && t - q.t < 0.35) fire(q.voice);
       }
       // keep the score with the picture if something (a stall, a seek it missed) pulls them apart
       if (!el.seeking && el.readyState >= 3 && !el.paused && Math.abs(el.currentTime - t) > 0.15) el.currentTime = t;

@@ -209,6 +209,7 @@ function toggle() { playing ? pause() : play(); }
 function seek(x, announce) {
   t = wrap(K.clamp(x, T0, T1 - 1e-3));
   sound.seek(t);
+  updateUI(chapterAt(t));   // the transport answers at once, even if the new frame is slow to draw
   invalidate();
   if (announce) live.textContent = `${chapterAt(t).scene.title}, ${fmt(t)}`;
 }
@@ -410,7 +411,7 @@ window.__reel = {
   get playing() { return playing; },
   get frames() { return frames; },
   get soundOn() { return sound.on; },
-  get audio() { return { position: sound.position, voices: sound.voicesReady }; },
+  get audio() { return { position: sound.position, voices: sound.voicesReady, fired: sound.voicesFired }; },
   /** the playhead and the score's position as of the last painted frame */
   get sync() { return syncAtPaint; },
   cueCount: CHAPTERS.reduce((n, c) => n + (c.scene.cues || []).length, 0),
