@@ -1,9 +1,11 @@
 # BUILD-STATUS — `/reel`
 
 ## Now
-- T13：不带上下文的 reviewer 正在审 7 个章节和渐进加载（23:17 MYT 派出）；审完修复后进 T14
+- T14：PR https://github.com/chunhee00/Pot/pull/1（base `staging`）CI 绿，合并中；合并后删除 session 分支，确认 staging 部署 READY
 
 ## Done
+- T13 审查（00:14 MYT）：第二轮 review 5 项全部修复并加测试（3D 模型下载失败不再卡住、等待加载时声音不再循环、iPhone 工具栏 / iPad 竖屏布局不出界、Needle 缓存按像素密度区分、两处缓存加上限）
+  - 最终代码 `2280d7a` 完整测试 51/51 通过（输出存档于 `/tmp/claude-0/final-test.txt`）
 - T13 部分（23:17 MYT）
   - 完整测试 46/46 通过（7 个章节检查 + 播放器 + 声音 + 慢网络 + 手机 + 减少动态效果 + 首页未改动）
   - 每帧 JS 绘制耗时：整片平均 1.05ms（无头浏览器 CPU）
@@ -24,7 +26,7 @@
   - 首页、`/process`、`/work` 三个文件的 sha256 和开工前一致
 
 ## Queue
-- T14 Go-Live 上 staging
+- 无（生产分支等你明确说了才上线）
 
 ## Blockers
 - 无
