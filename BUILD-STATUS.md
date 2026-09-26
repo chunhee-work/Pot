@@ -1,10 +1,12 @@
 # BUILD-STATUS — `/reel`
 
 ## Now
-- T5–T11：7 个章节 agent 并行在做（22:16 MYT 派出），每个只改 `showreel/scenes/<n>-<id>.js`
+- T5 Needle、T8 The Cast：agent 还在做（其余 5 章已验收）
 - T2–T4、T12：不带上下文的 reviewer 正在审引擎代码
 
 ## Done
+- T6 Medium、T9 Four more cuts、T10 The Product（22:55 MYT）：check-chapter 全部 PASS
+  - Medium 横屏 0.96ms / 手机 0.76ms；Cuts 0.88ms / 1.42ms；Product 0.49ms / 0.33ms（每帧平均绘制耗时）
 - T11 One operator（22:53 MYT）：check-chapter PASS（横屏 0.74ms，手机 0.92ms）；截图 `/tmp/claude-0/shots/operator-final/`
 - T7 Land of Hope（22:44 MYT）：check-chapter PASS（横屏每帧 1.0ms，手机 1.14ms）；截图 `/tmp/claude-0/shots/landofhope/`
 - 引擎 review 13 项全部修复（22:36 MYT），页面测试 34/35（剩「配音已加载」等 The Cast）
