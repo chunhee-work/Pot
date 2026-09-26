@@ -23,7 +23,7 @@ page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('pageerror', e => errors.push(String(e)));
 await page.goto(`${url}/reel.html?paused${debug ? '&debug' : ''}`);
 await page.evaluate(() => window.__reel.ready);
-if (!chrome) await page.addStyleTag({ content: '.chrome,#pulse{display:none!important}' });
+if (!chrome) await page.addStyleTag({ content: '.chrome,#pulse,#loader{display:none!important}' });
 for (const spec of times) {
   let at = spec;
   if (spec.includes(':')) {
