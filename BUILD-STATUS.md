@@ -1,9 +1,13 @@
 # BUILD-STATUS — `/reel`
 
 ## Now
-- T14：PR https://github.com/chunhee00/Pot/pull/1（base `staging`）CI 绿，合并中；合并后删除 session 分支，确认 staging 部署 READY
+- 无。本轮完成（00:27 MYT）
 
 ## Done
+- T14 Go-Live 上 staging（00:27 MYT）
+  - PR https://github.com/chunhee00/Pot/pull/1 已合并进 `staging`（合并提交 `ad075b7`），CI（Vercel）绿，无 review 评论
+  - staging 部署 `dpl_53LuxDeLq2qPA5WoE2UdKiG6RJjN` 状态 READY：https://chunhee-portfolio-3ywzwmc5p-chunhee00s-projects.vercel.app/reel
+  - 本地 session 分支已删；远端 `claude/vibrant-allen-9mlymk` 删不掉（容器的 git 代理在删除时断开连接，GitHub 连接器没有删分支工具），需要在 PR 页面点「Delete branch」
 - T13 审查（00:14 MYT）：第二轮 review 5 项全部修复并加测试（3D 模型下载失败不再卡住、等待加载时声音不再循环、iPhone 工具栏 / iPad 竖屏布局不出界、Needle 缓存按像素密度区分、两处缓存加上限）
   - 最终代码 `2280d7a` 完整测试 51/51 通过（输出存档于 `/tmp/claude-0/final-test.txt`）
 - T13 部分（23:17 MYT）
@@ -29,7 +33,7 @@
 - 无（生产分支等你明确说了才上线）
 
 ## Blockers
-- 无
+- 远端分支 `claude/vibrant-allen-9mlymk` 待手动删除（见上）
 
 ## Resume notes
 - 本地预览：`node tests/shoot.mjs <输出目录> <时间,…> [--size 390x844] [--debug]`
