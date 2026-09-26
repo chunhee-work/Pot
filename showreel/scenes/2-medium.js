@@ -13,15 +13,16 @@
             and traces a viewfinder round it, which snaps tight as the word
             racks into focus.
    b3 1.875 a strand drops from the bottom rail and gathers into the caret;
-            "&" slams, and "code." is typed on sixteenths.
-   b4 2.5   2025 — THE PIVOT rises on the film's edge. Hold; the caret blinks
-            on the beat.
-   ~3.95    the type dives into the strip, the strip whips,
+            "&" slams, and "code." is typed on sixteenth triplets,
+   b4 2.5   the full stop landing on the bar. 2025 — THE PIVOT rises on the
+            film's edge (an eyebrow over the words on a phone). Hold; the
+            caret blinks on the beat.
+   3.85     the type dives into the strip through the rails, the strip whips,
    b7 4.375 and the rails slam shut into one thread, which twangs itself
             still — pure rest from 4.9. */
 import {
   PAL, BEAT, clamp, lerp, seg, TAU, bezier,
-  inQuad, outCubic, inOutCubic, inOutQuad, inQuart, outQuart, outExpo, inBack, outBack,
+  outCubic, inOutCubic, inOutQuad, inQuart, outQuart, outExpo, inBack, outBack,
   cover, rrect, thread, rest, text, layout, measure, label, along, polyLength
 } from '../kit.js';
 
@@ -51,6 +52,7 @@ const SHUT0 = 4.06;                     // the rails start to close
 const T_REST = 4.9;                     // pure rest from here to the cut
 
 const BASE = '#15140f';                 // the film base, a lifted black
+const CAPTION = '2025 — THE PIVOT';
 
 // ── small helpers ─────────────────────────────────────────────────────────
 const mod = (a, n) => ((a % n) + n) % n;
@@ -83,13 +85,10 @@ function ring(lt, t0, amp, xn) {
 }
 
 // ── geometry, cached per frame size ────────────────────────────────────────
-let geo = null;
-function geometry(ctx, S) {
-  const key = S.W + 'x' + S.H;
-  if (geo && geo.key === key) return geo;
-  const { W, H, u } = S, P = S.portrait;
-  const cy = H / 2, hh = (P ? 19 : 14) * u;
-  const size = (P ? 20 : 17) * u;
+/** the layout at one type size and strip height */
+function build(ctx, S, stacked, size, hh) {
+  const { W, H, u } = S;
+  const cy = H / 2;
   const Lt = { size, weight: 200 }, Hv = { size, weight: 800 };
   const capH = layout(ctx, 'camera', Hv).ascent;
   const sp = 0.27 * size, lead = capH + 0.5 * size;   // word space, line pitch
@@ -100,29 +99,55 @@ function geometry(ctx, S) {
   const yA = railT - gap;                         // "camera" baseline
   const yAmp = railB + gap + capH;                // "&" baseline
   let xL, xTo, yTo, xCam, xAmp, xCode, yCode, cap;
-  const capSize = (P ? 2.9 : 2) * u;
-  if (!P) {
+  const capSize = (stacked ? 2.9 : 2) * u;
+  if (!stacked) {
     // a Z: the first line hangs left above the strip, the answer right below
     // it; "to" stands clear of the viewfinder
     xL = W * 0.12; xTo = xL; yTo = yA; xCam = xL + wTo + 0.5 * size;
     xAmp = W - xL - (wAmp + sp + wCode); xCode = xAmp + wAmp + sp; yCode = yAmp;
-    // the dateline, printed along the film's edge
-    cap = { x: W - xL, y: railT - 2.3 * u, align: 'right', top: true };
+    // the dateline, printed along the film's edge: over the top rail at the
+    // right, or — if the viewfinder leaves no room there — under the bottom
+    // rail at the left
+    const wCap = measure(ctx, CAPTION, { size: capSize, weight: 600, tracking: 0.18 });
+    const x1 = xCam + wCam + 0.2 * size + 0.17 * size;
+    if (W - xL - wCap > x1 + 2 * u) cap = { x: W - xL, y: railT - 2.3 * u, align: 'right', side: 'top' };
+    else cap = { x: xL, y: railB + 2.3 * u + capSize * 0.72, align: 'left', side: 'bottom' };
   } else {
     // on the phone the words stack on one left edge, light over heavy either
     // side of the strip: to / camera / — / & / code.
     xL = 9.5 * u; xTo = xL + 0.02 * size; xCam = xL; yTo = yA - lead;
     xAmp = xL + 0.02 * size; xCode = xL; yCode = yAmp + lead;
-    cap = { x: xL, y: yTo - capH - 0.62 * size, align: 'left', top: true };
+    cap = { x: xL, y: yTo - capH - 0.62 * size, align: 'left', side: 'top' };
   }
   const padX = 0.2 * size, padY = 0.2 * size;
   const brk = { x0: xCam - padX, x1: xCam + wCam + padX, y0: yA - capH - padY, y1: yA + padY };
-  geo = {
-    key, cy, hh, size, Lt, Hv, capH, sp, railT, railB,
+  const g = {
+    cy, hh, size, Lt, Hv, capH, sp, railT, railB,
     xTo, yTo, wTo, xCam, yA, wCam, xAmp, yAmp, xCode, yCode, wAmp, wCode,
     codeL: layout(ctx, 'code.', Hv), cap, capSize, brk, arm: 0.27 * size,
-    inflX: (P ? 0.07 : 0.17) * size       // how loose the viewfinder is before it locks
+    inflX: (stacked ? 0.07 : 0.17) * size       // how loose the viewfinder is before it locks
   };
+  // does it sit inside the safe area?
+  const top = Math.min(brk.y0, yTo - capH, cap.y - capSize), bottom = yCode + 0.02 * size;
+  const left = Math.min(brk.x0, xTo), right = Math.max(brk.x1, xCode + wCode + 0.2 * size, stacked ? 0 : cap.x);
+  g.fits = top >= 0.08 * H && bottom <= 0.86 * H && left >= 0.05 * W && right <= 0.95 * W;
+  return g;
+}
+let geo = null;
+function geometry(ctx, S) {
+  const key = S.W + 'x' + S.H;
+  if (geo && geo.key === key) return geo;
+  // the words stack on a phone-tall frame; anything squarer takes the Z. If a
+  // frame is too tight for the type, the type and the strip come down together.
+  const stacked = S.H > S.W * 1.3, u = S.u;
+  let size = (stacked ? 20 : 17) * u, hh = (stacked ? 19 : 14) * u, g;
+  for (let i = 0; i < 14; i++) {
+    g = build(ctx, S, stacked, size, hh);
+    if (g.fits) break;
+    size *= 0.93; hh *= 0.96;
+  }
+  g.key = key;
+  geo = g;
   return geo;
 }
 
@@ -136,7 +161,7 @@ function filmStrip(S, g) {
   const u = S.u, hh = g.hh, N = FRAMES.length;
   const fh = hh * 1.25, fw = fh * 16 / 9;
   const pitch = Math.round(fw + hh * 0.23);
-  const loopW = pitch * N, pad = pitch * 2;
+  const loopW = pitch * N, pad = pitch * 3, margin = Math.ceil(pitch / 2);
   const cw = pad + loopW + S.W + 4, ch = Math.round(hh * 2);
   const cv = document.createElement('canvas');
   cv.width = cw; cv.height = ch;
@@ -168,7 +193,7 @@ function filmStrip(S, g) {
     rrect(c, x, cy - rowY - hH / 2, hw, hH, hH * 0.32); c.fill();
     rrect(c, x, cy + rowY - hH / 2, hw, hH, hH * 0.32); c.fill();
   }
-  film = { key, cv, pitch, loopW, pad, ch };
+  film = { key, cv, pitch, loopW, pad, margin, ch };
   return film;
 }
 
@@ -211,6 +236,42 @@ function railPoints(S, g, lt) {
 }
 
 // ── the strip's content ───────────────────────────────────────────────────
+/* two scratch canvases, rewritten in full every frame they are used (the
+   first copy drawn into each is opaque), so nothing carries between frames */
+const scratch = [null, null];
+function buffer(i, w, h) {
+  let b = scratch[i];
+  if (!b || b.width !== w || b.height !== h) {
+    b = document.createElement('canvas'); b.width = w; b.height = h;
+    scratch[i] = b;
+  }
+  return b;
+}
+/** the strip's window at film position P, smeared over `blur` px of travel.
+   Two passes: a comb of n1 copies, then n2 copies of the comb spread across
+   one tooth — n1·n2 samples for n1 + n2 draws, so the smear reads smooth. */
+function smeared(S, st, P, blur) {
+  const W = S.W, ch = st.ch, u = S.u;
+  const sx = st.pad + mod(P * st.pitch, st.loopW);
+  if (blur < 0.5 * u) return { cv: st.cv, x: sx };
+  const n1 = clamp(Math.ceil(blur / (2.2 * u)), 2, 8), sp = blur / n1;
+  const n2 = clamp(Math.ceil(sp / (0.3 * u)), 1, 8);
+  const M = st.margin;
+  const A = buffer(0, W + M, ch), a = A.getContext('2d');
+  a.globalCompositeOperation = 'source-over';
+  for (let j = 0; j < n1; j++) {
+    a.globalAlpha = 1 / (j + 1);
+    a.drawImage(st.cv, sx - M - j * sp, 0, W + M, ch, 0, 0, W + M, ch);
+  }
+  if (n2 === 1) return { cv: A, x: M };
+  const B = buffer(1, W, ch), b = B.getContext('2d');
+  for (let k = 0; k < n2; k++) {
+    b.globalAlpha = 1 / (k + 1);
+    b.drawImage(A, M - (sp * k) / n2, 0, W, ch, 0, 0, W, ch);
+  }
+  return { cv: B, x: 0 };
+}
+
 function drawStrip(ctx, S, g, lt, R) {
   const st = filmStrip(S, g);
   const W = S.W, cy = g.cy, hh = g.hh, ch = st.ch;
@@ -223,31 +284,22 @@ function drawStrip(ctx, S, g, lt, R) {
   ctx.clip();
   ctx.fillStyle = BASE;
   ctx.fillRect(0, cy - hh * 1.3, W, hh * 2.6);
-  // motion blur: the window drawn at its positions over the last 1/60 s
-  const P = filmPos(lt), blur = Math.min(st.pad - 2, (P - filmPos(lt - 1 / 60)) * st.pitch);
-  const n = clamp(Math.ceil(blur / (0.35 * S.u)), 1, 16);
-  const sx = st.pad + mod(P * st.pitch, st.loopW);
+  // motion blur: the film's travel over the last 1/60 s
+  const P = filmPos(lt), blur = Math.min(st.pitch * 2, (P - filmPos(lt - 1 / 60)) * st.pitch);
+  const win = smeared(S, st, P, blur);
   ctx.globalAlpha = 1;
   if (R.opening) {
     // the strip unfolds from edge-on, a column at a time from the centre out
-    const nS = 72, sw = W / nS, m = Math.min(n, 5);
+    const nS = 72, sw = W / nS;
     for (let s = 0; s < nS; s++) {
       const x0 = s * sw, o = openAt(S, lt, x0 + sw / 2);
       if (o < 0.004) continue;
       const dh = ch * o;
-      for (let j = 0; j < m; j++) {
-        ctx.globalAlpha = 1 / (j + 1);
-        const off = m > 1 ? (blur * j) / (m - 1) : 0;
-        ctx.drawImage(st.cv, sx - off + x0, 0, sw, ch, x0, cy - dh / 2, sw + 1, dh);
-      }
+      ctx.drawImage(win.cv, win.x + x0, 0, sw, ch, x0, cy - dh / 2, sw + 1, dh);
     }
   } else {
     const dh = ch * R.ou;
-    for (let j = 0; j < n; j++) {
-      ctx.globalAlpha = 1 / (j + 1);
-      const off = n > 1 ? (blur * j) / (n - 1) : 0;
-      ctx.drawImage(st.cv, sx - off, 0, W, ch, 0, cy - dh / 2, W, dh);
-    }
+    ctx.drawImage(win.cv, win.x, 0, W, ch, 0, cy - dh / 2, W, dh);
   }
   ctx.restore();
 }
@@ -271,7 +323,7 @@ function scaled(ctx, cx, cy, s, fn) {
 function slammed(ctx, sl, cx, cy, draw) {
   if (!sl) return;
   if (sl.pre) {
-    // the word's scale 1/100 s ago, and between: a short streak toward the lens
+    // ghosts at the scales it has just fallen through: a short streak toward the lens
     const back = 0.012 * sl.v * 1.2;
     for (let j = 3; j >= 1; j--) scaled(ctx, cx, cy, sl.s + back * j, () => draw(sl.a * 0.16));
   }
@@ -446,9 +498,10 @@ function drawCaret(ctx, S, g, lt, dy) {
 // ── the caption ───────────────────────────────────────────────────────────
 function drawCaption(ctx, S, g, lt) {
   if (lt < T_CAP) return;
-  const c = g.cap, str = '2025 — THE PIVOT';
-  const dist = g.railT - c.y + g.capSize * 1.2;
-  label(ctx, S, str, c.x, c.y, {
+  const c = g.cap;
+  // it leaves through the rail it sits by (its mask keeps the fall short)
+  const dist = c.side === 'top' ? g.railT - c.y + g.capSize * 1.2 : g.railB - c.y - g.capSize * 1.2;
+  label(ctx, S, CAPTION, c.x, c.y, {
     size: g.capSize, align: c.align, color: PAL.dim, mask: true,
     reveal: seg(lt, T_CAP, T_CAP + 0.5), window: 0.45,
     glyph: i => ({ dy: dive(lt, i * 0.35, dist, -0.04) })
@@ -508,11 +561,12 @@ export default {
       ctx.save();
       ctx.beginPath(); ctx.rect(-W, -H, 3 * W, H + rt); ctx.clip();
       drawTop(ctx, S, g, lt);
-      drawCaption(ctx, S, g, lt);
+      if (g.cap.side === 'top') drawCaption(ctx, S, g, lt);
       ctx.restore();
       ctx.save();
       ctx.beginPath(); ctx.rect(-W, rb, 3 * W, 2 * H); ctx.clip();
       drawBottom(ctx, S, g, lt);
+      if (g.cap.side === 'bottom') drawCaption(ctx, S, g, lt);
       ctx.restore();
     }
     thread(ctx, S, R.top, { glow: 0.8 });

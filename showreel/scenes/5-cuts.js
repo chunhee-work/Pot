@@ -37,30 +37,26 @@ const C = {
 const FILMS = [
   {
     img: 'assets/ccats.jpg', kick: 'OG10 ORIGIN', rt: '3:37',
-    title: ['CCATS'], titleP: ['CCATS'],
-    log: ['A factory cat, a coffee-powered idea, a city saved.'],
-    logP: ['A factory cat, a coffee-powered idea,', 'a city saved.'],
+    title: ['CCATS'],
+    log: ['A factory cat, a coffee-powered idea,', 'a city saved.'],
     L: { fx: 0, fy: 0.4, z: 1.16 }, P: { fx: 0.13, fy: 0.4, z: 1 }, pan: 1, motes: 'ember', grade: ['color', 0.42]
   },
   {
     img: 'assets/og10.jpg', kick: 'TEASER', rt: '1:14',
-    title: ['OG10 ARE BACK'], titleP: ['OG10', 'ARE BACK'],
+    title: ['OG10', 'ARE BACK'],
     log: ['Ten characters walk off the page.'],
-    logP: ['Ten characters walk off the page.'],
     L: { fx: 1, fy: 0.55, z: 1 }, P: { fx: 0.9, fy: 0.5, z: 1 }, pan: -1, motes: 'dust', grade: ['overlay', 0.24]
   },
   {
     img: 'assets/sket.jpg', kick: 'OG10 ORIGIN', rt: '4:22',
-    title: ['SKET'], titleP: ['SKET'],
-    log: ['A student’s gi, a moonlit road, the armor he came back for.'],
-    logP: ['A student’s gi, a moonlit road,', 'the armor he came back for.'],
+    title: ['SKET'],
+    log: ['A student’s gi, a moonlit road,', 'the armor he came back for.'],
     L: { fx: 0.02, fy: 0.35, z: 1.08 }, P: { fx: 0.09, fy: 0.35, z: 1 }, pan: 1, motes: 'petal', grade: ['color', 0.3]
   },
   {
     img: 'assets/bounty-board.jpg', kick: 'COMMUNITY', rt: '1:13',
-    title: ['BOUNTY BOARD'], titleP: ['BOUNTY', 'BOARD'],
-    log: ['Pick a platform, share the heroes, earn your reward.'],
-    logP: ['Pick a platform, share the heroes,', 'earn your reward.'],
+    title: ['BOUNTY', 'BOARD'],
+    log: ['Pick a platform, share the heroes,', 'earn your reward.'],
     L: { fx: 0.5, fy: 0.45, z: 1 }, P: { fx: 1, fy: 0.45, z: 1 }, pan: -1, motes: 'speck', grade: ['soft-light', 0.4]
   }
 ];
@@ -135,7 +131,7 @@ function geo(ctx, S) {
   const yc2 = 0.852 * H, yc1 = yc2 - G.cS * 1.65;
   // (both orientations stack the same way, bottom up from the logline)
   G.type = FILMS.map(F => {
-    const lines = F.titleP, logs = F.logP;
+    const lines = F.title, logs = F.log;
     const to = { size: G.tS, weight: 900, tracking: -0.012 };
     const tW = Math.max(...lines.map(s => measure(ctx, s, to)));
     const n = logs.length, yLn = P ? yc1 - 5.6 * u : 0.835 * H - G.cS - 4.2 * u;
@@ -183,7 +179,7 @@ function makeScrim(W, H, P) {
     gr = g.createLinearGradient(xt, 0, xt + nx * f, ny * f);
     gr.addColorStop(0, css(C.bg, 1)); gr.addColorStop(0.45, css(C.bg, 0.62)); gr.addColorStop(1, css(C.bg, 0));
     g.fillStyle = gr;
-    g.beginPath(); g.moveTo(0, 0); g.lineTo(xt + nx * f * 1.2, 0); g.lineTo(xb + nx * f * 1.2 + ex * 0, H); g.lineTo(0, H); g.closePath();
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(xt + nx * f * 1.2, 0); g.lineTo(xb + nx * f * 1.2, H); g.lineTo(0, H); g.closePath();
     g.fill();
     gr = g.createLinearGradient(0, H, 0, H * 0.55);
     gr.addColorStop(0, css(C.bg, 0.9)); gr.addColorStop(0.35, css(C.bg, 0.55)); gr.addColorStop(1, css(C.bg, 0));
@@ -197,9 +193,9 @@ function makeScrim(W, H, P) {
     gr.addColorStop(0, css(C.bg, 0)); gr.addColorStop(0.5, css(C.bg, 0.55)); gr.addColorStop(0.82, css(C.bg, 0.93)); gr.addColorStop(1, css(C.bg, 1));
     g.fillStyle = gr; g.fillRect(0, y0, W, y1 - y0);
     g.fillStyle = css(C.bg, 1); g.fillRect(0, y1 - 1, W, H - y1 + 1);
-    gr = g.createLinearGradient(0, 0, 0, H * 0.17);
-    gr.addColorStop(0, css(C.bg, 0.66)); gr.addColorStop(1, css(C.bg, 0));
-    g.fillStyle = gr; g.fillRect(0, 0, W, H * 0.17);
+    gr = g.createLinearGradient(0, 0, 0, H * 0.2);
+    gr.addColorStop(0, css(C.bg, 0.82)); gr.addColorStop(0.5, css(C.bg, 0.55)); gr.addColorStop(1, css(C.bg, 0));
+    g.fillStyle = gr; g.fillRect(0, 0, W, H * 0.2);
   }
   return c;
 }
@@ -246,7 +242,12 @@ function grade(ctx, S, G, k, ft) {
   const R = Math.max(pr.w, pr.h);
   if (k === 0) {
     // the colour script's own light, then the inferno climbing out of the floor
-    ctx.globalAlpha = 0.2; blot(ctx, glow(c), pr.x + pr.w * 0.62, pr.y + pr.h * 0.3, R * 0.5);
+    // (a blob per key colour, crossfaded, so the sprite cache stays four entries big)
+    const K = [0, 0.625, 0.9375, 1.25], cs = [C.amber, C.steel, C.blossom, C.ember];
+    for (let i = 0; i < 4; i++) {
+      const w = Math.min(i ? seg(ft, K[i], K[i] + 0.09, outCubic) : 1, 1 - (i < 3 ? seg(ft, K[i + 1], K[i + 1] + 0.09, outCubic) : 0));
+      if (w > 0.001) { ctx.globalAlpha = 0.2 * w; blot(ctx, glow(cs[i]), pr.x + pr.w * 0.62, pr.y + pr.h * 0.3, R * 0.5); }
+    }
     const inf = seg(ft, 1.2, 1.875, inOutCubic);
     if (inf > 0) { ctx.globalAlpha = 0.55 * inf; blot(ctx, glow(C.ember), pr.x + pr.w * 0.5, pr.y + pr.h * 1.1, R * (0.55 + 0.2 * inf)); }
   } else if (k === 1) {
@@ -254,7 +255,9 @@ function grade(ctx, S, G, k, ft) {
     ctx.globalAlpha = 0.2 + 0.05 * Math.sin(ft * 3); blot(ctx, glow(C.sun), pr.x + pr.w * (0.25 + 0.08 * ft / 2.5), pr.y + pr.h * 0.02, R * 0.55);
   } else if (k === 2) {
     const e = seg(ft, 0.7, 2.5, inOutCubic);
-    ctx.globalAlpha = 0.14 + 0.36 * e; blot(ctx, glow(c), pr.x + pr.w * 0.55, pr.y + pr.h * 1.08, R * 0.6);
+    const e2 = seg(ft, 0.55, 2.3, inOutCubic), a = 0.14 + 0.36 * e;
+    if (e2 < 1) { ctx.globalAlpha = a * (1 - e2); blot(ctx, glow(C.blossom), pr.x + pr.w * 0.55, pr.y + pr.h * 1.08, R * 0.6); }
+    if (e2 > 0) { ctx.globalAlpha = a * e2; blot(ctx, glow(C.ember), pr.x + pr.w * 0.55, pr.y + pr.h * 1.08, R * 0.6); }
   } else {
     ctx.globalAlpha = 0.16 + 0.05 * noise1(ft * 9, 4); blot(ctx, glow(C.amber), pr.x + pr.w * 0.97, pr.y + pr.h * 0.97, R * 0.28);
   }
@@ -267,8 +270,9 @@ function motes(ctx, S, G, k, ft) {
   const { W, u } = S, pr = G.plate, kind = FILMS[k].motes, P = S.portrait;
   const n = kind === 'petal' ? 24 : 30, sc = P ? 1.35 : 1;
   const y0 = pr.y - 4 * u, y1 = pr.y + pr.h * (P ? 0.72 : 1) + 4 * u;
+  const x0 = P ? -6 * u : pr.x - 4 * u, x1 = W + 6 * u;
   const inf = k === 0 ? seg(ft, 1.2, 1.875) : 0;
-  const c = scriptAt(k, ft);
+  const petal = css(mixc(scriptAt(k, ft), C.white, 0.18));
   ctx.save();
   if (kind !== 'petal') ctx.globalCompositeOperation = 'lighter';
   for (let i = 0; i < n; i++) {
@@ -281,12 +285,12 @@ function motes(ctx, S, G, k, ft) {
     s *= sc;
     // nearer motes also drift further with the pan: parallax
     const par = -FILMS[k].pan * z * 2.2 * u * ft;
-    const x = wrapf(r0 * W + vx * ft + par, -6 * u, W + 6 * u);
+    const x = wrapf(x0 + r0 * (x1 - x0) + vx * ft + par, x0, x1);
     const y = wrapf(y0 + r1 * (y1 - y0) + vy * ft, y0, y1);
     const tw = 0.5 + 0.5 * Math.sin(ft * (5 + 7 * r3) + i * 2.1);
     if (kind === 'petal') {
       ctx.globalAlpha = 0.55 + 0.35 * tw;
-      ctx.fillStyle = css(mixc(c, C.white, 0.18));
+      ctx.fillStyle = petal;
       ctx.beginPath(); ctx.ellipse(x, y, s, s * 0.46, ft * (2 + 3 * r3) + i, 0, TAU); ctx.fill();
     } else {
       const col = kind === 'ember' ? (i % 3 ? C.ember : C.amber) : kind === 'dust' ? C.goldHi : C.parch;
@@ -348,12 +352,12 @@ function typeBlock(ctx, S, G, k, ft) {
     const nr = seg(ft, 0.06, 0.5);
     const nb = text(ctx, S, '0' + (k + 1), x - G.nS * 0.05, T.yN, {
       size: G.nS, weight: 800, tracking: -0.02, stroke: true, strokeWidth: Math.max(1, S.lw * 0.6),
-      color: 'rgba(216,178,106,.62)', reveal: nr, mask: true, window: 0.7
+      color: 'rgba(216,178,106,.78)', reveal: nr, mask: true, window: 0.7
     });
     text(ctx, S, '/ 04', nb.x1 + 1.6 * u, T.yN, { size: G.hS, weight: 700, tracking: 0.22, color: PAL.faint, reveal: seg(ft, 0.2, 0.55), mask: true, window: 0.5 });
   }
   // beat 1, with the cut: the title slams in
-  T.lines.forEach((s, j) => slam(ctx, S, s, x, T.yT[j], G.tS, seg(ft, 0.03 + j * 0.08, 0.42 + j * 0.08), G.cut[k].dir * -4 * u));
+  T.lines.forEach((s, j) => slam(ctx, S, s, x, T.yT[j], G.tS, seg(ft, 0.08 + j * 0.07, 0.46 + j * 0.07), G.cut[k].dir * -4 * u));
   // up to beat 2: the kicker rises, the runtime spins and lands on the beat
   const kr = seg(ft, 0.12, 0.46);
   const kb = text(ctx, S, F.kick, x, T.yK, { size: G.kS, weight: 700, tracking: 0.24, color: acc, reveal: kr, mask: true, window: 0.5 });
@@ -363,10 +367,10 @@ function typeBlock(ctx, S, G, k, ft) {
     text(ctx, S, '·', sx, T.yK, { size: G.kS * 1.2, weight: 700, color: PAL.faint, alpha: clamp(pr * 5) });
     odometer(ctx, F.rt, sx + G.kS * 1.3, T.yK + (G.rS - G.kS) * 0.12, G.rS, pr);
   }
-  // beat 2 to 3: the logline rises out of the rule
+  // then the logline rises under the rule, set well before beat 3
   T.logs.forEach((s, j) => text(ctx, S, s, x, T.yL[j], {
     size: G.lS, weight: 400, color: 'rgba(245,245,240,.92)',
-    reveal: seg(ft, 0.4 + j * 0.16, 0.98 + j * 0.16), mask: true, window: 0.2
+    reveal: seg(ft, 0.3 + j * 0.12, 0.74 + j * 0.12), mask: true, window: 0.2
   }));
 }
 
@@ -495,15 +499,16 @@ function drawThread(ctx, S, G, lt) {
 
 // ── the slash: the frame as it was, cut in two, sliding off itself ────────
 const pool = [];
+let tick = 0;   // recency for the two-slot cache only; never reaches a pixel
 /** the frame just before slash j, frozen into an offscreen canvas (cached by size) */
 function frozen(S, G, j) {
   const im = j === 0 ? 1 : (S.img(FILMS[j - 1].img) ? 1 : 0);
   const key = G.key + '|' + j + '|' + im;
   let slot = pool.find(s => s.key === key);
-  if (slot) { slot.used = S.t; return slot.cv; }
+  if (slot) { slot.used = ++tick; return slot.cv; }
   if (pool.length < 2) { slot = { cv: document.createElement('canvas') }; pool.push(slot); }
   else slot = pool[0].used <= pool[1].used ? pool[0] : pool[1];
-  slot.key = key; slot.used = S.t;
+  slot.key = key; slot.used = ++tick;
   const cv = slot.cv;
   if (cv.width !== S.W || cv.height !== S.H) { cv.width = S.W; cv.height = S.H; }
   const o = cv.getContext('2d');
@@ -531,9 +536,10 @@ function halves(ctx, S, G, j, fc) {
   for (const side of [-1, 1]) {
     for (const [lag, a] of [[0.022, 0.28], [0, 1]]) {
       if (lag && fc < lag) continue;
-      const [ox, oy] = halfOffset(S, G, j, fc - lag, side);
+      const f = fc - lag, [ox, oy] = halfOffset(S, G, j, f, side);
+      const rot = side * cu.dir * 0.035 * SLIDE_E(clamp(f / SLIDE));
       ctx.save();
-      ctx.translate(ox, oy);
+      ctx.translate(ox + c.x, oy + c.y); ctx.rotate(rot); ctx.translate(-c.x, -c.y);
       ctx.beginPath();
       ctx.moveTo(c.x - t.x * B, c.y - t.y * B); ctx.lineTo(c.x + t.x * B, c.y + t.y * B);
       ctx.lineTo(c.x + t.x * B + side * n.x * B, c.y + t.y * B + side * n.y * B);
@@ -584,7 +590,7 @@ export default {
   caption: 'The thread turns blade and slashes through four brand films on the downbeats: CCATS, OG10 Are Back, SKET and the Bounty Board, each made by one person.',
   assets: FILMS.map(f => f.img),
   models: [],
-  still: 4.2,
+  still: 6.8,
   draw(ctx, S) {
     const lt = S.lt;
     if (lt < IN || lt >= OUT) { rest(ctx, S); return; }
@@ -596,6 +602,7 @@ export default {
       return;
     }
     const k = lt < CUT[4] ? filmAt(lt) : 4, fc = lt - CUT[k];
+    if (k < 4 && CUT[k + 1] - lt < 0.45) frozen(S, G, k + 1);   // paint the next slash's frame ahead of it
     if (k < 4) drawFilm(ctx, S, G, k, fc);
     if (fc < SLIDE + 0.06) halves(ctx, S, G, k, fc);
     if (k < 4) overlays(ctx, S, G, lt);

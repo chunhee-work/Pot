@@ -20,8 +20,8 @@
    4.38  CCATS … one a beat … 9.38 OLD KEEPER — the cast takes the whole line
    9.72  the strip evens out (phone: the speaking window shuts)
    10.0  "12 voices" · CAST & DIRECTED WITH ELEVENLABS — the hold (still)
-   11.4  the voices close into the line, left to right
-   12.34 flat — pure rest to the end */
+   11.58 the voices close into the line, left to right
+   12.40 flat — pure rest to the end */
 import {
   PAL, clamp, lerp, invlerp, seg, noise1,
   outExpo, outCubic, inCubic, inOutCubic, inQuad, siteE, spring,
@@ -51,9 +51,9 @@ const HEROES = 3, LAST = ARR.length - 1;
 const EVEN = [9.72, 10.12];    // wide: the strip evens out
 const SHUTP = [9.74, 9.98];    // phone: the speaking window closes
 const SLAM = 10;               // "12 voices"
-const TXT_OUT = 11.4;         // the hold's type leaves
-const SHUT = 11.48;            // voices close into the line, left to right
-const TAUT = 12.0, FLAT = 12.34;
+const TXT_OUT = 11.5;         // the hold's type leaves
+const SHUT = 11.58;            // voices close into the line, left to right
+const TAUT = 12.06, FLAT = 12.4;
 
 const numStr = i => String(i + 1).padStart(2, '0');
 const role = c => (c.npc ? 'STORY NPC' : 'OG10 COLLECTIBLE');
@@ -107,9 +107,10 @@ function makeWave(S, lt, src) {
 function drawLine(ctx, S, wave) {
   const { W, H, u } = S, cy = H / 2;
   const step = 0.6 * u, x0 = -0.02 * W, n = Math.ceil((1.04 * W) / step);
-  const pts = new Array(n + 1);
-  for (let j = 0; j <= n; j++) { const x = x0 + j * step; pts[j] = [x, cy + wave(x)]; }
-  thread(ctx, S, pts, { sharp: true });
+  thread(ctx, S, c => {
+    c.beginPath();
+    for (let j = 0; j <= n; j++) { const x = x0 + j * step, y = cy + wave(x); if (j) c.lineTo(x, y); else c.moveTo(x, y); }
+  });
 }
 
 // ── windows: where the line parts around a voice ──────────────────────────
@@ -437,9 +438,9 @@ function holdType(ctx, S, lt, o) {
   swap(ctx, S, 'TEN COLLECTIBLES · TWO STORY NPCS', W / 2, o.ey, { size: o.esize, weight: 600, tracking: 0.2, color: PAL.dim, align: 'center', spread: 0 }, lt, SLAM - 0.12, 0.5, TXT_OUT, 0.2);
   const st = { size: o.dsize, weight: 800, tracking: -0.01 };
   const w12 = measure(ctx, '12', st), wv = measure(ctx, ' voices', st), x = W / 2 - (w12 + wv) / 2;
-  swap(ctx, S, '12', x, o.y, { ...st, color: PAL.goldHi, spread: 0.25 }, lt, SLAM - 0.04, 0.3, TXT_OUT + 0.02, 0.2);
-  swap(ctx, S, ' voices', x + w12, o.y, { ...st, color: PAL.ink, spread: 0.12 }, lt, SLAM + 0.02, 0.42, TXT_OUT + 0.05, 0.2);
-  swap(ctx, S, 'CAST & DIRECTED WITH ELEVENLABS', W / 2, o.cy, { size: o.csize, weight: 700, tracking: 0.22, color: PAL.gold, align: 'center', spread: 0 }, lt, SLAM + 0.25, 0.6, TXT_OUT + 0.08, 0.2);
+  swap(ctx, S, '12', x, o.y, { ...st, color: PAL.goldHi, spread: 0.25, drop: true }, lt, SLAM - 0.04, 0.3, TXT_OUT + 0.02, 0.2);
+  swap(ctx, S, ' voices', x + w12, o.y, { ...st, color: PAL.ink, spread: 0.12, drop: true }, lt, SLAM + 0.02, 0.32, TXT_OUT + 0.05, 0.2);
+  swap(ctx, S, 'CAST & DIRECTED WITH ELEVENLABS', W / 2, o.cy, { size: o.csize, weight: 700, tracking: 0.22, color: PAL.gold, align: 'center', spread: 0 }, lt, SLAM + 0.12, 0.45, TXT_OUT + 0.08, 0.2);
 }
 
 // ── lens ─────────────────────────────────────────────────────────────────
@@ -459,7 +460,7 @@ function lens(S, lt, src) {
   for (const [t0, i] of [[ARR[1], 1], [ARR[8], 8], [SLAM, -1]]) {
     const p = (lt - t0) / 0.65;
     if (p > 0 && p < 1) {
-      fx.warp = p;
+      fx.warp = 0.18 + 0.82 * p;         // born already clear of the face
       fx.warpX = i < 0 || src[i] == null ? 0.5 : clamp(src[i] / S.W, 0.1, 0.9);
       fx.warpY = 0.5;
     }

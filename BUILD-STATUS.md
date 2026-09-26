@@ -5,6 +5,7 @@
 - T2–T4、T12：不带上下文的 reviewer 正在审引擎代码
 
 ## Done
+- T11 One operator（22:53 MYT）：check-chapter PASS（横屏 0.74ms，手机 0.92ms）；截图 `/tmp/claude-0/shots/operator-final/`
 - T7 Land of Hope（22:44 MYT）：check-chapter PASS（横屏每帧 1.0ms，手机 1.14ms）；截图 `/tmp/claude-0/shots/landofhope/`
 - 引擎 review 13 项全部修复（22:36 MYT），页面测试 34/35（剩「配音已加载」等 The Cast）
 - T2–T4 引擎、控件、静态版、手机布局、加载态（22:21 MYT）

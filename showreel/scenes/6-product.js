@@ -9,7 +9,7 @@
    cards fly home, the pack folds into the line and the ring pulls straight. */
 import {
   PAL, BEAT, clamp, lerp, invlerp, seg, TAU, noise1,
-  inCubic, outCubic, inOutCubic, inQuad, outQuad, outExpo, outBack, bezier, siteE,
+  inCubic, outCubic, inOutCubic, outQuad, outExpo, outBack, bezier, siteE,
   cover, rrect, thread, rest, restPoints, text, measure, counter
 } from '../kit.js';
 
@@ -53,35 +53,47 @@ function geo(S) {
   if (G && G.key === key) return G;
   const { W, H, u } = S, P = S.portrait, cy = H / 2;
   const g = { key, P, cy };
-  if (P) { g.pw = 88 * u; g.ph = g.pw * AI.h / AI.w; g.px = (W - g.pw) / 2; }
-  else { g.ph = 80 * u; g.pw = g.ph * AI.w / AI.h; g.px = W * 0.925 - g.pw; }
+  /* tuned for 16:9 and a 9:19.5 phone; squarer frames (16:10, 4:3, a tablet
+     held upright, a 9:16 phone) scale the pieces down until they fit */
+  const wu = W / u, hu = H / u;
+  const k = P ? Math.min(1, hu / 205) : Math.min(1, 0.855 * wu / 136.2);
+  const kx = P ? k : Math.min(1, (wu - 15) / 162);
+  if (P) {
+    g.ph = Math.min(85.4, (0.42 * hu - 25) / 0.55, (0.36 * hu - 21) / 0.45) * u;
+    g.pw = g.ph * AI.w / AI.h; g.px = (W - g.pw) / 2;
+  } else {
+    g.ph = 80 * u * k; g.pw = g.ph * AI.w / AI.h; g.px = W * 0.925 - g.pw;
+  }
   g.py = cy - DEAD * g.ph;
   g.sA = g.pw / AI.w;
   g.ringA = { x: g.px + AI.rx * g.sA, y: g.py + AI.ry * g.sA, r: AI.rr * g.sA };
-  g.ringB = P ? { x: W / 2, y: 0.44 * H, r: 31 * u } : { x: W / 2, y: 0.42 * H, r: 27 * u };
+  g.ringB = P ? { x: W / 2, y: (hu > 190 ? 0.44 : 0.42) * H, r: 31 * u * k } : { x: W / 2, y: 0.42 * H, r: 27 * u };
   g.sB = g.ringB.r / AI.rr;
   // type
   g.colX = P ? W / 2 : 0.07 * W;
   g.align = P ? 'center' : 'left';
-  g.hs = P ? 9.4 * u : 8.4 * u;
+  g.hs = P ? 9.4 * u : 8.4 * u * k;
   g.ls = P ? 2.7 * u : 1.75 * u;
-  g.bs = P ? 4.7 * u : 4.4 * u;
+  g.bs = P ? 4.7 * u : 4.4 * u * Math.max(0.85, k);
   g.h2 = cy - 3 * u; g.h1 = g.h2 - g.hs * 1.06; g.he = g.h1 - g.hs * 0.9;
   g.headShift = P ? (g.py - 6.5 * u) - g.h2 : 0;
   if (P) { const b = g.py + g.ph; g.le = b + 8.5 * u; g.l1 = g.le + 7.5 * u; g.l2 = g.l1 + g.bs * 1.18; }
   else { g.le = cy + 7.5 * u; g.l1 = g.le + 6.8 * u; g.l2 = g.l1 + g.bs * 1.18; }
   // the product stage
   const R = g.ringB.r;
-  g.pillY = g.ringB.y + R + (P ? 6.8 : 4.9) * u;
-  if (P) { g.ce = 0.763 * H; g.c1 = g.ce + 7.6 * u; g.c2 = g.c1 + 6.2 * u; g.cs = 4.4 * u; }
+  g.pillY = g.ringB.y + R + (P ? 6.8 * k : 4.9) * u;
+  if (P) { g.c2 = 0.835 * H; g.c1 = g.c2 - 6.2 * u; g.ce = g.c1 - 7.6 * u; g.cs = 4.4 * u; }
   else { g.ce = 0.79 * H; g.c1 = g.ce + 5.3 * u; g.c2 = null; g.cs = 3.3 * u; }
-  g.card = P ? { w: 26 * u, h: 32 * u, rx: 34 * u, ry: 66 * u } : { w: 30 * u, h: 22.9 * u, rx: 64 * u, ry: 29.5 * u };
+  const kc = Math.max(0.85, kx);
+  g.card = P ? { w: 26 * u * k, h: 32 * u * k, rx: 34 * u * k, ry: 66 * u * k }
+    : { w: 30 * u * kc, h: 22.9 * u * kc, rx: 64 * u * kx, ry: 29.5 * u };
   g.slots = ANG.map(a => ({
     x: g.ringB.x + Math.cos(a) * g.card.rx, y: g.ringB.y + Math.sin(a) * g.card.ry,
     rot: Math.cos(a) * (P ? 0.09 : 0.11), dx: Math.cos(a), dy: Math.sin(a)
   }));
   // higher cards sit behind lower ones, so each keeps its header in view
   g.zorder = g.slots.map((s, k) => k).sort((a, b) => g.slots[a].y - g.slots[b].y);
+  g.cardPad = Math.ceil(2.4 * u);
   g.cards = null; g.nodes = null; g.hatch = null;
   G = g;
   return g;
@@ -146,36 +158,36 @@ function hatch(ctx, g, S) {
   return g.hatch;
 }
 
-/** the real screens as device panels (a phone's proportions on a phone) */
-function cardSprites(g, S) {
-  if (g.cards) return g.cards;
-  const imgs = SCREENS.map(p => S.img(p));
-  if (imgs.some(im => !im || !im.width)) return null;
-  const { w, h } = g.card, u = S.u, pad = Math.ceil(2.4 * u), r = (g.P ? 2.4 : 1.3) * u;
+/** the real screens as device panels (a phone's proportions on a phone),
+    built one at a time, cached per frame size */
+function cardSprite(g, S, k) {
+  if (!g.cards) g.cards = [];
+  if (g.cards[k]) return g.cards[k];
+  const im = S.img(SCREENS[k]);
+  if (!im || !im.width) return null;
+  const { w, h } = g.card, u = S.u, pad = g.cardPad, r = (g.P ? 2.4 : 1.3) * u;
   const bz = Math.max(1, (g.P ? 0.75 : 0.45) * u);
-  g.cards = imgs.map(im => {
-    const cv = canvas(w + pad * 2, h + pad * 2), x = cv.getContext('2d');
-    x.save();
-    x.shadowColor = 'rgba(0,0,0,0.8)'; x.shadowBlur = 1.8 * u; x.shadowOffsetY = 0.8 * u;
-    x.fillStyle = '#161615'; rrect(x, pad, pad, w, h, r); x.fill();
-    x.restore();
-    x.save();
-    rrect(x, pad + bz, pad + bz, w - 2 * bz, h - 2 * bz, Math.max(1, r - bz)); x.clip();
-    const sc = { fx: 0.5, fy: 0, zoom: g.P ? 1 : 1.03 };
-    cover(x, im, pad + bz, pad + bz, w - 2 * bz, h - 2 * bz, sc);
-    x.globalCompositeOperation = 'lighter';     // lift the dark UI so it reads at thumbnail size
-    cover(x, im, pad + bz, pad + bz, w - 2 * bz, h - 2 * bz, { ...sc, alpha: 0.45 });
-    x.globalCompositeOperation = 'source-over';
-    const gr = x.createLinearGradient(0, pad, 0, pad + h);
-    gr.addColorStop(0, 'rgba(255,255,255,0.08)'); gr.addColorStop(0.3, 'rgba(255,255,255,0)');
-    x.fillStyle = gr; x.fillRect(pad, pad, w, h);
-    if (g.P) { x.fillStyle = '#050505'; rrect(x, pad + w / 2 - 3.2 * u, pad + bz + 0.8 * u, 6.4 * u, 1.5 * u, 0.75 * u); x.fill(); }
-    x.restore();
-    x.strokeStyle = 'rgba(78,205,196,0.42)'; x.lineWidth = Math.max(1, 0.12 * u);
-    rrect(x, pad + 0.5, pad + 0.5, w - 1, h - 1, r); x.stroke();
-    return cv;
-  });
-  return g.cards;
+  const cv = canvas(w + pad * 2, h + pad * 2), x = cv.getContext('2d');
+  x.save();
+  x.shadowColor = 'rgba(0,0,0,0.8)'; x.shadowBlur = 1.8 * u; x.shadowOffsetY = 0.8 * u;
+  x.fillStyle = '#161615'; rrect(x, pad, pad, w, h, r); x.fill();
+  x.restore();
+  x.save();
+  rrect(x, pad + bz, pad + bz, w - 2 * bz, h - 2 * bz, Math.max(1, r - bz)); x.clip();
+  const sc = { fx: 0.5, fy: 0, zoom: g.P ? 1 : 1.03 };
+  cover(x, im, pad + bz, pad + bz, w - 2 * bz, h - 2 * bz, sc);
+  x.globalCompositeOperation = 'lighter';     // lift the dark UI so it reads at thumbnail size
+  cover(x, im, pad + bz, pad + bz, w - 2 * bz, h - 2 * bz, { ...sc, alpha: 0.45 });
+  x.globalCompositeOperation = 'source-over';
+  const gr = x.createLinearGradient(0, pad, 0, pad + h);
+  gr.addColorStop(0, 'rgba(255,255,255,0.08)'); gr.addColorStop(0.3, 'rgba(255,255,255,0)');
+  x.fillStyle = gr; x.fillRect(pad, pad, w, h);
+  if (g.P) { x.fillStyle = '#050505'; rrect(x, pad + w / 2 - 3.2 * u, pad + bz + 0.8 * u, 6.4 * u, 1.5 * u, 0.75 * u); x.fill(); }
+  x.restore();
+  x.strokeStyle = 'rgba(78,205,196,0.42)'; x.lineWidth = Math.max(1, 0.12 * u);
+  rrect(x, pad + 0.5, pad + 0.5, w - 1, h - 1, r); x.stroke();
+  g.cards[k] = cv;
+  return cv;
 }
 
 // ── the thread's shapes ─────────────────────────────────────────────────────
@@ -257,8 +269,12 @@ export default {
       ctx.drawImage(glowSprite(), c.cx - gs / 2, c.cy - gs / 2, gs, gs);
       ctx.restore();
     }
-    const cards = lt > T.light0 && lt < T.ret + 0.7 ? cardSprites(g, S) : null;
-    if (cards) drawCards(ctx, S, g, lt, c, cards);
+    // the cached pieces are built ahead of need, one screen per frame, so no frame stalls
+    if (lt < T.light0) {
+      nodeSprites(g, S); glowSprite(); hatch(ctx, g, S);
+      for (let k = 0; k < 10; k++) if (!(g.cards && g.cards[k])) { cardSprite(g, S, k); break; }
+    }
+    if (lt > T.light0 && lt < T.ret + 0.7) drawCards(ctx, S, g, lt, c);
 
     // ── the pack screen: before, then after, then pushed into ─────────────
     const uf = seg(lt, T.unfold[0], T.unfold[1], unfoldE);
@@ -396,6 +412,15 @@ function drawThread(ctx, S, g, lt, c) {
   const { W } = S, cy = g.cy;
   if (lt < T.coil[0]) {
     rest(ctx, S);
+    // a gleam runs along the line under the title, lifting it glyph by glyph
+    if (lt > 0.1 && lt < 0.95) {
+      const hw = measure(ctx, 'Gacha, screen', { size: g.hs, weight: 200, tracking: -0.02 });
+      const x0 = g.P ? S.W / 2 - hw / 2 : g.colX;
+      const gx = x0 + (lt - 0.14) / 0.34 * hw;
+      const f = (gx + 0.02 * W) / (1.04 * W);
+      const a = seg(lt, 0.1, 0.18) * (1 - seg(lt, 0.6, 0.95));
+      if (f > 0 && a > 0) thread(ctx, S, restPoints(S), { sharp: true, from: Math.max(0, f - 0.06), progress: Math.min(1, f), color: PAL.goldHi, glow: 1.8, width: S.lw * 1.4, alpha: a });
+    }
     // the split: the thread brightens across the width of the screen it cuts
     const sp = seg(lt, T.unfold[0] - 0.06, T.unfold[1], siteE);
     if (sp > 0) {
@@ -482,8 +507,8 @@ function drawNodes(ctx, S, g, lt, c) {
   }
 }
 
-function drawCards(ctx, S, g, lt, c, sprites) {
-  const u = S.u, cw = sprites[0].width, ch = sprites[0].height;
+function drawCards(ctx, S, g, lt, c) {
+  const u = S.u, cw = g.card.w + g.cardPad * 2, ch = g.card.h + g.cardPad * 2;
   const place = (k, tt) => {
     const t0 = lightAt(k) + 0.02;
     const f = seg(tt, t0, t0 + 0.6, outExpo);
@@ -504,16 +529,18 @@ function drawCards(ctx, S, g, lt, c, sprites) {
   for (const k of g.zorder) {
     const q = place(k, lt);
     if (q.p <= 0.002) continue;
+    const img = cardSprite(g, S, k);
+    if (!img) continue;
     const t0 = lightAt(k) + 0.02, r0 = T.ret + (9 - k) * 0.02;
     const moving = (lt > t0 && lt < t0 + 0.32) || (lt > r0 && lt < r0 + 0.28);
     if (moving) {
       for (let j = 3; j >= 1; j--) {
         const gq = place(k, lt - j * 0.022);
         if (gq.p <= 0.002) continue;
-        blit(ctx, sprites[k], gq, cw, ch, 0.22 / j);
+        blit(ctx, img, gq, cw, ch, 0.22 / j);
       }
     }
-    blit(ctx, sprites[k], q, cw, ch, clamp(q.p * 5));
+    blit(ctx, img, q, cw, ch, clamp(q.p * 5));
   }
 }
 function blit(ctx, img, q, cw, ch, alpha) {
@@ -552,23 +579,23 @@ function drawSelection(ctx, S, g, lt, c) {
 function drawType(ctx, S, g, lt) {
   const u = S.u, cy = g.cy, P = g.P, al = g.align, x = g.colX;
   // ── the title: each line rises off its own sill, the last one off the thread
-  if (lt < 4.7) {
+  if (lt < 4.8) {
     const sh = g.headShift * seg(lt, T.unfold[0], T.unfold[1], unfoldE);
-    kt(ctx, S, 'Gacha, screen', x, g.h1 + sh, { size: g.hs, weight: 200, tracking: -0.02, color: PAL.ink, align: al, mask: true, window: 0.5 }, [0.12, 0.78], [4.32, 4.62]);
-    kt(ctx, S, 'by screen.', x, g.h2 + sh, { size: g.hs, weight: 800, tracking: -0.02, color: PAL.ink, align: al, mask: true, window: 0.5 }, [0.24, 0.9], [4.36, 4.66]);
-    kt(ctx, S, 'THE PRODUCT \u2014 UI/UX I DESIGNED', x, g.he + sh, { size: g.ls, weight: 700, tracking: 0.22, color: PAL.teal, align: al, mask: true, window: 0.45 }, [0.5, 1.0], [4.28, 4.56]);
+    kt(ctx, S, 'Gacha, screen', x, g.h1 + sh, { size: g.hs, weight: 200, tracking: -0.02, color: PAL.ink, align: al, mask: true, window: 0.5 }, [0.18, 0.86], [4.44, 4.72]);
+    kt(ctx, S, 'by screen.', x, g.h2 + sh, { size: g.hs, weight: 800, tracking: -0.02, color: PAL.ink, align: al, mask: true, window: 0.5 }, [0.12, 0.8], [4.47, 4.75]);
+    kt(ctx, S, 'THE PRODUCT \u2014 UI/UX I DESIGNED', x, g.he + sh, { size: g.ls, weight: 700, tracking: 0.22, color: PAL.teal, align: al, mask: true, window: 0.45 }, [0.5, 1.0], [4.4, 4.66]);
   }
   // ── before / after
   const bo = { size: g.bs, tracking: -0.01, color: PAL.ink, align: al };
   if (lt < 3.4) {
-    kt(ctx, S, 'BEFORE \u2014 THE SHIPPED BUILD', x, g.le, { size: g.ls, weight: 700, tracking: 0.22, color: PAL.dim, align: al, mask: true }, [1.25, 1.65], [2.95, 3.2]);
-    kt(ctx, S, '45% of the screen', x, g.l1, { ...bo, weight: 300, mask: true }, [1.33, 1.85], [2.97, 3.24]);
-    kt(ctx, S, 'doing nothing', x, g.l2, { ...bo, weight: 800, mask: true }, [1.42, 1.95], [3.0, 3.28]);
+    kt(ctx, S, 'BEFORE \u2014 THE SHIPPED BUILD', x, g.le, { size: g.ls, weight: 700, tracking: 0.22, color: PAL.dim, align: al, mask: true }, [1.25, 1.65], [3.0, 3.24]);
+    kt(ctx, S, '45% of the screen', x, g.l1, { ...bo, weight: 300, mask: true }, [1.33, 1.85], [3.02, 3.28]);
+    kt(ctx, S, 'doing nothing', x, g.l2, { ...bo, weight: 800, mask: true }, [1.42, 1.95], [3.05, 3.32]);
   }
-  if (lt > 3.1 && lt < 4.75) {
-    kt(ctx, S, 'AFTER — LIVE NOW', x, g.le, { size: g.ls, weight: 700, tracking: 0.22, color: PAL.teal, align: al, mask: true }, [3.15, 3.5], [4.3, 4.55]);
-    kt(ctx, S, 'every pixel', x, g.l1, { ...bo, weight: 300, mask: true }, [3.2, 3.65], [4.32, 4.6]);
-    kt(ctx, S, 'given a job', x, g.l2, { ...bo, weight: 800, mask: true }, [3.28, 3.75], [4.36, 4.64]);
+  if (lt > 3.1 && lt < 4.8) {
+    kt(ctx, S, 'AFTER — LIVE NOW', x, g.le, { size: g.ls, weight: 700, tracking: 0.22, color: PAL.teal, align: al, mask: true }, [3.2, 3.55], [4.42, 4.66]);
+    kt(ctx, S, 'every pixel', x, g.l1, { ...bo, weight: 300, mask: true }, [3.25, 3.7], [4.45, 4.7]);
+    kt(ctx, S, 'given a job', x, g.l2, { ...bo, weight: 800, mask: true }, [3.33, 3.8], [4.48, 4.74]);
   }
   // ── the product stage: the decision, then where to find it
   const cx = S.W / 2;
@@ -582,9 +609,9 @@ function drawType(ctx, S, g, lt) {
       duo(ctx, S, 'Ten bolts around the pack are ', 'something you spend.', cx, g.c1, co, 'center', [5.05, 5.7], [7.32, 7.58]);
     }
   }
-  if (lt > 7.55 && lt < 9.1) {
-    kt(ctx, S, 'DESIGNED & PROTOTYPED WITH CLAUDE CODE', cx, g.ce, { size: g.ls, weight: 700, tracking: 0.22, color: PAL.teal, align: 'center', mask: true }, [7.6, 8.0], [8.75, 9.0]);
-    kt(ctx, S, 'gacha.thechillgallery.com', cx, g.c1, { size: g.cs * (P ? 1.02 : 1.2), weight: 700, tracking: -0.01, color: PAL.ink, align: 'center', mask: true }, [7.68, 8.1], [8.78, 9.04]);
+  if (lt > 7.55 && lt < 9.2) {
+    kt(ctx, S, 'DESIGNED & PROTOTYPED WITH CLAUDE CODE', cx, g.ce, { size: g.ls, weight: 700, tracking: P ? 0.15 : 0.22, color: PAL.teal, align: 'center', mask: true }, [7.6, 8.0], [8.85, 9.1]);
+    kt(ctx, S, 'gacha.thechillgallery.com', cx, g.c1, { size: g.cs * (P ? 1.02 : 1.2), weight: 700, tracking: -0.01, color: PAL.ink, align: 'center', mask: true }, [7.68, 8.1], [8.88, 9.14]);
   }
 }
 

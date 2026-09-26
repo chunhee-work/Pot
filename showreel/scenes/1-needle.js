@@ -1,31 +1,34 @@
 /* 1 — Needle (0–6 s). The reel's opening shot, and the frame it loops back to.
 
-   The rest line is a gold thread. A needle slides in along it, stabs down
-   through it as if through cloth, loops underneath and comes back up, lifting
-   the thread off the line into the C — then sews CHUN HEE in running stitches
-   around the letters' own outlines (Archivo 900, baked in below so the needle
-   can follow them exactly), and stabs back through the line beside the last E
-   on the bar. After the read the thread is pulled: the stitches cinch, the
-   needle whips out to the right and the name is drawn flat, back into the line
-   — pure rest by 5.915, on the downbeat that opens chapter 2.
+   The rest line is a gold thread. The camera leans in on it; a needle slides
+   in along it, stabs down through it as if through cloth, loops underneath and
+   comes back up, lifting the thread off the line into the C. As the camera
+   pulls back it sews CHUN HEE in running stitches around the letters' own
+   outlines (Archivo 900, baked in below so the needle can follow them stitch
+   by stitch), then stabs back through the line beside the last E, on the bar.
+   After the read the thread is pulled: the stitches cinch, the needle whips out
+   to the right, the name stretches across the frame and snaps flat into the
+   line — pure rest by 5.915, on the downbeat that opens chapter 2.
 
    Time map (local s; the intro's beats fall at 0.375 + k·0.625, bars at 1.0, 3.5, 6.0)
      0.00–0.08   rest
-     0.08–0.75   a glint runs the length of the taut line
-     0.24–0.84   the needle slides in along the thread
-     0.40–1.20   eyebrow SHOWREEL 2026
+     0.08–0.95   the camera leans in on the line; a glint runs its length
+     0.28–0.84   the needle slides in along the thread
      0.80–0.965  wind-up; the stab lands on the bar at 1.00 — the line twangs
-     1.00–1.34   under the line, back up through it, the thread lifting into the C
-     1.34–3.22   C H U N H E E sewn: a few slow stitches, then machine speed
-     3.22–3.50   out of the last E and down through the line (bar: quiver, lens hit)
-     3.36–4.05   "from needle & thread," drops from behind the line
+     1.00–1.22   under the line, back up through it, the thread lifting into the C
+     1.26–2.05   the camera pulls back while the first stitches go in slowly
+     1.90–2.60   eyebrow SHOWREEL 2026 settles in above the name
+     1.22–3.20   C H U N H E E sewn, the needle gathering to machine speed
+     3.20–3.50   out of the last E and down through the line (bar: quiver, lens hit)
+     3.50–4.10   "from needle & thread," drops from behind the line, word by word
      3.95–4.75   a sheen crosses the stitches while it holds
      4.95–5.375  tension: the copy leaves, stitches cinch and tremble, needle draws back
-     5.375–5.84  the pull: the needle whips out right, letters flatten into the line R→L
-     5.84–5.915  last settle   ·   5.915–6.00 rest                                    */
+     5.375–5.70  the pull: needle whips out right, the name stretches edge to edge
+                 and flattens into the line; it snaps taut at 5.70 and twangs
+     5.70–5.915  the twang dies; 5.915–6.00 rest                                     */
 import {
-  PAL, clamp, lerp, invlerp, seg, smoothstep, noise1, TAU,
-  outExpo, outCubic, inOutCubic, inQuad, outQuad, inQuart, siteE, bezier,
+  PAL, clamp, lerp, invlerp, smoothstep, noise1, TAU,
+  outExpo, outCubic, inCubic, inOutCubic, inQuad, outQuad, inOutQuad, inQuart, siteE,
   thread, rest, needle, text, layout
 } from '../kit.js';
 
@@ -42,21 +45,22 @@ const GLYPH = {
 
 // ── timing ────────────────────────────────────────────────────────────────
 const T = {
-  glint: [0.08, 0.75],
-  slide: [0.24, 0.84],
-  brow: [0.40, 1.20],
+  glint: [0.08, 0.78],
+  zoomIn: [0.08, 0.98], zoomOut: [1.26, 2.05],
+  slide: [0.28, 0.84],
+  brow: [1.9, 2.6],
   cock: [0.80, 0.95], stab: [0.965, 1.0],
-  leadIn: [1.0, 1.34],
-  sew: [1.34, 3.22],
-  leadOut: [3.22, 3.5, 3.535],     // start, the pierce (bar), the thunk
-  tag: [3.36, 4.05],
+  leadIn: [1.0, 1.22],
+  sew: [1.22, 3.2],
+  leadOut: [3.2, 3.5, 3.535],     // leaves the E, pierces the line (bar), stops dead
+  tag: [3.50, 4.10],
   sheen: [3.95, 4.75],
-  tension: 4.95, pull: 5.375,
-  tagOut: [5.0, 5.34], browOut: [4.98, 5.3],
-  flatStagger: 0.034, flatDur: 0.26,
-  fade: [5.835, 5.905],
+  tension: 4.95, pull: 5.375, snap: 5.70,
+  tagOut: [5.0, 5.33], browOut: [4.98, 5.3],
+  fade: [5.80, 5.90],
   end: 5.915
 };
+const ZMAX = 1.9;
 
 // ── polyline paths: flat [x,y,…] with cumulative arc length ─────────────────
 function mkPath(xy) {
@@ -78,21 +82,7 @@ function ptAt(p, s, o = {}) {
   o.y = p.xy[2 * i + 1] + (p.xy[2 * i + 3] - p.xy[2 * i + 1]) * k;
   return o;
 }
-/* the identity mapping; the pull replaces it with a flatten-and-spread */
-const ID = { ax: 1, bx: 0, ky: 1, cy: 0, by: 0 };
-const mx = (f, x) => x * f.ax + f.bx;
-const my = (f, y) => f.cy + (y - f.cy) * f.ky + f.by;
-/** add the stretch [a, b] of path p to the current path, through mapping f */
-function subPath(ctx, p, a, b, f) {
-  const xy = p.xy, c = p.c;
-  let i = seek(p, a), l = c[i + 1] - c[i], k = l > 0 ? (a - c[i]) / l : 0;
-  ctx.moveTo(mx(f, xy[2 * i] + (xy[2 * i + 2] - xy[2 * i]) * k), my(f, xy[2 * i + 1] + (xy[2 * i + 3] - xy[2 * i + 1]) * k));
-  const j = seek(p, b);
-  for (let q = i + 1; q <= j; q++) ctx.lineTo(mx(f, xy[2 * q]), my(f, xy[2 * q + 1]));
-  l = c[j + 1] - c[j]; k = l > 0 ? (b - c[j]) / l : 0;
-  ctx.lineTo(mx(f, xy[2 * j] + (xy[2 * j + 2] - xy[2 * j]) * k), my(f, xy[2 * j + 1] + (xy[2 * j + 3] - xy[2 * j + 1]) * k));
-}
-/** Catmull-Rom through control points, sampled to a flat polyline */
+/** Catmull-Rom through control points, sampled to a polyline */
 function spline(ctrl, per = 12) {
   const out = [];
   for (let i = 0; i < ctrl.length - 1; i++) {
@@ -107,11 +97,39 @@ function spline(ctrl, per = 12) {
   const e = ctrl[ctrl.length - 1]; out.push(e[0], e[1]);
   return mkPath(out);
 }
-/** arc length of the point on p nearest to (x, y) */
 function nearestS(p, x, y) {
   let best = 0, bd = Infinity;
   for (let i = 0; i < p.n; i++) { const d = Math.hypot(p.xy[2 * i] - x, p.xy[2 * i + 1] - y); if (d < bd) { bd = d; best = p.c[i]; } }
   return best;
+}
+
+/* A mapping takes the sewn name to where the pull has got it:
+   X = x·ax + bx,  Y = cy + (y − cy)·ky + by + dw·(the line's twang at X) */
+const ID = { ax: 1, bx: 0, ky: 1, cy: 0, by: 0, dw: 0 };
+let _defl = null;
+function deflAt(x) {
+  const d = _defl;
+  if (!d) return 0;
+  const f = clamp((x - d.x0) / (d.x1 - d.x0)) * (LN - 1), i = Math.min(LN - 2, Math.floor(f));
+  return lerp(d.y[i], d.y[i + 1], f - i);
+}
+function mapPt(f, x, y, o) {
+  o.x = x * f.ax + f.bx;
+  o.y = f.cy + (y - f.cy) * f.ky + f.by + (f.dw ? f.dw * deflAt(o.x) : 0);
+  return o;
+}
+const _m = {};
+/** add the stretch [a, b] of path p to the current path, through mapping f */
+function subPath(ctx, p, a, b, f) {
+  const xy = p.xy, c = p.c;
+  let i = seek(p, a), l = c[i + 1] - c[i], k = l > 0 ? (a - c[i]) / l : 0;
+  mapPt(f, xy[2 * i] + (xy[2 * i + 2] - xy[2 * i]) * k, xy[2 * i + 1] + (xy[2 * i + 3] - xy[2 * i + 1]) * k, _m);
+  ctx.moveTo(_m.x, _m.y);
+  const j = seek(p, b);
+  for (let q = i + 1; q <= j; q++) { mapPt(f, xy[2 * q], xy[2 * q + 1], _m); ctx.lineTo(_m.x, _m.y); }
+  l = c[j + 1] - c[j]; k = l > 0 ? (b - c[j]) / l : 0;
+  mapPt(f, xy[2 * j] + (xy[2 * j + 2] - xy[2 * j]) * k, xy[2 * j + 1] + (xy[2 * j + 3] - xy[2 * j + 1]) * k, _m);
+  ctx.lineTo(_m.x, _m.y);
 }
 
 // ── the sewing speed: a few deliberate stitches, then machine speed ────────
@@ -121,13 +139,19 @@ const SEWQ = (() => {
   let acc = 0;
   for (let i = 1; i <= SEWN; i++) {
     const t = (i - 0.5) / SEWN;
-    acc += lerp(0.05, 1, smoothstep(0, 0.27, t)) * lerp(1, 0.55, smoothstep(0.86, 1, t));
+    acc += lerp(0.13, 1, smoothstep(0.03, 0.3, t)) * lerp(1, 0.55, smoothstep(0.86, 1, t));
     q[i] = acc;
   }
   for (let i = 0; i <= SEWN; i++) q[i] /= acc;
   return q;
 })();
 function sewQ(t) { t = clamp(t) * SEWN; const i = Math.floor(t); return i >= SEWN ? 1 : lerp(SEWQ[i], SEWQ[i + 1], t - i); }
+function sewT(q) {           // inverse: the time a sewing fraction is reached
+  let lo = 0, hi = SEWN;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (SEWQ[m] < q) lo = m; else hi = m; }
+  return lerp(T.sew[0], T.sew[1], (lo + invlerp(SEWQ[lo], SEWQ[hi], q)) / SEWN);
+}
+const sewD = (G, t) => G.Dt * sewQ(invlerp(T.sew[0], T.sew[1], t));
 
 // ── geometry, built once per frame size ───────────────────────────────────
 let GEO = null;
@@ -156,18 +180,18 @@ function geometry(ctx, S) {
     rows.push(row);
   });
 
-  // stitches: a running stitch whose holes land on every corner
+  // stitches: a running stitch with a stitch centred on every corner
   const Pst = 1.5 * u, ratio = 0.6;
   glyphs.forEach((g, gi) => {
     const last = gi === glyphs.length - 1;
     const rule = gi === 0 ? (x, y) => x + 0.03 * Math.abs(y - (rows[g.row].base - 344 * k))   // the C's leftmost point
-      : last ? (x, y) => -x - 2 * y                                                           // the last E's foot, right
+      : last ? (x, y) => -x - 2 * y                                                           // the last E's foot
         : (x, y) => x - 2 * y;                                                                // bottom-left corner
     g.p = contour(g.raw, g.n, rule);
     Object.assign(g, stitchesOf(g.p, Pst, ratio));
   });
 
-  // the sewing order, with the hops between letters made under the cloth
+  // the sewing order; the hops between letters are made under the cloth
   let D = 0;
   glyphs.forEach((g, gi) => {
     if (gi) {
@@ -178,44 +202,49 @@ function geometry(ctx, S) {
     g.D0 = D; D += g.p.L; g.D1 = D;
   });
   const Dt = D;
+  glyphs.forEach(g => { g.tDone = sewT(g.D1 / Dt); });
 
   const r0 = rows[0], rl = rows[rows.length - 1];
-  const NL = (P ? 11.5 : 11) * u;               // needle length
+  const NL = (P ? 12.5 : 12) * u;                // needle length
   // the dive, left of the name
   const C0 = { x: glyphs[0].p.xy[0], y: glyphs[0].p.xy[1] };
   const xu = P ? 19.5 * u : r0.nL - 1.2 * u, xd = xu - 4.6 * u;
   const thD = 58 * Math.PI / 180, dD = [Math.cos(thD), Math.sin(thD)];
   const leadIn = spline([
-    [xd, cy], [xd + dD[0] * 2 * u, cy + dD[1] * 2 * u], [(xd + xu) / 2 + 0.2 * u, cy + 3.4 * u],
-    [xu - 0.5 * u, cy + 1.7 * u], [xu, cy],
+    [xd, cy], [xd + dD[0] * 1.8 * u, cy + dD[1] * 1.8 * u],
+    [(xd + xu) / 2 - 0.6 * u, cy + 3.1 * u], [(xd + xu) / 2 + 0.8 * u, cy + 3.1 * u],
+    [xu - 0.3 * u, cy + 1.5 * u], [xu, cy],
     [lerp(xu, C0.x, 0.45) - (P ? 0.6 : 0.9) * u, lerp(cy, C0.y, 0.45)],
     [C0.x - 0.7 * u, C0.y + 2.4 * u], [C0.x, C0.y]
   ], 14);
   const sUp = nearestS(leadIn, xu, cy);
-  // the exit, right of the last E
+  // the exit, right of the last E: the thread runs on from its foot into the needle's eye
   const gl = glyphs[glyphs.length - 1], E0 = { x: gl.p.xy[0], y: gl.p.xy[1] };
-  const xe = rl.nR + 7.4 * u, thE = 52 * Math.PI / 180, dE = [Math.cos(thE), Math.sin(thE)];
+  const xe = rl.nR + 6.2 * u, thE = 52 * Math.PI / 180, dE = [Math.cos(thE), Math.sin(thE)], depth = 4 * u;
   const leadOut = spline([
-    [E0.x, E0.y], [E0.x + 0.9 * u, E0.y + 1.6 * u],
-    [xe - dE[0] * 4.6 * u, cy - dE[1] * 4.6 * u], [xe - dE[0] * 2.2 * u, cy - dE[1] * 2.2 * u],
-    [xe, cy], [xe + dE[0] * 2.6 * u, cy + dE[1] * 2.6 * u]
+    [E0.x, E0.y], [E0.x + 1.3 * u, E0.y + 0.4 * u],
+    [xe - dE[0] * 5 * u, cy - dE[1] * 5 * u], [xe - dE[0] * 2.5 * u, cy - dE[1] * 2.5 * u],
+    [xe, cy], [xe + dE[0] * depth, cy + dE[1] * depth]
   ], 14);
   const sPierce = nearestS(leadOut, xe, cy);
 
-  // copy
   const topY = r0.top;
-  const brow = { y: topY - (P ? 6.2 : 5.4) * u, size: (P ? 2.55 : 1.95) * u };
-  const tag = { size: (P ? 5.0 : 4.2) * u };
-  tag.y = cy + (P ? 10.2 : 8.8) * u;
-
   GEO = {
-    key, F, k, rows, glyphs, Dt, NL, cy, u,
+    key, W, F, k, rows, glyphs, Dt, NL, cy, u,
     sw: Math.max(S.lw * 1.3, 0.34 * u),
-    xd, xu, dD, thD, leadIn, sUp,
-    xe, dE, thE, leadOut, sPierce, E0, C0,
-    brow, tag,
-    nL: Math.min(...rows.map(r => r.nL)), nR: Math.max(...rows.map(r => r.nR)), nTop: topY
+    xd, xu, dD, thD, leadIn, sUp, focusX: (P ? 0.46 : 0.4) * W,
+    xe, dE, thE, depth, leadOut, sPierce,
+    nL: Math.min(...rows.map(r => r.nL)), nR: Math.max(...rows.map(r => r.nR)), nTop: topY,
+    brow: { y: topY - (P ? 6.4 : 5.6) * u, size: (P ? 2.6 : 2.0) * u },
+    tag: { y: cy + (P ? 11.4 : 9.2) * u, size: (P ? 5.5 : 4.4) * u }
   };
+  // the lead-in carries the stab's speed in and hands the sewing its first, slow speed
+  const dur = T.leadIn[1] - T.leadIn[0];
+  GEO.m0 = Math.min(2 * 3.4 * u / (T.stab[1] - T.stab[0]) * dur, 2.2 * leadIn.L);
+  GEO.m1 = Dt * sewQ(0.004) / (0.004 * (T.sew[1] - T.sew[0])) * dur;
+  let lo = T.leadIn[0], hi = T.leadIn[1];
+  for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (leadInS(GEO, m) < sUp) lo = m; else hi = m; }
+  GEO.tUp = lo;
   return GEO;
 }
 
@@ -234,8 +263,8 @@ function contour(raw, n, rule) {
   return mkPath(xy);
 }
 
-/** running stitches along a closed path: a stitch centred on every corner and
-    evenly between, so each straight run divides into whole stitches */
+/** running stitches along a closed path: one centred on every corner and the
+    rest spaced evenly between, so each straight run takes whole stitches */
 function stitchesOf(p, P, ratio) {
   const n = p.n - 1, bounds = [0];
   for (let j = 1; j < n; j++) {
@@ -259,17 +288,26 @@ function stitchesOf(p, P, ratio) {
   return { sa: Float32Array.from(list, s => s[0]), sb: Float32Array.from(list, s => s[1]) };
 }
 
+// ── the camera: leans in on the thread for the stab, pulls back to sew ─────
+function cam(G, t, o) {
+  const a = inOutQuad(invlerp(T.zoomIn[0], T.zoomIn[1], t)) * (1 - inOutCubic(invlerp(T.zoomOut[0], T.zoomOut[1], t)));
+  o.z = 1 + (ZMAX - 1) * a; o.sx = lerp(G.xd, G.focusX, a);
+  return o;
+}
+
 // ── the needle's path through the chapter ──────────────────────────────────
-const _a = {}, _b = {};
-/** where the needle is at time t: tip (x, y), angle a, length, alpha */
+const _a = {}, _c = {};
+/** where the needle is at time t (world coords): tip (x, y), angle a, length, alpha */
 function pose(G, t, o) {
   const { u, cy, NL } = G;
   o.al = 1; o.len = NL; o.hide = false;
-  if (t < T.slide[0]) { o.al = 0; o.x = -NL; o.y = cy; o.a = 0; return o; }
+  if (t < T.slide[0]) { o.al = 0; o.hide = true; o.x = -NL; o.y = cy; o.a = 0; return o; }
   const xp = G.xd - 2.9 * u;
   const P0x = G.xd - G.dD[0] * 3.4 * u, P0y = cy - G.dD[1] * 3.4 * u;
   if (t < T.cock[0]) {                                          // slides in along the thread
-    o.x = lerp(-1.5 * u, xp, outExpo(invlerp(T.slide[0], T.slide[1], t))); o.y = cy; o.a = 0; return o;
+    cam(G, T.slide[0], _c);
+    const x0 = G.xd + (-1.5 * u - _c.sx) / _c.z;                 // just off the left edge of the frame
+    o.x = lerp(x0, xp, outExpo(invlerp(T.slide[0], T.slide[1], t))); o.y = cy; o.a = 0; return o;
   }
   if (t < T.stab[0]) {                                          // wind-up: lifts and takes aim
     const e = siteE(invlerp(T.cock[0], T.cock[1], t));
@@ -280,14 +318,14 @@ function pose(G, t, o) {
     o.x = lerp(P0x, G.xd, e); o.y = lerp(P0y, cy, e); o.a = G.thD; return o;
   }
   if (t < T.sew[0]) {                                           // under, up through, into the C
-    const s = G.leadIn.L * outCubic(invlerp(T.leadIn[0], T.leadIn[1], t));
+    const s = leadInS(G, t);
     ptAt(G.leadIn, s, o);
     const back = s - NL * 0.93;
     if (back >= 0) ptAt(G.leadIn, back, _a); else { _a.x = G.xd + G.dD[0] * back; _a.y = cy + G.dD[1] * back; }
     o.a = Math.atan2(o.y - _a.y, o.x - _a.x); return o;
   }
   if (t < T.leadOut[0]) {                                       // sewing
-    const D = G.Dt * sewQ(invlerp(T.sew[0], T.sew[1], t));
+    const D = sewD(G, t);
     let gi = 0;
     while (gi < G.glyphs.length - 1 && D >= G.glyphs[gi].D1) gi++;
     const g = G.glyphs[gi];
@@ -306,44 +344,52 @@ function pose(G, t, o) {
       _a.x = lerp(g.p.xy[0], pr.p.xy[0], f); _a.y = lerp(g.p.xy[1], pr.p.xy[1], f);
     }
     o.a = Math.atan2(o.y - _a.y, o.x - _a.x);
-    // the first few stitches are slow enough to see the needle dip at each hole
-    const q = stitchIndex(g, s);
-    const slow = 1 - smoothstep(T.sew[0] + 0.12, T.sew[0] + 0.3, t);
-    if (slow > 0 && q >= 0 && s > g.sb[q] && q + 1 < g.sa.length) {
-      const dip = Math.sin(Math.PI * invlerp(g.sb[q], g.sa[q + 1], s));
-      o.len = NL * (1 - 0.2 * dip * slow);
+    // the first stitches go in slowly enough to see the needle dip at each hole
+    const slow = 1 - smoothstep(T.sew[0] + 0.15, T.sew[0] + 0.4, t);
+    if (slow > 0) {
+      const q = stitchIndex(g, s);
+      if (q >= 0 && s > g.sb[q] && q + 1 < g.sa.length) {
+        const dip = Math.sin(Math.PI * invlerp(g.sb[q], g.sa[q + 1], s));
+        o.len = NL * (1 - 0.22 * dip * slow);
+      }
     }
     return o;
   }
   const [lo0, lop, lo1] = T.leadOut;
   if (t < lo1) {                                                // out of the E and down through the line
-    const s = t < lop ? G.sPierce * Math.pow(invlerp(lo0, lop, t), 2.2)
-      : lerp(G.sPierce, G.leadOut.L, outQuad(invlerp(lop, lo1, t)));
-    ptAt(G.leadOut, s, o);
-    const back = s - NL * 0.93, gl = G.glyphs[G.glyphs.length - 1];
+    ptAt(G.leadOut, leadOutS(G, t), o);
+    const s = leadOutS(G, t), back = s - NL * 0.93, gl = G.glyphs[G.glyphs.length - 1];
     if (back >= 0) ptAt(G.leadOut, back, _a); else ptAt(gl.p, gl.p.L + back, _a);
     o.a = Math.atan2(o.y - _a.y, o.x - _a.x); return o;
   }
-  // stuck through the line; it quivers from the blow, then draws back and whips out
-  const tipX = G.xe + G.dE[0] * 2.6 * u, tipY = cy + G.dE[1] * 2.6 * u;
-  let a = G.thE, x = tipX, y = tipY;
+  // stuck through the line: it quivers from the blow, then draws back and whips out
+  let a = G.thE, x = G.xe + G.dE[0] * G.depth, y = cy + G.dE[1] * G.depth;
   const qv = t - lo1;
-  const quiver = 0.11 * Math.exp(-5.5 * qv) * Math.sin(TAU * 5.2 * qv);
-  if (quiver) {
+  const quiver = 0.12 * Math.exp(-5.5 * qv) * Math.sin(TAU * 5.2 * qv);
+  if (Math.abs(quiver) > 1e-5) {
     const c = Math.cos(quiver), sn = Math.sin(quiver), dx = x - G.xe, dy = y - cy;
     x = G.xe + dx * c - dy * sn; y = cy + dx * sn + dy * c; a += quiver;
   }
-  const back = 2.6 * u * inOutCubic(invlerp(T.tension + 0.1, T.pull, t));
+  const back = 3.2 * u * inOutCubic(invlerp(T.tension + 0.1, T.pull, t));
   x -= G.dE[0] * back; y -= G.dE[1] * back;
   if (t >= T.pull) {
-    const w = invlerp(T.pull, T.pull + 0.25, t);
+    const w = invlerp(T.pull, T.pull + 0.24, t);
     const r = outCubic(Math.min(1, w * 1.8));
     a = lerp(G.thE, -0.02, r);
     y = lerp(y, cy - 0.25 * u, r);
     x = lerp(x, G.W + NL * 1.4, inQuart(w));
-    if (w >= 1) o.al = 0;
+    if (w >= 1) { o.al = 0; o.hide = true; }
   }
   o.x = x; o.y = y; o.a = a; return o;
+}
+function leadInS(G, t) {          // cubic Hermite: leaves at the stab's speed, arrives at the sewing's
+  const x = invlerp(T.leadIn[0], T.leadIn[1], t), x2 = x * x, x3 = x2 * x, L = G.leadIn.L;
+  return clamp((x3 - 2 * x2 + x) * G.m0 + (3 * x2 - 2 * x3) * L + (x3 - x2) * G.m1, 0, L);
+}
+function leadOutS(G, t) {
+  const [lo0, lop, lo1] = T.leadOut;
+  return t < lop ? G.sPierce * Math.pow(invlerp(lo0, lop, t), 2.2)
+    : lerp(G.sPierce, G.leadOut.L, outQuad(invlerp(lop, lo1, t)));
 }
 function stitchIndex(g, s) {
   let lo = 0, hi = g.sa.length - 1;
@@ -352,21 +398,21 @@ function stitchIndex(g, s) {
   return lo;
 }
 
-/** the needle, split where it passes through the line: the part below is on the far side of the cloth */
+/** the needle, split where it passes through the line: below it is on the far side of the cloth */
 function drawNeedle(ctx, S, G, o, alpha = 1) {
   const al = o.al * alpha;
   if (al <= 0.004) return;
-  const ex = o.x - Math.cos(o.a) * o.len * 0.93, ey = o.y - Math.sin(o.a) * o.len * 0.93;
+  const ey = o.y - Math.sin(o.a) * o.len * 0.93;
   const lim = G.cy + 0.6 * G.u;
   if (o.y < lim && ey < lim) { needle(ctx, S, o.x, o.y, o.a, o.len, { alpha: al }); return; }
-  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, S.W, G.cy); ctx.clip();
+  ctx.save(); ctx.beginPath(); ctx.rect(-S.W, -S.H, 3 * S.W, S.H + G.cy); ctx.clip();
   needle(ctx, S, o.x, o.y, o.a, o.len, { alpha: al }); ctx.restore();
-  ctx.save(); ctx.beginPath(); ctx.rect(0, G.cy, S.W, S.H - G.cy); ctx.clip();
+  ctx.save(); ctx.beginPath(); ctx.rect(-S.W, G.cy, 3 * S.W, 2 * S.H); ctx.clip();
   needle(ctx, S, o.x, o.y, o.a, o.len, { alpha: al * 0.4 }); ctx.restore();
 }
 
 // ── the line: taut, and twanging where the needle goes through it ─────────
-const LN = 96;
+const LN = 120;
 const _ly = new Float32Array(LN);
 function modal(xf, p, A, tau, f1, damp) {
   let y = 0;
@@ -377,66 +423,63 @@ function modal(xf, p, A, tau, f1, damp) {
   }
   return y;
 }
-function lineShape(S, G, t) {
-  const { W, u } = S, x0 = -0.02 * W, x1 = 1.02 * W;
-  const pf = x => clamp((x - x0) / (x1 - x0), 0.02, 0.98);
+/** fills _ly across the visible stretch [x0, x1] of the string (world x); returns the largest deflection */
+function lineShape(S, G, t, x0, x1) {
+  const { W, u } = S, s0 = -0.02 * W, s1 = 1.02 * W;
+  const pf = x => clamp((x - s0) / (s1 - s0), 0.02, 0.98);
   const plucks = [
-    [1.0, pf(G.xd), 0.85 * u, 0.025],
-    [G.tUp, pf(G.xu), -0.55 * u, 0.02],
-    [T.leadOut[1], pf(G.xe), 1.0 * u, 0.02]
+    [1.0, pf(G.xd), 0.85 * u, 0.025, 7, 6],
+    [G.tUp, pf(G.xu), -0.55 * u, 0.02, 7, 6],
+    [T.leadOut[1], pf(G.xe), 1.0 * u, 0.02, 7, 6],
+    [T.snap, 0.5, 0.75 * u, 0.0, 9, 9]
   ];
-  // the needle tugs the line up as it draws back, then lets go on the pull
+  // the needle tugs the line up as it draws back, and lets go on the pull
   const tug = -0.9 * u * inOutCubic(invlerp(T.tension + 0.1, T.pull, t));
   const env = 1 - smoothstep(T.fade[0], T.fade[1], t);
   let mxAbs = 0;
   for (let i = 0; i < LN; i++) {
-    const xf = i / (LN - 1);
+    const xf = (lerp(x0, x1, i / (LN - 1)) - s0) / (s1 - s0);
     let y = 0;
-    for (const [t0, p, A, pre] of plucks) {
-      if (t < t0 - pre) continue;
-      y += t < t0 ? modal(xf, p, A * smoothstep(t0 - pre, t0, t), 0, 7, 6) : modal(xf, p, A, t - t0, 7, 6);
+    if (xf > 0 && xf < 1) {
+      for (const [t0, p, A, pre, f1, dm] of plucks) {
+        if (t < t0 - pre || (t < t0 && !pre)) continue;
+        y += t < t0 ? modal(xf, p, A * smoothstep(t0 - pre, t0, t), 0, f1, dm) : modal(xf, p, A, t - t0, f1, dm);
+      }
+      if (t < T.pull) { if (tug) y += modal(xf, pf(G.xe), tug, 0, 7, 6); }
+      else y += modal(xf, pf(G.xe), -0.9 * u, t - T.pull, 7.5, 7);
+      y *= env;
     }
-    if (t < T.pull) y += modal(xf, pf(G.xe), tug, 0, 7, 6);
-    else y += modal(xf, pf(G.xe), -0.9 * u, t - T.pull, 7.5, 7);
-    y *= env;
     _ly[i] = y; mxAbs = Math.max(mxAbs, Math.abs(y));
   }
   return mxAbs;
 }
-function drawLine(ctx, S, G, t) {
-  const m = lineShape(S, G, t);
-  if (m < 0.05) { rest(ctx, S); return; }
-  const x0 = -0.02 * S.W, x1 = 1.02 * S.W, pts = [];
-  for (let i = 0; i < LN; i++) pts.push([lerp(x0, x1, i / (LN - 1)), G.cy + _ly[i]]);
-  thread(ctx, S, pts, { sharp: true });
-}
 
-// ── the pull: each letter flattens and stretches back into the line ──────
-const flatY = bezier(0.55, 0, 0.25, 1.12);
-const flatX = bezier(0.45, 0, 0.3, 1);
+// ── the pull: the name stretches edge to edge and flattens into the line ──
 function mapping(S, G, gi, t, out) {
   const g = G.glyphs[gi], row = G.rows[g.row], n = G.glyphs.length, u = G.u;
   const cinch = inOutCubic(invlerp(T.tension, T.pull, t));
-  const t0 = T.pull + (n - 1 - gi) * T.flatStagger;
-  const tc = invlerp(t0, t0 + T.flatDur, t);
-  const ky = (1 - flatY(tc)) * (1 + 0.03 * cinch * (1 - tc));
-  const kx = flatX(tc);
+  const st = (n - 1 - gi) * 0.012;                           // the pull reaches the far letters last
+  const tx = invlerp(T.pull + st, T.pull + st + 0.24, t);
+  const ty = invlerp(T.pull + 0.02 + st, T.snap, t);
+  const kx = outCubic(tx);
+  const ky = (1 - inCubic(ty)) * (1 - 0.05 * cinch);
   const xL = -0.02 * S.W, xR = 1.02 * S.W, sr = (xR - xL) / (row.nR - row.nL);
   const A = 1 - kx + kx * sr, B = kx * (xL - row.nL * sr);
-  const gth = 0.012 * cinch * (1 - tc);                       // the cloth gathers toward the pull
-  const trem = cinch * (1 - tc) * 0.16 * u;
-  out.ax = (1 - gth) * A; out.bx = G.xe * gth * A + B + noise1(t * 41, gi * 3.7 + 1) * trem;
-  out.ky = ky; out.cy = G.cy; out.by = noise1(t * 37, gi * 5.1 + 2) * trem;
-  out.close = smoothstep(0.3, 0.85, tc);
-  out.shrink = 0.3 * cinch * (1 - out.close);
-  out.tc = tc;
+  const xc = (row.nL + row.nR) / 2, gth = 0.014 * cinch * (1 - tx);   // the cloth gathers in
+  const trem = cinch * (1 - ty) * 0.16 * u;
+  out.ax = (1 - gth) * A; out.bx = xc * gth * A + B + noise1(t * 41, gi * 3.7 + 1) * trem;
+  out.ky = ky; out.cy = G.cy;
+  out.by = noise1(t * 37, gi * 5.1 + 2) * trem;
+  out.dw = smoothstep(0.85, 1, ty);
+  out.close = smoothstep(0.25, 0.8, tx);
+  out.shrink = 0.22 * cinch * (1 - out.close);
+  out.flat = ty;
   return out;
 }
 
 // ── stitches ───────────────────────────────────────────────────────────────
-function stitchPath(ctx, g, upto, f, hl, dxo, dyo) {
+function stitchPath(ctx, g, upto, f, hl) {
   const { sa, sb, p } = g, N = sa.length;
-  const ff = { ax: f.ax, bx: f.bx + dxo, ky: f.ky, cy: f.cy, by: f.by + dyo };
   for (let q = 0; q < N; q++) {
     let a = sa[q];
     if (a >= upto) break;
@@ -445,11 +488,9 @@ function stitchPath(ctx, g, upto, f, hl, dxo, dyo) {
     if (f.shrink > 0) { const m = (a + b) / 2, h = (b - a) / 2 * (1 - f.shrink); a = m - h; b = m + h; }
     if (hl > 0) { const d = b - a; a += d * 0.2 * hl; b -= d * 0.3 * hl; }
     b = Math.min(b, upto);
-    if (b > a) subPath(ctx, p, a, b, ff);
+    if (b > a) subPath(ctx, p, a, b, f);
   }
 }
-
-let _sheenKey = '', _sheen = null;
 function sheenStyles(ctx, G, t) {
   const e = inOutCubic(invlerp(T.sheen[0], T.sheen[1], t));
   if (e <= 0 || e >= 1) return null;
@@ -464,7 +505,8 @@ function sheenStyles(ctx, G, t) {
 }
 
 // ── draw ───────────────────────────────────────────────────────────────────
-const _o = {}, _g = {}, _f = {};
+const _o = {}, _g = {}, _f = {}, _cam = {}, _f0 = {}, _fl = {};
+const TAG = ['from', 'needle', '&', 'thread,'];
 export default {
   id: 'needle',
   title: 'Needle',
@@ -477,72 +519,72 @@ export default {
     if (t <= T.glint[0] || t >= T.end) { rest(ctx, S); return; }
     const G = geometry(ctx, S);
     const { W, H, u } = S, cy = G.cy;
-    if (G.tUp === undefined) {
-      // when the needle comes back up through the line (inverts the lead-in easing)
-      G.tUp = lerp(T.leadIn[0], T.leadIn[1], 1 - Math.cbrt(1 - G.sUp / G.leadIn.L));
-      G.W = W;
-    }
-
-    // the line, and the glint that runs along it at the top of the reel
-    drawLine(ctx, S, G, t);
-    const gw = invlerp(T.glint[0], T.glint[1], t);
-    if (gw > 0 && gw < 1) {
-      const xg = lerp(-0.1 * W, 1.1 * W, inOutCubic(gw)), a = Math.sin(Math.PI * gw), gl = 11 * u;
-      const gr = ctx.createLinearGradient(xg - gl, 0, xg + gl, 0);
-      gr.addColorStop(0, 'rgba(255,247,222,0)'); gr.addColorStop(0.5, 'rgba(255,247,222,1)'); gr.addColorStop(1, 'rgba(255,247,222,0)');
-      ctx.save(); ctx.strokeStyle = gr; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(xg - gl, cy); ctx.lineTo(xg + gl, cy);
-      ctx.globalAlpha = 0.22 * a; ctx.lineWidth = S.lw * 6; ctx.stroke();
-      ctx.globalAlpha = 0.95 * a; ctx.lineWidth = S.lw * 1.15; ctx.stroke();
-      ctx.restore();
-    }
-
-    // how far the sewing has got
-    const sewing = t >= T.sew[0];
-    const D = sewing ? G.Dt * sewQ(invlerp(T.sew[0], T.sew[1], t)) : -1;
-    const fade = 1 - smoothstep(T.fade[0], T.fade[1], t);
+    const C = cam(G, t, _cam), z = C.z;
     const nG = G.glyphs.length;
-    const f0 = mapping(S, G, 0, t, {}), fl = mapping(S, G, nG - 1, t, {});
+    const fade = 1 - smoothstep(T.fade[0], T.fade[1], t);
+    const f0 = mapping(S, G, 0, t, _f0), fl = mapping(S, G, nG - 1, t, _fl);
 
-    // the thread lifted off the line into the C (the loop under the line sits on the far side of the cloth)
+    // ── world: everything the camera sees ──
+    ctx.save();
+    if (z > 1.0001) { ctx.translate(C.sx, cy); ctx.scale(z, z); ctx.translate(-G.xd, -cy); }
+    const wx0 = G.xd + (-0.02 * W - C.sx) / z, wx1 = G.xd + (1.02 * W - C.sx) / z;
+
+    // the line
+    const dm = lineShape(S, G, t, wx0, wx1);
+    _defl = { x0: wx0, x1: wx1, y: _ly };
+    if (dm < 0.05 && z <= 1.0001) rest(ctx, S);
+    else {
+      const pts = [];
+      for (let i = 0; i < LN; i++) pts.push([lerp(wx0, wx1, i / (LN - 1)), cy + _ly[i]]);
+      thread(ctx, S, pts, { sharp: true });
+    }
+
+    // the thread lifted off the line into the C (the loop under the line is on the far side of the cloth)
     if (t >= T.leadIn[0]) {
       const li = G.leadIn;
-      let s1 = li.L;
-      if (t < T.sew[0]) s1 = Math.max(0, li.L * outCubic(invlerp(T.leadIn[0], T.leadIn[1], t)) - G.NL * 0.93);
-      else s1 = lerp(li.L - G.NL * 0.93, li.L, smoothstep(T.sew[0], T.sew[0] + 0.12, t));
+      const s1 = t < T.sew[0] ? Math.max(0, leadInS(G, t) - G.NL * 0.93)
+        : lerp(li.L - G.NL * 0.93, li.L, smoothstep(T.sew[0], T.sew[0] + 0.12, t));
       if (s1 > 0.1) {
-        const w = lerp(S.lw * 1.1, S.lw, f0.close), fa = fade;
+        const w = lerp(S.lw * 1.1, S.lw, f0.close);
         const build = c => { c.beginPath(); subPath(c, li, 0, s1, f0); };
-        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, cy); ctx.clip();
-        thread(ctx, S, build, { width: w, alpha: fa, glow: 0.8 }); ctx.restore();
-        ctx.save(); ctx.beginPath(); ctx.rect(0, cy, W, H - cy); ctx.clip();
-        thread(ctx, S, build, { width: w, alpha: fa * 0.42, glow: 0.4 }); ctx.restore();
+        ctx.save(); ctx.beginPath(); ctx.rect(-W, -H, 3 * W, H + cy); ctx.clip();
+        thread(ctx, S, build, { width: w, alpha: fade, glow: 0.8 }); ctx.restore();
+        ctx.save(); ctx.beginPath(); ctx.rect(-W, cy, 3 * W, 2 * H); ctx.clip();
+        thread(ctx, S, build, { width: w, alpha: fade * 0.42, glow: 0.4 }); ctx.restore();
       }
     }
 
     // the stitched name
-    if (sewing) {
+    if (t >= T.sew[0]) {
+      const D = sewD(G, t);
       const sheen = sheenStyles(ctx, G, t);
       const trail = 9 * u;
+      ctx.save();
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (let gi = 0; gi < nG; gi++) {
         const g = G.glyphs[gi];
         const upto = D - g.D0;
         if (upto <= 0) break;
         const f = mapping(S, G, gi, t, _f);
         const sw = lerp(G.sw, S.lw, f.close);
-        ctx.save();
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        ctx.globalAlpha = fade;
+        // the felt the letter is stitched onto
+        const felt = smoothstep(g.tDone, g.tDone + 0.4, t) * (1 - smoothstep(0, 0.6, f.flat));
+        if (felt > 0) {
+          ctx.beginPath(); subPath(ctx, g.p, 0, g.p.L, f); ctx.closePath();
+          ctx.globalAlpha = felt * fade; ctx.fillStyle = 'rgba(216,178,106,0.075)'; ctx.fill();
+        }
         // body: a soft glow and the thread itself
-        ctx.beginPath(); stitchPath(ctx, g, upto, f, 0, 0, 0);
+        ctx.globalAlpha = fade;
+        ctx.beginPath(); stitchPath(ctx, g, upto, f, 0);
         ctx.strokeStyle = `rgba(216,178,106,${0.09 * (1 - f.close)})`; ctx.lineWidth = sw * 4.5; ctx.stroke();
         ctx.strokeStyle = sheen ? sheen.base : PAL.gold; ctx.lineWidth = sw; ctx.stroke();
         // each stitch catches the light along its top
         const off = 1 - f.close;
-        ctx.beginPath(); stitchPath(ctx, g, upto, f, off, -0.1 * sw * off, -0.15 * sw * off);
+        const fh = { ax: f.ax, bx: f.bx - 0.1 * sw * off, ky: f.ky, cy: f.cy, by: f.by - 0.15 * sw * off, dw: f.dw };
+        ctx.beginPath(); stitchPath(ctx, g, upto, fh, off);
         ctx.strokeStyle = sheen ? sheen.hi : PAL.goldHi; ctx.globalAlpha = fade * 0.85;
         ctx.lineWidth = lerp(sw * 0.36, S.lw * 0.38, f.close); ctx.stroke();
-        // the stitches still warm from the needle
+        // stitches still warm from the needle
         if (upto < g.p.L + trail && t < T.leadOut[1]) {
           const hot = Math.max(0, upto - trail);
           ctx.beginPath();
@@ -554,42 +596,50 @@ export default {
           }
           ctx.strokeStyle = '#fff6dc'; ctx.globalAlpha = 0.55; ctx.lineWidth = sw * 0.75; ctx.stroke();
         }
-        ctx.restore();
       }
+      ctx.restore();
     }
 
-    // the thread from the last E down to the needle's eye
+    // the thread from the last E into the needle's eye
     const o = pose(G, t, _o);
     if (t >= T.leadOut[0]) {
       const lo = G.leadOut;
-      const ex = o.x - Math.cos(o.a) * o.len * 0.93, ey = o.y - Math.sin(o.a) * o.len * 0.93;
-      let s1;
-      if (t < T.leadOut[2]) {
-        const s = t < T.leadOut[1] ? G.sPierce * Math.pow(invlerp(T.leadOut[0], T.leadOut[1], t), 2.2)
-          : lerp(G.sPierce, lo.L, outQuad(invlerp(T.leadOut[1], T.leadOut[2], t)));
-        s1 = Math.max(0, s - G.NL * 0.93);
-      } else s1 = Math.max(0, lo.L - G.NL * 0.93);
-      const eX = o.al > 0 ? ex : 1.1 * W, eY = o.al > 0 ? ey : cy;
+      const s1 = Math.max(0, (t < T.leadOut[2] ? leadOutS(G, t) : lo.L) - G.NL * 0.93);
+      const eX = o.al > 0 ? o.x - Math.cos(o.a) * o.len * 0.93 : 1.1 * W;
+      const eY = o.al > 0 ? o.y - Math.sin(o.a) * o.len * 0.93 : cy;
       const build = c => {
         c.beginPath();
-        if (s1 > 0.1) { subPath(c, lo, 0, s1, fl); } else c.moveTo(mx(fl, lo.xy[0]), my(fl, lo.xy[1]));
+        if (s1 > 0.1) subPath(c, lo, 0, s1, fl);
+        else { mapPt(fl, lo.xy[0], lo.xy[1], _m); c.moveTo(_m.x, _m.y); }
         c.lineTo(eX, eY);
       };
       thread(ctx, S, build, { width: lerp(S.lw * 1.1, S.lw, fl.close), alpha: fade, glow: 0.8 });
     }
 
     // the needle, smeared when it moves fast
-    if (t >= T.slide[0]) {
-      const dt = 1 / 60;
-      const p1 = pose(G, t - dt, _g);
-      const sp = Math.hypot(o.x - p1.x, o.y - p1.y);
-      if (sp > 1.2 * u && !o.hide) {
+    if (!o.hide) {
+      const dt = 1 / 60, p1 = pose(G, t - dt, _g);
+      if (!p1.hide && Math.hypot(o.x - p1.x, o.y - p1.y) > 1.2 * u) {
         for (let kk = 3; kk >= 1; kk--) {
           const gp = pose(G, t - dt * kk / 3.2, _g);
           if (!gp.hide) drawNeedle(ctx, S, G, gp, [0, 0.34, 0.2, 0.1][kk]);
         }
       }
       drawNeedle(ctx, S, G, o, 1);
+    }
+    ctx.restore();
+
+    // ── screen: the glint, and the copy ──
+    const gw = invlerp(T.glint[0], T.glint[1], t);
+    if (gw > 0 && gw < 1) {
+      const xg = lerp(-0.1 * W, 1.1 * W, inOutCubic(gw)), a = Math.sin(Math.PI * gw), gl = 11 * u;
+      const gr = ctx.createLinearGradient(xg - gl, 0, xg + gl, 0);
+      gr.addColorStop(0, 'rgba(255,247,222,0)'); gr.addColorStop(0.5, 'rgba(255,247,222,1)'); gr.addColorStop(1, 'rgba(255,247,222,0)');
+      ctx.save(); ctx.strokeStyle = gr; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(xg - gl, cy); ctx.lineTo(xg + gl, cy);
+      ctx.globalAlpha = 0.22 * a; ctx.lineWidth = S.lw * z * 6; ctx.stroke();
+      ctx.globalAlpha = 0.95 * a; ctx.lineWidth = S.lw * z * 1.15; ctx.stroke();
+      ctx.restore();
     }
 
     // SHOWREEL 2026
@@ -602,28 +652,42 @@ export default {
       });
     }
 
-    // from needle & thread, — hangs from the line
-    const tIn = invlerp(T.tag[0], T.tag[1], t), tOut = invlerp(T.tagOut[0], T.tagOut[1], t);
-    if (tIn > 0 && tOut < 1) {
+    // from needle & thread, — hangs from the line, a word at a time
+    if (t > T.tag[0] && t < T.tagOut[1]) {
+      const o2 = { size: G.tag.size, weight: 400 };
+      const L = layout(ctx, TAG.join(' '), o2);
+      const x0 = W / 2 - L.width / 2, drop = G.tag.y - cy + G.tag.size * 0.35;
       ctx.save(); ctx.beginPath(); ctx.rect(0, cy + S.lw * 1.6, W, H); ctx.clip();
-      const drop = G.tag.y - cy + G.tag.size * 0.4;
-      text(ctx, S, 'from needle & thread,', W / 2, G.tag.y, {
-        size: G.tag.size, weight: 400, align: 'center', color: PAL.ink,
-        reveal: tOut > 0 ? 1 - tOut : tIn, window: 0.55, rise: -drop, ease: outExpo
+      let ci = 0;
+      TAG.forEach((w, i) => {
+        const pin = outExpo(invlerp(T.tag[0] + i * 0.075, T.tag[0] + i * 0.075 + 0.6, t));
+        const pout = inCubic(invlerp(T.tagOut[0] + (TAG.length - 1 - i) * 0.05, T.tagOut[1] - i * 0.05 + (TAG.length - 1) * 0.0, t));
+        const p = pin * (1 - pout);
+        if (p > 0.001) {
+          text(ctx, S, w, x0 + L.xs[ci], G.tag.y - (1 - p) * drop, {
+            ...o2, color: w === '&' ? PAL.gold : PAL.ink, alpha: Math.min(1, p * 1.6)
+          });
+        }
+        ci += w.length + 1;
       });
       ctx.restore();
     }
 
     // the lens: a small knock on the stab, a proper one when the name is finished
     const fx = S.fx;
-    if (t >= 1.0 && t < 1.2) fx.ab = 0.12 * (1 - outCubic(invlerp(1.0, 1.2, t)));
+    if (t >= 1.0 && t < 1.2) fx.ab = 0.14 * (1 - outCubic(invlerp(1.0, 1.2, t)));
     const lp = T.leadOut[1];
-    if (t >= lp && t < lp + 0.7) {
-      const k = invlerp(lp, lp + 0.7, t);
-      fx.ab = 0.32 * Math.pow(1 - k, 3);
-      fx.shake = 0.32 * u * Math.pow(Math.max(0, 1 - k * 2.6), 2);
-      fx.warp = k; fx.warpX = G.xe / W; fx.warpY = 0.5;
+    if (t >= lp && t < lp + 0.5) {
+      const k = invlerp(lp, lp + 0.5, t);
+      fx.ab = 0.3 * Math.pow(1 - k, 3);
+      fx.shake = 0.3 * u * Math.pow(Math.max(0, 1 - k * 2.4), 2);
+      fx.warp = lerp(0.55, 1, outQuad(k)); fx.warpX = G.xe / W; fx.warpY = 0.5;
     }
     if (t >= T.pull && t < T.pull + 0.25) fx.ab = 0.16 * (1 - outCubic(invlerp(T.pull, T.pull + 0.25, t)));
+    if (t >= T.snap && t < T.snap + 0.14) {
+      const k = invlerp(T.snap, T.snap + 0.14, t);
+      fx.ab = Math.max(fx.ab, 0.14 * (1 - k));
+      fx.shake = 0.18 * u * Math.pow(1 - k, 2);
+    }
   }
 };
