@@ -239,8 +239,9 @@ const endDrag = () => {
 scrub.addEventListener('pointerup', endDrag);
 scrub.addEventListener('pointercancel', endDrag);
 scrub.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { seek(t - 1, true); e.preventDefault(); e.stopPropagation(); }
-  if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { seek(t + 1, true); e.preventDefault(); e.stopPropagation(); }
+  // ←/→ are handled for the whole page (±5 s); ↑/↓ nudge by a second on the focused slider
+  if (e.key === 'ArrowDown') { seek(t - 1, true); e.preventDefault(); }
+  if (e.key === 'ArrowUp') { seek(t + 1, true); e.preventDefault(); }
 });
 
 // clicking the picture plays and pauses; a tap on a sleeping phone only wakes the controls
@@ -352,6 +353,14 @@ const ready = new Promise(r => (resolveReady = r));
 
 // ── hooks for the tests and the frame grabber ─────────────────────────────
 const probe = document.createElement('canvas');
+/* sampling uses high-quality (mip-mapped) downscaling, so a hairline or a
+   small caption still registers in a 64px-wide thumbnail */
+function probeCtx(w, h) {
+  probe.width = w; probe.height = h;
+  const p = probe.getContext('2d', { willReadFrequently: true });
+  p.imageSmoothingEnabled = true; p.imageSmoothingQuality = 'high';
+  return p;
+}
 window.__reel = {
   duration: DURATION,
   chapters: CHAPTERS.map(c => ({ id: c.scene.id, title: c.scene.title, start: c.start, end: c.end, still: c.scene.still })),
@@ -360,26 +369,41 @@ window.__reel = {
   get playing() { return playing; },
   get frames() { return frames; },
   get soundOn() { return sound.on; },
+  get audio() { return { position: sound.position, voices: sound.voicesReady }; },
+  cueCount: CHAPTERS.reduce((n, c) => n + (c.scene.cues || []).length, 0),
   get post() { return !!post; },
   play, pause, seek, jump, setSound,
   /** render the frame at `time` and return it as w×h luma (0..255), pre-lens */
-  sample(time, w = 64, h = 36) {
+  sample(time, w = 64, h = Math.round(64 * S.H / S.W)) {
     drawFrame(time);
-    probe.width = w; probe.height = h;
-    const p = probe.getContext('2d', { willReadFrequently: true });
+    const p = probeCtx(w, h);
     p.drawImage(c2d, 0, 0, w, h);
     const d = p.getImageData(0, 0, w, h).data, out = new Array(w * h);
     for (let i = 0; i < w * h; i++) out[i] = Math.round(d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114);
     dirty = true;
     return out;
   },
+  /** the frame every chapter boundary must match: black and the thread at rest */
+  sampleRest(w = 64, h = Math.round(64 * S.H / S.W)) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+    ctx.fillStyle = K.PAL.bg; ctx.fillRect(0, 0, S.W, S.H);
+    K.rest(ctx, S);
+    const p = probeCtx(w, h);
+    p.drawImage(c2d, 0, 0, w, h);
+    const d = p.getImageData(0, 0, w, h).data, out = new Array(w * h);
+    for (let i = 0; i < w * h; i++) out[i] = Math.round(d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114);
+    dirty = true;
+    return out;
+  },
+  /** the lens settings a chapter asked for at `time` */
+  fxAt(time) { drawFrame(time); dirty = true; return { ...S.fx }; },
   /** show the frame at `time` exactly as a viewer would (lens included), paused */
   show(time) { pause(); t = time; const c = drawFrame(t); present(performance.now()); updateUI(c); dirty = false; },
   /** mean and worst JS cost of drawing a frame, over n instants spread across the reel */
-  perf(n = 120) {
+  perf(n = 120, from = 0, to = DURATION) {
     let sum = 0, max = 0, worst = 0;
     for (let i = 0; i < n; i++) {
-      const at = (i + 0.5) / n * DURATION;
+      const at = from + (i + 0.5) / n * (to - from);
       const a = performance.now(); drawFrame(at); const b = performance.now() - a;
       sum += b; if (b > max) { max = b; worst = at; }
     }

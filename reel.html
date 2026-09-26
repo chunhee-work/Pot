@@ -3,11 +3,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Showreel — Chun Hee</title>
-<meta name="description" content="Sixty seconds, one unbroken thread: a motion reel of the Land of Hope universe, its cast and voices, four brand films and the Gacha product — made solo by Chun Hee.">
+<meta name="description" content="One minute, one unbroken thread: a motion reel of the Land of Hope universe, its cast and voices, four brand films and the Gacha product — made solo by Chun Hee.">
 <meta name="theme-color" content="#0a0a09">
 <meta property="og:type" content="video.other">
 <meta property="og:title" content="Chun Hee — Showreel">
-<meta property="og:description" content="Sixty seconds, one unbroken thread. From needle & thread, to camera & code.">
+<meta property="og:description" content="One minute, one unbroken thread. From needle & thread, to camera & code.">
 <meta property="og:image" content="assets/reel/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -66,7 +66,7 @@ body[data-idle] .chrome.bottom{transform:translateY(8px)}
 .scrub .knob{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--gold-hi);box-shadow:0 0 0 4px rgba(216,178,106,.18);transition:transform .2s var(--E)}
 .scrub:hover .knob,.scrub[data-drag] .knob{transform:scale(1.25)}
 .chapters{position:absolute;left:0;right:0;bottom:34px;height:28px;pointer-events:auto}
-.chapters button{position:absolute;top:0;height:28px;padding:0 8px 0 0;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;transition:color .3s var(--E)}
+.chapters button{position:absolute;top:0;height:28px;padding:0 8px 0 0;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:visible;text-align:left;transition:color .3s var(--E)}
 .chapters button:hover{color:var(--ink)}
 .chapters button[aria-current=true]{color:var(--gold-hi)}
 
@@ -96,7 +96,7 @@ body[data-still] #stage,body[data-still] .chrome,body[data-still] #loader{displa
 #still .play:hover{background:rgba(216,178,106,.1)}
 #still ol{list-style:none;max-width:1080px;margin:0 auto;display:grid;gap:28px}
 #still li figure{display:grid;gap:10px}
-#still li canvas,#still li img{width:100%;aspect-ratio:16/9;display:block;border-radius:4px;background:#111110}
+#still li canvas,#still li img{width:100%;aspect-ratio:16/9;display:block;border-radius:4px;background:#111110;outline:1px solid var(--line);outline-offset:-1px}
 #still figcaption{display:flex;gap:14px;align-items:baseline;font-size:13px;color:var(--dim)}
 #still figcaption b{color:var(--ink);font-weight:700;letter-spacing:.02em}
 #still figcaption time{font-variant-numeric:tabular-nums;font-size:11px;letter-spacing:.12em;color:var(--faint)}
@@ -155,7 +155,7 @@ body[data-still] #stage,body[data-still] .chrome,body[data-still] #loader{displa
 
 <section id="still" aria-label="Showreel, as stills">
   <header>
-    <h1><span>Chun Hee — Showreel 2026</span>Sixty seconds, one thread.</h1>
+    <h1><span>Chun Hee — Showreel 2026</span>One minute, one thread.</h1>
     <button class="play" id="playAnyway">Play the reel with motion</button>
   </header>
   <ol id="stillList"></ol>
