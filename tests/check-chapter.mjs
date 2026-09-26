@@ -19,7 +19,7 @@ for (const [w, h, dpr] of SIZES) {
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push(String(e)));
   await page.goto(`${url}/reel.html?paused`);
-  await page.evaluate(() => window.__reel.ready);
+  await page.evaluate(() => window.__reel.allReady);
   const r = await page.evaluate(id => {
     const R = window.__reel, c = R.chapters.find(c => c.id === id);
     if (!c) return { missing: true };

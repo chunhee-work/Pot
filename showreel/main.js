@@ -41,6 +41,15 @@ function chapterAt(t) {
   return CHAPTERS[CHAPTERS.length - 1];
 }
 
+/* Loading is progressive: playback starts as soon as the fonts are in (the
+   opening chapter needs nothing else) and each chapter's pictures stream in
+   behind it. A chapter whose pictures have not all arrived is shown as the
+   rest frame — the frame every chapter begins on anyway — and playback
+   waits on it. */
+const loaded = new Set();
+const needs = c => [...(c.scene.assets || []).map(p => 'img:' + p), ...(c.scene.models || []).map(m => 'model:' + m)];
+const chapterReady = c => needs(c).every(k => loaded.has(k));
+
 const failed = new Set();
 function drawFrame(t) {
   const c = chapterAt(t);
@@ -49,7 +58,8 @@ function drawFrame(t) {
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
   ctx.fillStyle = K.PAL.bg; ctx.fillRect(0, 0, S.W, S.H);
   ctx.save();
-  try { c.scene.draw(ctx, S); }
+  if (!chapterReady(c)) K.rest(ctx, S);
+  else try { c.scene.draw(ctx, S); }
   catch (e) { if (!failed.has(c.scene.id)) { failed.add(c.scene.id); console.error('[reel] chapter', c.scene.id, e); } }
   ctx.restore();
   if (debug) drawDebug(c);
@@ -89,7 +99,7 @@ function setBacking(W, H, dpr) {
 }
 
 // ── clock and loop ────────────────────────────────────────────────────────
-let t = T0, playing = false, dirty = true, raf = 0, last = 0, dragging = false, frames = 0, started = false;
+let t = T0, playing = false, dirty = true, raf = 0, last = 0, dragging = false, frames = 0, started = false, waiting = false;
 const start = parseFloat(qs.get('t'));
 if (isFinite(start)) t = K.clamp(start, T0, T1 - 0.001);
 
@@ -116,8 +126,15 @@ function loop(now) {
   const dt = last ? Math.min(0.25, Math.max(0, (now - last) / 1000)) : 0;
   last = now;
   if (playing && !dragging) {
-    const next = advance(dt);
-    if (next >= T1) { t = wrap(next); sound.seek(t); } else t = next;
+    let next = advance(dt);
+    if (next >= T1) { next = wrap(next); sound.seek(next); }
+    const c = chapterAt(next);
+    if (!chapterReady(c)) {
+      // wait on the seam (or wherever a seek left us) until its pictures arrive
+      if (!waiting) { waiting = true; sound.pause(); chapterLabel.textContent = `Loading · ${c.scene.title}`; }
+      next = t < c.start && next >= c.start ? c.start - 1e-4 : Math.min(t, next);
+    } else if (waiting) { waiting = false; lastCh = null; if (playing) sound.play(next); }
+    t = next;
     sound.tick(t);
     dirty = true;
   }
@@ -327,28 +344,37 @@ glc.addEventListener('webglcontextlost', () => {
 
 // ── loading ───────────────────────────────────────────────────────────────
 const loadBar = $('loadBar'), loadText = $('loadText');
-async function load() {
-  const paths = [...new Set(CHAPTERS.flatMap(c => c.scene.assets || []))];
-  const models = [...new Set(CHAPTERS.flatMap(c => c.scene.models || []))];
-  const total = paths.length + models.length + 1;
-  let done = 0;
-  const bump = () => {
-    done++;
-    const p = done / total;
+let resolveAll;
+const allLoaded = new Promise(r => (resolveAll = r));
+function load() {
+  const first = chapterAt(t);
+  const order = [...CHAPTERS.slice(CHAPTERS.indexOf(first)), ...CHAPTERS.slice(0, CHAPTERS.indexOf(first))];
+  const paths = [...new Set(order.flatMap(c => c.scene.assets || []))];
+  const models = [...new Set(order.flatMap(c => c.scene.models || []))];
+  const firstNeeds = needs(first).length;
+  let firstDone = 0;
+  const bump = k => {
+    loaded.add(k);
+    if (needs(first).includes(k)) firstDone++;
+    const p = (1 + firstDone) / (1 + firstNeeds);
     loadBar.style.transform = `scaleX(${p})`;
     loadText.textContent = `Threading the needle · ${Math.round(p * 100)}%`;
+    if (started) invalidate();
   };
   const fonts = Promise.all(['400', '600', '700', '800', '900'].map(w => document.fonts.load(`${w} 40px Archivo`)).concat(document.fonts.load('700 40px Cinzel')))
-    .catch(() => {}).then(bump);
+    .catch(() => {});
+  // pictures in the order they are needed, from wherever playback starts
   const imgs = paths.map(p => new Promise(res => {
     const im = new Image();
     im.decoding = 'async';
-    im.onload = () => { (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => { images.set(p, im); bump(); res(); }); };
-    im.onerror = () => { console.error('[reel] image failed', p); bump(); res(); };
+    im.onload = () => { (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => { images.set(p, im); bump('img:' + p); res(); }); };
+    im.onerror = () => { console.error('[reel] image failed', p); bump('img:' + p); res(); };
     im.src = p;
   }));
-  const mods = loadModels(models, bump).catch(e => { console.error('[reel]', e.message); models.forEach(bump); });
-  await Promise.all([fonts, mods, ...imgs]);
+  const mods = loadModels(models, n => bump('model:' + n)).catch(e => { console.error('[reel]', e.message); models.forEach(n => bump('model:' + n)); });
+  Promise.all([fonts, mods, ...imgs]).then(resolveAll);
+  // the first frame waits only for the type and whatever the opening chapter needs
+  return Promise.all([fonts, new Promise(res => { const k = () => (chapterReady(first) ? res() : setTimeout(k, 30)); k(); })]);
 }
 
 // ── the still version ─────────────────────────────────────────────────────
@@ -372,7 +398,7 @@ function buildStills() {
   });
   setBacking(...keep);
 }
-function enterStill() { halt(); pause(); body.setAttribute('data-still', ''); buildStills(); }
+function enterStill() { halt(); pause(); body.setAttribute('data-still', ''); allLoaded.then(buildStills); }
 function leaveStill() { body.removeAttribute('data-still'); size(); play(); playBtn.focus(); }
 $('playAnyway').addEventListener('click', leaveStill);
 
@@ -407,6 +433,8 @@ window.__reel = {
   duration: DURATION,
   chapters: CHAPTERS.map(c => ({ id: c.scene.id, title: c.scene.title, start: c.start, end: c.end, still: c.scene.still })),
   ready,
+  /** resolves once every chapter's pictures and models are in */
+  allReady: allLoaded,
   get t() { return t; },
   get playing() { return playing; },
   get frames() { return frames; },

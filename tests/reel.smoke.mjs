@@ -33,7 +33,7 @@ async function open(vw, vh, dpr = 1, opts = {}) {
   page.on('requestfailed', r => failedReq.push(r.url()));
   page.on('response', r => { if (r.status() >= 400) failedReq.push(`${r.status()} ${r.url()}`); });
   await page.goto(`${url}${opts.path || '/reel'}`);
-  if (!opts.noReady) await page.evaluate(() => window.__reel.ready);
+  if (!opts.noReady) await page.evaluate(() => window.__reel.allReady);
   return { page, ctx, errors, failedReq };
 }
 
@@ -145,7 +145,7 @@ async function open(vw, vh, dpr = 1, opts = {}) {
     const at = [0.0005, ...R.chapters.slice(1).flatMap(c => [c.start - 0.0005, c.start + 0.0005]), R.duration - 0.0005];
     return at.map(t => ({ t: +t.toFixed(4), d: +diff(R.sample(t)).toFixed(2) }));
   });
-  const worst = seams.reduce((a, s) => (s.d > a.d ? s : a), { d: 0 });
+  const worst = seams.reduce((a, s) => (s.d > a.d ? s : a), { d: -1 });
   check('every chapter seam and the loop seam match the rest frame', worst.d <= 1.5, `worst ${worst.d} at t=${worst.t}`);
 
   // wrap: playing past the end comes back to the start
@@ -156,6 +156,34 @@ async function open(vw, vh, dpr = 1, opts = {}) {
 
   const perf = await page.evaluate(() => window.__reel.perf(240));
   check('draw cost across the reel (headless, CPU)', perf.mean < 12, `mean ${perf.mean.toFixed(2)} ms, worst ${perf.max.toFixed(1)} ms at t=${perf.worst.toFixed(2)}`);
+  await ctx.close();
+}
+
+// 2b · progressive loading: on a slow network the reel starts before its pictures arrive
+{
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 720 } });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  await page.route(/\.(jpg|webp|png|glb)$|three-/, async r => { await new Promise(res => setTimeout(res, 2500)); r.continue(); });
+  const t0 = Date.now();
+  // (JS-started image loads hold back the window load event, so don't wait for it)
+  await page.goto(`${url}/reel`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__reel);
+  await page.evaluate(() => window.__reel.ready);
+  const firstFrameMs = Date.now() - t0;
+  await page.waitForTimeout(400);
+  const early = await page.evaluate(() => ({ t: window.__reel.t, playing: window.__reel.playing }));
+  check('slow network: playback starts before the pictures arrive', firstFrameMs < 2000 && early.playing && early.t > 0.1, `first frame after ${firstFrameMs} ms, t = ${early.t.toFixed(2)}`);
+  // jump to Land of Hope before its pictures are in: it holds on the rest frame, then plays once they land
+  await page.evaluate(() => window.__reel.seek(12));
+  await page.waitForTimeout(300);
+  const held = await page.evaluate(() => { const R = window.__reel, rest = R.sampleRest(), s = R.sample(R.t); return { t: R.t, label: document.getElementById('chapterLabel').textContent, d: s.reduce((a, v, i) => a + Math.abs(v - rest[i]), 0) / s.length }; });
+  await page.evaluate(() => window.__reel.allReady);
+  await page.waitForTimeout(600);
+  const after = await page.evaluate(() => window.__reel.t);
+  check('slow network: an unloaded chapter holds on the rest frame, then plays', Math.abs(held.t - 12) < 0.05 && held.d < 1.5 && /Loading/.test(held.label) && after > 12.2, `held at ${held.t.toFixed(2)} (“${held.label}”, diff ${held.d.toFixed(2)}), then ${after.toFixed(2)}`);
+  check('slow network: no page errors', errors.length === 0, errors.join(' | '));
   await ctx.close();
 }
 
