@@ -69,7 +69,8 @@ export function createSound({ duration, chapters }) {
 
   function start(t) {
     ensure();
-    if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
+    // WebKit reports 'interrupted' after a call or Siri, not 'suspended'
+    if (ac && ac.state !== 'running') ac.resume().catch(() => {});
     if (Math.abs(el.currentTime - t) > 0.04) el.currentTime = t;
     if (scoreGain) { scoreGain.gain.cancelScheduledValues(ac.currentTime); scoreGain.gain.setValueAtTime(0, ac.currentTime); }
     setLevel(t);
@@ -95,9 +96,12 @@ export function createSound({ duration, chapters }) {
 
   return {
     get on() { return on; },
-    /** the score's position while it is audibly playing, else null */
+    /** the score's position while it is audibly playing; NaN while it is
+        meant to be playing but is still seeking or buffering; null when it
+        is not the clock at all (sound off, or paused) */
     clock() {
-      if (!on || !playing || !el || el.paused || el.seeking || el.readyState < 3) return null;
+      if (!on || !playing || !el) return null;
+      if (el.seeking || el.readyState < 3 || el.paused) return NaN;
       return el.currentTime;
     },
     /** where the score actually is (for the tests) */

@@ -113,7 +113,9 @@ export function cover(ctx, img, x, y, w, h, o = {}) {
 
 /** a rounded rectangle path */
 export function rrect(ctx, x, y, w, h, r) {
-  r = Math.min(r, w / 2, h / 2);
+  if (w < 0) { x += w; w = -w; }
+  if (h < 0) { y += h; h = -h; }
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
   ctx.beginPath();
   ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
@@ -185,10 +187,11 @@ export function thread(ctx, S, path, o = {}) {
   }
   setDash();
   ctx.strokeStyle = o.color || PAL.gold; ctx.lineWidth = w; ctx.stroke();
-  if (o.twist) {
+  if (o.twist && !dash) {
     // the ply: short bright dashes that read as a twist at close range
-    ctx.setLineDash(dash ? [] : [w * 1.1, w * 0.9]);
-    if (!dash) ctx.lineDashOffset = -(o.twistPhase || 0) * w * 2;
+    // (a partial draw-on keeps the plain highlight — one dash pattern per stroke)
+    ctx.setLineDash([w * 1.1, w * 0.9]);
+    ctx.lineDashOffset = -(o.twistPhase || 0) * w * 2;
     ctx.strokeStyle = PAL.goldHi; ctx.globalAlpha = a0 * 0.85; ctx.lineWidth = w * 0.42; ctx.stroke();
   } else {
     setDash();
@@ -206,7 +209,7 @@ export function rest(ctx, S, o = {}) { thread(ctx, S, restPoints(S), { sharp: tr
 export function needle(ctx, S, x, y, a, len, o = {}) {
   const w = len * 0.045;
   ctx.save();
-  ctx.translate(x, y); ctx.rotate(a); ctx.globalAlpha = o.alpha ?? 1;
+  ctx.translate(x, y); ctx.rotate(a); ctx.globalAlpha *= o.alpha ?? 1;
   const g = ctx.createLinearGradient(0, -w, 0, w);
   g.addColorStop(0, '#fbfbf6'); g.addColorStop(0.45, '#c9c9c2'); g.addColorStop(1, '#6d6d67');
   ctx.fillStyle = g;

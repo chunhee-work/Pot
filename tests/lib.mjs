@@ -25,10 +25,12 @@ function rewrites() {
 export function serve(port = 0) {
   const rw = rewrites();
   const server = http.createServer((req, res) => {
-    let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    let p;
+    try { p = decodeURIComponent(new URL(req.url, 'http://x').pathname); }
+    catch { res.writeHead(400); return res.end('bad request'); }
     if (rw[p]) p = rw[p];
     const file = path.join(ROOT, p);
-    if (!file.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
+    if (file !== ROOT && !file.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end(); }
     fs.stat(file, (err, st) => {
       if (err || !st.isFile()) { res.writeHead(404); return res.end('not found'); }
       const size = st.size, range = req.headers.range;

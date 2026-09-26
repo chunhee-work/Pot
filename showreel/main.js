@@ -97,19 +97,41 @@ const sound = createSound({ duration: DURATION, chapters: CHAPTERS });
 
 function wrap(x) { return x >= T1 || x < T0 ? T0 + ((((x - T0) % (T1 - T0)) + (T1 - T0)) % (T1 - T0)) : x; }
 
+/* While sound is on the score is the clock. When it is still seeking or
+   buffering (sound on, a seek, a loop, a return to the tab) the picture
+   holds where it is — for up to two seconds, then it runs on its own and
+   the score is pulled to it — so the playhead never jumps backwards. */
+let held = 0;
+function advance(dt) {
+  const at = sound.clock();
+  if (at === null) { held = 0; return t + dt; }
+  if (Number.isNaN(at)) { held += dt; return held < 2 ? t : t + dt; }
+  held = 0;
+  return at > t ? at : t;   // never backwards: sound.tick() pulls a lagging score up to the picture
+}
+
 function loop(now) {
-  raf = requestAnimationFrame(loop);
-  const dt = last ? Math.min(0.1, Math.max(0, (now - last) / 1000)) : 0;
+  raf = 0;
+  // a slow frame still advances real time (up to 1/4 s — a sleeping tab is handled by visibilitychange)
+  const dt = last ? Math.min(0.25, Math.max(0, (now - last) / 1000)) : 0;
   last = now;
   if (playing && !dragging) {
-    const at = sound.clock();
-    const next = at != null ? at : t + dt;
+    const next = advance(dt);
     if (next >= T1) { t = wrap(next); sound.seek(t); } else t = next;
     sound.tick(t);
     dirty = true;
   }
-  if (!dirty) return;
-  dirty = false;
+  if (dirty) {
+    dirty = false;
+    paint(now);
+  }
+  // nothing moves while paused, so the loop sleeps until something asks for a frame
+  if (playing || dirty) raf = requestAnimationFrame(loop);
+}
+
+let syncAtPaint = null;
+function paint(now) {
+  syncAtPaint = { t, audio: sound.position };
   const c = drawFrame(t);
   present(now);
   frames++;
@@ -123,7 +145,11 @@ function present(now) {
   post.draw(c2d, fx, (now || 0) / 1000);
 }
 
-function run() { if (!raf) { last = 0; raf = requestAnimationFrame(loop); } }
+function run() {
+  if (raf || document.hidden || body.hasAttribute('data-still')) return;
+  last = 0; raf = requestAnimationFrame(loop);
+}
+function invalidate() { dirty = true; run(); }
 function halt() { cancelAnimationFrame(raf); raf = 0; }
 
 // ── transport ─────────────────────────────────────────────────────────────
@@ -177,13 +203,13 @@ function setPlaying(p) {
   wake();
 }
 function play() { if (!playing) setPlaying(true); run(); }
-function pause() { if (playing) setPlaying(false); dirty = true; }
+function pause() { if (playing) setPlaying(false); invalidate(); }
 function toggle() { playing ? pause() : play(); }
 
 function seek(x, announce) {
   t = wrap(K.clamp(x, T0, T1 - 1e-3));
   sound.seek(t);
-  dirty = true; run();
+  invalidate();
   if (announce) live.textContent = `${chapterAt(t).scene.title}, ${fmt(t)}`;
 }
 function jump(i) { const c = CHAPTERS[K.clamp(i, 0, CHAPTERS.length - 1)]; seek(c.start + 1e-3, true); }
@@ -244,9 +270,13 @@ scrub.addEventListener('keydown', e => {
   if (e.key === 'ArrowUp') { seek(t + 1, true); e.preventDefault(); }
 });
 
-// clicking the picture plays and pauses; a tap on a sleeping phone only wakes the controls
+// clicking the picture plays and pauses; a tap on a sleeping phone only wakes the controls.
+// (Idle is read on the stage's pointerdown, before the window's wake() clears it.)
+let tapWasIdle = false;
+stage.addEventListener('pointerdown', e => { tapWasIdle = body.hasAttribute('data-idle'); });
 stage.addEventListener('pointerup', e => {
-  if (e.pointerType !== 'mouse' && body.hasAttribute('data-idle')) { wake(); return; }
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  if (e.pointerType !== 'mouse' && tapWasIdle) { wake(); return; }
   toggle(); flashPulse();
 });
 
@@ -278,10 +308,21 @@ function wake() {
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { halt(); sound.pause(); }
-  else if (started && !body.hasAttribute('data-still')) { if (playing) sound.play(t); dirty = true; run(); }
+  else if (started && !body.hasAttribute('data-still')) { if (playing) sound.play(t); invalidate(); }
 });
 
-new ResizeObserver(() => { size(); if (started) run(); }).observe(stage);
+// repaint inside the resize itself, so no step of a resize shows a cleared canvas
+new ResizeObserver(() => {
+  size();
+  if (started && !body.hasAttribute('data-still') && !document.hidden) { dirty = false; paint(performance.now()); }
+}).observe(stage);
+
+// if the GPU takes the lens away (iOS can, after the tab sleeps), show the plain 2D frame
+glc.addEventListener('webglcontextlost', () => {
+  post = null;
+  c2d.removeAttribute('data-hidden'); glc.setAttribute('data-hidden', '');
+  invalidate();
+});
 
 // ── loading ───────────────────────────────────────────────────────────────
 const loadBar = $('loadBar'), loadText = $('loadText');
@@ -331,7 +372,7 @@ function buildStills() {
   setBacking(...keep);
 }
 function enterStill() { halt(); pause(); body.setAttribute('data-still', ''); buildStills(); }
-function leaveStill() { body.removeAttribute('data-still'); size(); play(); }
+function leaveStill() { body.removeAttribute('data-still'); size(); play(); playBtn.focus(); }
 $('playAnyway').addEventListener('click', leaveStill);
 
 // ── boot ──────────────────────────────────────────────────────────────────
@@ -345,7 +386,7 @@ const ready = new Promise(r => (resolveReady = r));
   $('loader').setAttribute('data-done', '');
   if (reduced.matches) enterStill();
   else {
-    if (qs.has('paused')) { setPlaying(false); dirty = true; run(); }
+    if (qs.has('paused')) { setPlaying(false); invalidate(); }
     else play();
   }
   resolveReady();
@@ -370,6 +411,8 @@ window.__reel = {
   get frames() { return frames; },
   get soundOn() { return sound.on; },
   get audio() { return { position: sound.position, voices: sound.voicesReady }; },
+  /** the playhead and the score's position as of the last painted frame */
+  get sync() { return syncAtPaint; },
   cueCount: CHAPTERS.reduce((n, c) => n + (c.scene.cues || []).length, 0),
   get post() { return !!post; },
   play, pause, seek, jump, setSound,
@@ -380,7 +423,7 @@ window.__reel = {
     p.drawImage(c2d, 0, 0, w, h);
     const d = p.getImageData(0, 0, w, h).data, out = new Array(w * h);
     for (let i = 0; i < w * h; i++) out[i] = Math.round(d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114);
-    dirty = true;
+    invalidate();
     return out;
   },
   /** the frame every chapter boundary must match: black and the thread at rest */
@@ -392,11 +435,11 @@ window.__reel = {
     p.drawImage(c2d, 0, 0, w, h);
     const d = p.getImageData(0, 0, w, h).data, out = new Array(w * h);
     for (let i = 0; i < w * h; i++) out[i] = Math.round(d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114);
-    dirty = true;
+    invalidate();
     return out;
   },
   /** the lens settings a chapter asked for at `time` */
-  fxAt(time) { drawFrame(time); dirty = true; return { ...S.fx }; },
+  fxAt(time) { drawFrame(time); const f = { ...S.fx }; invalidate(); return f; },
   /** show the frame at `time` exactly as a viewer would (lens included), paused */
   show(time) { pause(); t = time; const c = drawFrame(t); present(performance.now()); updateUI(c); dirty = false; },
   /** mean and worst JS cost of drawing a frame, over n instants spread across the reel */
@@ -407,7 +450,7 @@ window.__reel = {
       const a = performance.now(); drawFrame(at); const b = performance.now() - a;
       sum += b; if (b > max) { max = b; worst = at; }
     }
-    dirty = true;
+    invalidate();
     return { mean: sum / n, max, worst };
   }
 };

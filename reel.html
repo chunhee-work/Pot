@@ -21,7 +21,7 @@
   src:url("assets/Cinzel-Bold.ttf") format('truetype')}
 
 :root{
-  --bg:#0a0a09; --ink:#f5f5f0; --dim:#a19f97; --faint:#6a6862;
+  --bg:#0a0a09; --ink:#f5f5f0; --dim:#a19f97; --faint:#8b8982;
   --gold:#d8b26a; --gold-hi:#f3dfa8;
   --line:rgba(245,245,240,.14);
   --sans:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -42,6 +42,7 @@ body[data-idle] #stage{cursor:none}
 /* chrome: the thin top labels and the transport */
 .chrome{position:fixed;left:0;right:0;z-index:5;pointer-events:none;transition:opacity .5s var(--E),transform .5s var(--E)}
 body[data-idle] .chrome{opacity:0}
+body[data-idle] .transport{pointer-events:none}
 body[data-idle] .chrome.bottom{transform:translateY(8px)}
 .chrome.top{top:0;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
   padding:max(16px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left));
@@ -59,7 +60,8 @@ body[data-idle] .chrome.bottom{transform:translateY(8px)}
 .time b{color:var(--ink);font-weight:600}
 
 /* scrubber */
-.scrub{position:relative;flex:1;height:44px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.scrubwrap{position:relative;flex:1;min-width:0}
+.scrub{position:relative;width:100%;height:44px;display:flex;align-items:center;cursor:pointer;touch-action:none}
 .scrub .track{position:relative;width:100%;height:2px;background:var(--line);border-radius:2px}
 .scrub .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--gold),var(--gold-hi));border-radius:2px;transform-origin:0 50%;width:100%;transform:scaleX(0)}
 .scrub .tick{position:absolute;top:-4px;width:1px;height:10px;background:rgba(245,245,240,.35)}
@@ -130,10 +132,12 @@ body[data-still] #stage,body[data-still] .chrome,body[data-still] #loader{displa
       <svg id="icoPause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
       <svg id="icoPlay" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.2-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
     </button>
-    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="61" aria-valuenow="0" aria-valuetext="0 seconds">
+    <div class="scrubwrap">
       <nav class="chapters" id="chapters" aria-label="Chapters"></nav>
-      <div class="track"><div class="fill" id="fill"></div><div id="ticks"></div></div>
-      <div class="knob" id="knob"></div>
+      <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="61" aria-valuenow="0" aria-valuetext="0 seconds">
+        <div class="track"><div class="fill" id="fill"></div><div id="ticks"></div></div>
+        <div class="knob" id="knob"></div>
+      </div>
     </div>
     <div class="time" id="time"><b>00:00</b> / 01:01</div>
     <button class="tbtn" id="soundBtn" aria-label="Turn sound on" aria-pressed="false">

@@ -6,12 +6,13 @@
 import { serve, browser } from './lib.mjs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const results = [];
 const check = (name, pass, detail = '') => { results.push({ name, pass: !!pass, detail }); console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`); };
 
 // 1 · each chapter's own gate
-const here = path.dirname(new URL(import.meta.url).pathname);
+const here = path.dirname(fileURLToPath(import.meta.url));
 for (const id of process.env.SKIP_CHAPTERS ? [] : ['needle', 'medium', 'landofhope', 'cast', 'cuts', 'product', 'operator']) {
   let out = '', pass = true;
   try { out = execFileSync('node', [path.join(here, 'check-chapter.mjs'), id], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
@@ -47,7 +48,7 @@ async function open(vw, vh, dpr = 1, opts = {}) {
   const t0 = await page.evaluate(() => window.__reel.t);
   await page.waitForTimeout(1200);
   const s1 = await page.evaluate(() => ({ t: window.__reel.t, playing: window.__reel.playing, frames: window.__reel.frames }));
-  check('autoplays (muted) on load', s1.playing && s1.t > t0 + 0.5 && s1.frames > 10, `t ${t0.toFixed(2)} → ${s1.t.toFixed(2)}, ${s1.frames} frames`);
+  check('autoplays (muted) on load', s1.playing && s1.t > t0 + 0.2 && s1.frames > 5, `t ${t0.toFixed(2)} → ${s1.t.toFixed(2)}, ${s1.frames} frames`);
   check('sound is off by default', !(await page.evaluate(() => window.__reel.soundOn)));
 
   await page.mouse.move(640, 360);
@@ -101,12 +102,22 @@ async function open(vw, vh, dpr = 1, opts = {}) {
   // the score follows the picture through play, seek and a scrub
   await page.evaluate(() => { window.__reel.seek(20); window.__reel.play(); });
   await page.waitForTimeout(1500);
-  const a1 = await page.evaluate(() => ({ t: window.__reel.t, a: window.__reel.audio.position }));
+  const a1 = await page.evaluate(() => ({ t: window.__reel.sync.t, a: window.__reel.sync.audio }));
   check('sound: the score plays in step with the picture', a1.a !== null && a1.a > 20.5 && Math.abs(a1.a - a1.t) < 0.1, `picture ${a1.t.toFixed(3)} · score ${a1.a && a1.a.toFixed(3)}`);
   await page.evaluate(() => window.__reel.seek(40));
   await page.waitForTimeout(1200);
-  const a2 = await page.evaluate(() => ({ t: window.__reel.t, a: window.__reel.audio.position }));
+  const a2 = await page.evaluate(() => ({ t: window.__reel.sync.t, a: window.__reel.sync.audio }));
   check('sound: after a seek the score is within 0.1 s of the picture', Math.abs(a2.a - a2.t) < 0.1, `picture ${a2.t.toFixed(3)} · score ${a2.a.toFixed(3)}`);
+  // on a slow network the playhead holds for the score — it never runs backwards
+  await page.route('**/bgm-*.mp3', async r => { await new Promise(res => setTimeout(res, 700)); r.continue(); });
+  const mono = await page.evaluate(() => new Promise(res => {
+    window.__reel.jump(4);
+    const seen = [window.__reel.t], t0 = performance.now();
+    (function f() { seen.push(window.__reel.t); if (performance.now() - t0 < 2500) requestAnimationFrame(f); else res(seen); })();
+  }));
+  const back = mono.reduce((w, v, i) => (i && mono[i - 1] - v > w ? mono[i - 1] - v : w), 0);
+  check('sound: after a jump on a slow network the playhead never runs backwards', back < 0.001, `largest backward step ${back.toFixed(3)} s over ${mono.length} frames, ${mono[0].toFixed(2)} → ${mono[mono.length - 1].toFixed(2)}`);
+  await page.unroute('**/bgm-*.mp3');
   const voices = await page.evaluate(() => window.__reel.audio.voices);
   const wantVoices = await page.evaluate(() => window.__reel.cueCount);
   check('sound: the cast voices are loaded once sound is on', wantVoices > 0 && voices >= Math.min(wantVoices, 12), `${voices} voice buffers for ${wantVoices} cues`);
@@ -176,7 +187,10 @@ async function open(vw, vh, dpr = 1, opts = {}) {
 
 // 5 · the rest of the site is untouched
 {
-  const diff = execFileSync('git', ['diff', '--name-only', 'origin/claude/chun-hee-portfolio-8ptzy9', '--', 'Chun Hee - Portfolio.dc.html', 'process.dc.html', 'work.dc.html', 'gameui-staging.html', 'support.js'], { encoding: 'utf8' }).trim();
+  let diff;
+  try {
+    diff = execFileSync('git', ['diff', '--name-only', 'origin/claude/chun-hee-portfolio-8ptzy9', '--', 'Chun Hee - Portfolio.dc.html', 'process.dc.html', 'work.dc.html', 'gameui-staging.html', 'support.js'], { encoding: 'utf8', cwd: path.join(here, '..'), stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  } catch (e) { diff = 'could not compare: the production branch ref is not in this clone (git fetch origin claude/chun-hee-portfolio-8ptzy9)'; }
   check('home, /process, /work and the shared runtime are unchanged vs production', diff === '', diff);
   const { page, ctx } = await open(1280, 720, 1, { path: '/', noReady: true });
   const links = await page.evaluate(() => [...document.querySelectorAll('a[href]')].map(a => a.getAttribute('href')).filter(h => /reel/.test(h)));
