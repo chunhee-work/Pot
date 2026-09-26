@@ -10,7 +10,7 @@
    and stream off it, and the thread lies flat again. */
 import {
   PAL, clamp, lerp, invlerp, seg, smoothstep, TAU,
-  inQuad, inCubic, outCubic, inOutCubic, inOutQuad, outQuart, outExpo, outBack,
+  inQuad, inCubic, outCubic, inOutCubic, inOutQuad, outExpo, outBack,
   bezier, spring, rrect, thread, rest, text, measure
 } from '../kit.js';
 
@@ -184,10 +184,13 @@ function lockupState(S, L, t, g) {
   const pitch = lerp(0.2, 0, seg(t, 1.0, 2.6, outCubic)) - 0.12 * Math.sin(Math.PI * dock);
   const heroH = L.heroW / 3.3;
   const hy = lerp(S.H / 2 + heroH * 0.62, S.H / 2 - L.heroLift, rise);
-  const w = lerp(L.heroW, L.bugW, inOutQuad(dock));
+  const w = lerp(L.heroW, L.bugW, dock);
+  // fly by the left edge so the shrinking lockup never leaves the frame
+  const hx = S.W / 2 + (g.cx - S.W / 2) * 0.25;
+  const left = lerp(hx - L.heroW / 2, L.bugX - L.bugW / 2, outCubic(dock));
   return {
     opts: { w: L.rw, h: L.rh, yaw, pitch, fit: 1.2, exposure: lerp(0.55, 1.08, seg(t, 1.0, 2.8, outCubic)) },
-    x: lerp(S.W / 2 + (g.cx - S.W / 2) * 0.25, L.bugX, outQuart(dock)) - streamAt(S, t) * 0.35,
+    x: left + w / 2 - streamAt(S, t) * 0.35,
     y: lerp(hy, L.bugY, inOutCubic(dock)),
     w, h: w / 3.3, a: 1 - leave,
     ra: 0.32 * (1 - smoothstep(0, 0.35, dock))
@@ -284,10 +287,10 @@ function drawEpType(ctx, S, L, t, y) {
   ctx.save();
   ctx.beginPath(); ctx.rect(0, y + S.lw * 1.6, S.W, S.H); ctx.clip();   // the type hangs from the rail
   for (let k = 0; k < 4; k++) {
-    const rv = seg(t, LAND[k] - 0.28, LAND[k] + 0.75);
+    const rv = seg(t, LAND[k] - 0.3, LAND[k] + 0.5);
     if (rv <= 0) continue;
     const p = posterState(S, L, k, t);
-    const a = 1 - smoothstep(0.06 * L.sp, 0.5 * L.sp, Math.abs(p.d));
+    const a = 1 - smoothstep(0.04 * L.sp, (L.P ? 0.22 : 0.4) * L.sp, Math.abs(p.d));
     if (a <= 0.01) continue;
     const x = S.W / 2 + p.d * 1.45;                                 // type rides a layer nearer than the frames
     const e = EPS[k];
@@ -455,9 +458,12 @@ function drawEyebrow(ctx, S, L, t, g, y) {
   if (rv <= 0 || out >= 1) return;
   ctx.save();
   ctx.beginPath(); ctx.rect(0, y + S.lw * 1.6, S.W, S.H); ctx.clip();
-  text(ctx, S, 'THE FLAGSHIP — ORIGINAL SERIES', g.cx + (g.cx - S.W / 2) * 0.4, y + L.eyeDy, {
-    size: L.eyeS, weight: 600, tracking: 0.26, align: 'center', color: PAL.goldHi, alpha: 1 - out,
-    reveal: rv, window: 0.4, order: 'center', rise: -L.eyeDy - 2 * S.u
+  // tracks in from wide, opening out from the centre as the horizon did
+  const str = 'THE FLAGSHIP — ORIGINAL SERIES', n = str.length, sz = L.eyeS;
+  text(ctx, S, str, g.cx + (g.cx - S.W / 2) * 0.4, y + L.eyeDy, {
+    size: sz, weight: 600, tracking: 0.26, align: 'center', color: PAL.goldHi, alpha: 1 - out,
+    reveal: rv, window: 0.55, order: 'center', rise: 0, ease: outCubic,
+    glyph: (i, p) => ({ dx: (i - (n - 1) / 2) * (1 - p) * (L.P ? 0.4 : 0.8) * sz, alpha: p })
   });
   ctx.restore();
 }
@@ -465,15 +471,16 @@ function drawEyebrow(ctx, S, L, t, g, y) {
 // ── the lens, on the hits ─────────────────────────────────────────────────
 function lens(S, L, t, y) {
   const fx = S.fx;
-  const w = seg(t, ARCH_UP, ARCH_UP + 0.75);
-  if (w > 0 && w < 1) { fx.warp = w; fx.warpX = 0.5; fx.warpY = 0.5; }
+  // the arch pops on beat 1
+  const k0 = t - ARCH_UP;
+  if (k0 > 0 && k0 < 0.4) { fx.ab = 0.25 * Math.exp(-k0 * 12); fx.shake = 0.2 * S.u * Math.exp(-k0 * 14); }
   for (let k = 0; k < 4; k++) {
     const dt = t - LAND[k];
     if (dt < 0 || dt > 0.6) continue;
     const e = Math.exp(-dt * 16), big = k === 3;
     fx.ab = Math.max(fx.ab, (big ? 0.55 : 0.32) * e);
     fx.shake = Math.max(fx.shake, (big ? 0.45 : 0.25) * S.u * e);
-    if (big && dt < 0.55) { fx.warp = dt / 0.55; fx.warpX = 0.5; fx.warpY = (y - L.ph / 2) / S.H; }
+    if (big && dt < 0.45) { fx.warp = lerp(0.2, 1, dt / 0.45); fx.warpX = 0.5; fx.warpY = (y - L.ph / 2) / S.H; }
   }
   const s = seg(t, STREAM[0] + 0.2, STREAM[1]);
   if (s > 0 && s < 1) fx.ab = Math.max(fx.ab, 0.28 * Math.sin(Math.PI * s));
@@ -489,8 +496,11 @@ export default {
   still: 3.1,
   draw(ctx, S) {
     const t = S.lt;
-    if (t < 0.1 || t > S.d - 0.1) { rest(ctx, S); return; }
     const L = lay(S);
+    // the renderer is shared, and resizing it stalls a frame: size it for the
+    // lockup while the frame is still at rest, where a stall cannot be seen
+    if (t < 0.9) S.logo3d('landofhope', { w: L.rw, h: L.rh, yaw: -0.3, pitch: 0.2, fit: 1.2 });
+    if (t < 0.1 || t > S.d - 0.1) { rest(ctx, S); return; }
     const y = railY(S, L, t);
     const g = archGeom(S, L, t, y);
     const lk = lockupState(S, L, t, g);
