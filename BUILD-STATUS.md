@@ -1,10 +1,15 @@
 # BUILD-STATUS — `/reel`
 
 ## Now
-- T5 Needle、T8 The Cast：agent 还在做（其余 5 章已验收）
-- T2–T4、T12：不带上下文的 reviewer 正在审引擎代码
+- T13：不带上下文的 reviewer 正在审 7 个章节和渐进加载（23:17 MYT 派出）；审完修复后进 T14
 
 ## Done
+- T13 部分（23:17 MYT）
+  - 完整测试 46/46 通过（7 个章节检查 + 播放器 + 声音 + 慢网络 + 手机 + 减少动态效果 + 首页未改动）
+  - 每帧 JS 绘制耗时：整片平均 1.05ms（无头浏览器 CPU）
+  - 素材：整片 6.29MB（超出计划的 6MB 0.29MB）；改为渐进加载后，第一帧只需约 0.43MB（代码 + 字体），慢网络测试中 139ms 出第一帧
+  - 分享图：`assets/reel/og-48114eb348.jpg`（1200×630，片尾名字卡）
+- T5 Needle、T8 The Cast（23:08 MYT）：check-chapter PASS；配音 12 段按拍触发，已去掉每段开头 0.1–0.3s 的静音
 - T6 Medium、T9 Four more cuts、T10 The Product（22:55 MYT）：check-chapter 全部 PASS
   - Medium 横屏 0.96ms / 手机 0.76ms；Cuts 0.88ms / 1.42ms；Product 0.49ms / 0.33ms（每帧平均绘制耗时）
 - T11 One operator（22:53 MYT）：check-chapter PASS（横屏 0.74ms，手机 0.92ms）；截图 `/tmp/claude-0/shots/operator-final/`
@@ -19,9 +24,6 @@
   - 首页、`/process`、`/work` 三个文件的 sha256 和开工前一致
 
 ## Queue
-- T5–T11 七个章节（每章一个 agent 并行）
-- T12 声音
-- T13 性能、分享图、审查
 - T14 Go-Live 上 staging
 
 ## Blockers
