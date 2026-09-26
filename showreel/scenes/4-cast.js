@@ -19,12 +19,12 @@
    3.75  SKET   (hero)
    4.38  CCATS … one a beat … 9.38 OLD KEEPER — the cast takes the whole line
    9.72  the strip evens out (phone: the speaking window shuts)
-   10.0  "12 voices" · CAST & DIRECTED WITH ELEVENLABS — the hold (still)
+   10.0  "12 voices" · CAST & DIRECTED WITH ELEVENLABS — the hold (still at 11.1)
    11.58 the voices close into the line, left to right
    12.40 flat — pure rest to the end */
 import {
   PAL, clamp, lerp, invlerp, seg, noise1,
-  outExpo, outCubic, inCubic, inOutCubic, inQuad, siteE, spring,
+  outCubic, inCubic, inOutCubic, siteE, spring,
   thread, rest, text, measure
 } from '../kit.js';
 
@@ -51,7 +51,7 @@ const HEROES = 3, LAST = ARR.length - 1;
 const EVEN = [9.72, 10.12];    // wide: the strip evens out
 const SHUTP = [9.74, 9.98];    // phone: the speaking window closes
 const SLAM = 10;               // "12 voices"
-const TXT_OUT = 11.5;         // the hold's type leaves
+const TXT_OUT = 11.5;           // the hold's type leaves
 const SHUT = 11.58;            // voices close into the line, left to right
 const TAUT = 12.06, FLAT = 12.4;
 
@@ -69,7 +69,7 @@ function burst(tau) {
 /* The thread's displacement at x: a low murmur that travels along it, plus
    a packet for every voice that runs outward from where it spoke. */
 function makeWave(S, lt, src) {
-  const { u, W, H } = S;
+  const { u, W } = S;
   const taut = 1 - seg(lt, TAUT, FLAT, inOutCubic);
   const hum = u * taut * (1.0 * seg(lt, 0.1, 0.75, outCubic) - 0.45 * seg(lt, 1.6, 4.4, inOutCubic)
     + 0.15 * seg(lt, 9.8, 10.4) - 0.7 * seg(lt, 11.3, 12.1, inOutCubic));
@@ -157,7 +157,7 @@ function drawWindow(ctx, S, lt, w, wave) {
   if (W < 1 || w.h < 0.4) return;
   const yc = x => w.cy + (w.ride ? w.ride * wave(x) : 0);
   const cols = w.gap > 0.015 || w.speak > 0.015 || w.multi;
-  const groups = new Map();         // owner → path builder calls
+  const groups = new Map();         // owner → its outline (fused) or its bars
   let top = null;
   if (!cols) {
     // fused: one smooth outline, sampled densely at the caps
@@ -184,8 +184,10 @@ function drawWindow(ctx, S, lt, w, wave) {
       const ya = yc(xa), yb = yc(xb), ha = prof(w, xa) * fa, hb = prof(w, xb) * fb;
       let g = groups.get(who); if (!g) groups.set(who, (g = []));
       g.push(xa, ya - ha, xb, yb - hb, xb, yb + hb, xa, ya + ha);
-      const ym = yc(xc), hc = prof(w, xc) * flutter(w, xc, lt) * hm;
-      tops.push([xc, ym - hc]); bots.push([xc, ym + hc]);
+      if (w.lips > 0.01) {
+        const ym = yc(xc), hc = prof(w, xc) * flutter(w, xc, lt) * hm;
+        tops.push([xc, ym - hc]); bots.push([xc, ym + hc]);
+      }
     }
     top = [tops, bots];
   }
@@ -214,7 +216,7 @@ function drawWindow(ctx, S, lt, w, wave) {
       ctx.translate(bx, w.cy + w.h * 0.1); ctx.scale(bw, w.h * 0.95);
       ctx.fillStyle = scrim(ctx); ctx.fillRect(0, 0, 1, 1); ctx.restore();
     }
-    if (w.label > 0.005) w.drawLabel(ctx, w);
+    if (w.label > 0.005) w.drawLabel(ctx, S, w);
     ctx.restore();
   }
   if (w.lips > 0.01 && top) {
@@ -251,7 +253,7 @@ function layoutWide(S, lt) {
   for (const s of slots) {
     x += s.gp;
     const w = (avail * s.wt) / tot, i = s.i, T = ARR[i], tau = lt - T, hero = i < HEROES;
-    const lips = i < HEROES || i === 0 ? Math.max(0, spring(lt - (T - 0.08), 1.4, 6.5)) : seg(lt, T - 0.1, T + 0.3, outCubic);
+    const lips = hero ? Math.max(0, spring(lt - (T - 0.08), 1.4, 6.5)) : seg(lt, T - 0.1, T + 0.3, outCubic);
     const d = 0.022 * Math.abs(i - 5.5), ks = lt - (SLAM + d);
     const lv = 1 + even * (0.05 * noise1(lt * 2.4 + i * 1.9, 21) + (ks > 0 ? 0.2 * (1 - Math.exp(-ks / 0.03)) * Math.exp(-ks / 0.2) : 0));
     const shut = 1 - seg(lt, SHUT + i * 0.038, SHUT + i * 0.038 + 0.22, inCubic);
@@ -275,8 +277,7 @@ function layoutWide(S, lt) {
   return { wins, src };
 }
 
-function barName(ctx, w) {
-  const S = w.S;
+function barName(ctx, S, w) {
   const c = CAST[w.i], size = 2.1 * S.u;
   ctx.save();
   ctx.translate(w.x0 + 2.8 * S.u, w.cy + w.h - 1.6 * S.u + (1 - w.label) * 1.5 * S.u);
@@ -284,8 +285,7 @@ function barName(ctx, w) {
   text(ctx, S, c.name, 0, 0, { size, weight: 800, tracking: 0.1, color: PAL.ink, alpha: w.label });
   ctx.restore();
 }
-function cellName(ctx, w) {
-  const S = w.S;
+function cellName(ctx, S, w) {
   const c = CAST[w.i], size = 2.5 * S.u;
   text(ctx, S, c.name, w.x0 + 1.5 * S.u, w.cy + w.h - 1.5 * S.u + (1 - w.label) * S.u, { size, weight: 800, tracking: 0.06, color: PAL.ink, alpha: w.label });
 }
@@ -474,14 +474,14 @@ export default {
   assets: CAST.map(c => c.img),
   models: [],
   cues: ARR.map((at, i) => ({ at, voice: CAST[i].v })),
-  still: 10.75,
+  still: 11.1,
   draw(ctx, S) {
     const lt = S.lt;
     if (lt < 0.09 || lt > FLAT + 0.02) { rest(ctx, S); return; }
     const L = S.portrait ? layoutTall(S, lt) : layoutWide(S, lt);
     const wave = makeWave(S, lt, L.src);
     drawLine(ctx, S, wave);
-    for (const w of L.wins) { w.S = S; drawWindow(ctx, S, lt, w, wave); }
+    for (const w of L.wins) drawWindow(ctx, S, lt, w, wave);
     const { W, H, u } = S;
     if (!S.portrait) {
       titleBlock(ctx, S, lt, { x: 0.055 * W, ey: 0.283 * H, esize: 1.8 * u, y1: 0.372 * H, y2: 0.455 * H, dsize: 7.2 * u, sy: 0.585 * H, ssize: 2.5 * u, out: 3.96 });

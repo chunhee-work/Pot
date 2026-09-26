@@ -19,7 +19,8 @@
      1.26–2.05   the camera pulls back while the first stitches go in slowly
      1.90–2.60   eyebrow SHOWREEL 2026 settles in above the name
      1.22–3.20   C H U N H E E sewn, the needle gathering to machine speed
-     3.20–3.50   out of the last E and down through the line (bar: quiver, lens hit)
+     3.20–3.425  off the last E, the needle lifts and takes aim again
+     3.425–3.50  the second stab: through the line on the bar (quiver, lens hit)
      3.50–4.10   "from needle & thread," drops from behind the line, word by word
      3.95–4.75   a sheen crosses the stitches while it holds
      4.95–5.375  tension: the copy leaves, stitches cinch and tremble, needle draws back
@@ -52,7 +53,7 @@ const T = {
   cock: [0.80, 0.95], stab: [0.965, 1.0],
   leadIn: [1.0, 1.22],
   sew: [1.22, 3.2],
-  leadOut: [3.2, 3.5, 3.535],     // leaves the E, pierces the line (bar), stops dead
+  leadOut: [3.2, 3.38, 3.425, 3.5, 3.535],   // lifts off the E and aims · holds · stabs · pierces the line (bar) · stops dead
   tag: [3.50, 4.10],
   sheen: [3.95, 4.75],
   tension: 4.95, pull: 5.375, snap: 5.70,
@@ -220,20 +221,14 @@ function geometry(ctx, S) {
   const sUp = nearestS(leadIn, xu, cy);
   // the exit, right of the last E: the thread runs on from its foot into the needle's eye
   const gl = glyphs[glyphs.length - 1], E0 = { x: gl.p.xy[0], y: gl.p.xy[1] };
-  const xe = rl.nR + 6.2 * u, thE = 52 * Math.PI / 180, dE = [Math.cos(thE), Math.sin(thE)], depth = 4 * u;
-  const leadOut = spline([
-    [E0.x, E0.y], [E0.x + 1.3 * u, E0.y + 0.4 * u],
-    [xe - dE[0] * 5 * u, cy - dE[1] * 5 * u], [xe - dE[0] * 2.5 * u, cy - dE[1] * 2.5 * u],
-    [xe, cy], [xe + dE[0] * depth, cy + dE[1] * depth]
-  ], 14);
-  const sPierce = nearestS(leadOut, xe, cy);
+  const xe = rl.nR + 8 * u, thE = 64 * Math.PI / 180, dE = [Math.cos(thE), Math.sin(thE)], depth = 4 * u;
 
   const topY = r0.top;
   GEO = {
     key, W, F, k, rows, glyphs, Dt, NL, cy, u,
     sw: Math.max(S.lw * 1.3, 0.34 * u),
     xd, xu, dD, thD, leadIn, sUp, focusX: (P ? 0.46 : 0.4) * W,
-    xe, dE, thE, depth, leadOut, sPierce,
+    xe, dE, thE, depth, E0,
     nL: Math.min(...rows.map(r => r.nL)), nR: Math.max(...rows.map(r => r.nR)), nTop: topY,
     brow: { y: topY - (P ? 6.4 : 5.6) * u, size: (P ? 2.6 : 2.0) * u },
     tag: { y: cy + (P ? 11.4 : 9.2) * u, size: (P ? 5.5 : 4.4) * u }
@@ -355,12 +350,21 @@ function pose(G, t, o) {
     }
     return o;
   }
-  const [lo0, lop, lo1] = T.leadOut;
-  if (t < lo1) {                                                // out of the E and down through the line
-    ptAt(G.leadOut, leadOutS(G, t), o);
-    const s = leadOutS(G, t), back = s - NL * 0.93, gl = G.glyphs[G.glyphs.length - 1];
-    if (back >= 0) ptAt(G.leadOut, back, _a); else ptAt(gl.p, gl.p.L + back, _a);
-    o.a = Math.atan2(o.y - _a.y, o.x - _a.x); return o;
+  const [lo0, loAim, loStab, lop, lo1] = T.leadOut;
+  if (t < lo1) {
+    const upX = G.xe - G.dE[0] * 5.5 * u, upY = cy - G.dE[1] * 5.5 * u;
+    if (t < loStab) {                                           // off the E: lifts and takes aim
+      if (G.aEnd === undefined) G.aEnd = pose(G, lo0 - 1e-4, {}).a;
+      const e = siteE(invlerp(lo0, loAim, t));
+      let da = G.thE - G.aEnd;
+      while (da > Math.PI) da -= TAU;
+      while (da < -Math.PI) da += TAU;
+      o.x = lerp(G.E0.x, upX, e); o.y = lerp(G.E0.y, upY, e) - Math.sin(Math.PI * e) * 2 * u;
+      o.a = G.aEnd + da * e; return o;
+    }
+    o.a = G.thE;                                                // the stab, then it stops dead
+    const d = t < lop ? lerp(-5.5 * u, 0, inQuad(invlerp(loStab, lop, t))) : lerp(0, G.depth, outQuad(invlerp(lop, lo1, t)));
+    o.x = G.xe + G.dE[0] * d; o.y = cy + G.dE[1] * d; return o;
   }
   // stuck through the line: it quivers from the blow, then draws back and whips out
   let a = G.thE, x = G.xe + G.dE[0] * G.depth, y = cy + G.dE[1] * G.depth;
@@ -385,11 +389,6 @@ function pose(G, t, o) {
 function leadInS(G, t) {          // cubic Hermite: leaves at the stab's speed, arrives at the sewing's
   const x = invlerp(T.leadIn[0], T.leadIn[1], t), x2 = x * x, x3 = x2 * x, L = G.leadIn.L;
   return clamp((x3 - 2 * x2 + x) * G.m0 + (3 * x2 - 2 * x3) * L + (x3 - x2) * G.m1, 0, L);
-}
-function leadOutS(G, t) {
-  const [lo0, lop, lo1] = T.leadOut;
-  return t < lop ? G.sPierce * Math.pow(invlerp(lo0, lop, t), 2.2)
-    : lerp(G.sPierce, G.leadOut.L, outQuad(invlerp(lop, lo1, t)));
 }
 function stitchIndex(g, s) {
   let lo = 0, hi = g.sa.length - 1;
@@ -430,7 +429,7 @@ function lineShape(S, G, t, x0, x1) {
   const plucks = [
     [1.0, pf(G.xd), 0.85 * u, 0.025, 7, 6],
     [G.tUp, pf(G.xu), -0.55 * u, 0.02, 7, 6],
-    [T.leadOut[1], pf(G.xe), 1.0 * u, 0.02, 7, 6],
+    [T.leadOut[3], pf(G.xe), 1.0 * u, 0.02, 7, 6],
     [T.snap, 0.5, 0.75 * u, 0.0, 9, 9]
   ];
   // the needle tugs the line up as it draws back, and lets go on the pull
@@ -585,7 +584,7 @@ export default {
         ctx.strokeStyle = sheen ? sheen.hi : PAL.goldHi; ctx.globalAlpha = fade * 0.85;
         ctx.lineWidth = lerp(sw * 0.36, S.lw * 0.38, f.close); ctx.stroke();
         // stitches still warm from the needle
-        if (upto < g.p.L + trail && t < T.leadOut[1]) {
+        if (upto < g.p.L + trail && t < T.leadOut[3]) {
           const hot = Math.max(0, upto - trail);
           ctx.beginPath();
           const { sa, sb } = g;
@@ -603,15 +602,13 @@ export default {
     // the thread from the last E into the needle's eye
     const o = pose(G, t, _o);
     if (t >= T.leadOut[0]) {
-      const lo = G.leadOut;
-      const s1 = Math.max(0, (t < T.leadOut[2] ? leadOutS(G, t) : lo.L) - G.NL * 0.93);
       const eX = o.al > 0 ? o.x - Math.cos(o.a) * o.len * 0.93 : 1.1 * W;
       const eY = o.al > 0 ? o.y - Math.sin(o.a) * o.len * 0.93 : cy;
+      mapPt(fl, G.E0.x, G.E0.y, _m);
+      const sx = _m.x, sy = _m.y, sag = 0.5 * u * (1 - fl.close);
       const build = c => {
-        c.beginPath();
-        if (s1 > 0.1) subPath(c, lo, 0, s1, fl);
-        else { mapPt(fl, lo.xy[0], lo.xy[1], _m); c.moveTo(_m.x, _m.y); }
-        c.lineTo(eX, eY);
+        c.beginPath(); c.moveTo(sx, sy);
+        c.quadraticCurveTo((sx + eX) / 2, (sy + eY) / 2 + sag, eX, eY);
       };
       thread(ctx, S, build, { width: lerp(S.lw * 1.1, S.lw, fl.close), alpha: fade, glow: 0.8 });
     }
@@ -676,7 +673,7 @@ export default {
     // the lens: a small knock on the stab, a proper one when the name is finished
     const fx = S.fx;
     if (t >= 1.0 && t < 1.2) fx.ab = 0.14 * (1 - outCubic(invlerp(1.0, 1.2, t)));
-    const lp = T.leadOut[1];
+    const lp = T.leadOut[3];
     if (t >= lp && t < lp + 0.5) {
       const k = invlerp(lp, lp + 0.5, t);
       fx.ab = 0.3 * Math.pow(1 - k, 3);
