@@ -26,16 +26,17 @@ const SLAM = 4 * BEAT;          // "1 operator", the name: the bar line
 // standing part → loop up and back down over the line → round behind the
 // standing part → through the loop → out along the line. Four crossings.
 const KNOT = [
-  [-17, 0], [-13.5, 0], [-10, 0], [-6.6, 0], [-3.4, 0], [-0.4, 0], [2.2, 0.05], [4.4, 0.35],
-  [6.6, 1.8], [7.6, 4.6], [6.7, 7.6], [4.0, 9.2], [0.9, 8.7], [-1.0, 6.7], [-1.45, 4.0], [-0.95, 1.5],
-  [0.35, -1.7], [-0.3, -3.8], [-2.5, -4.8], [-4.9, -4.1], [-6.3, -2.1], [-6.45, 0.4], [-5.6, 2.7],
-  [-3.8, 4.25], [-1.5, 4.75], [0.8, 4.2], [2.4, 2.5], [3.35, 0.3], [4.1, -1.35], [5.5, -2.45],
-  [7.6, -2.35], [9.6, -1.05], [11.8, -0.15], [14.6, 0], [18, 0], [21.5, 0]
+  [-17, 0], [-13.5, 0], [-10, 0], [-6.6, 0], [-3.4, 0], [-0.4, 0], [2.1, 0.05], [4.1, 0.4],
+  [6.0, 1.9], [6.9, 4.4], [6.1, 7.0], [3.7, 8.5], [0.9, 8.1], [-0.9, 6.3], [-1.4, 3.9], [-0.95, 1.5],
+  [0.35, -1.7], [-0.2, -3.9], [-2.4, -5.1], [-5.0, -4.5], [-6.5, -2.4], [-6.7, 0.3], [-5.8, 2.7],
+  [-3.9, 4.2], [-1.5, 4.7], [0.8, 4.1], [2.3, 2.4], [3.2, 0.3], [3.9, -1.3], [5.1, -2.2],
+  [6.8, -2.0], [8.3, -1.0], [9.9, -0.2], [12.2, 0], [15.5, 0], [19, 0], [22.5, 0]
 ];
 const NK = KNOT.length;
-const ON_LINE = KNOT.map((p, i) => i <= 5 || i >= NK - 3);
+const ON_LINE = KNOT.map((p, i) => i <= 5 || i >= NK - 4);
 const PIVOT = 1.5;          // scaling about (PIVOT, 0) keeps the tails on the line
-const KMINX = -6.45;        // the knot's leftmost reach
+const KMINX = -6.7;         // the knot's leftmost reach
+const KMAXX = 9.9;          // … and its rightmost, before it lies back on the line
 const STEPS = 7;            // Catmull-Rom samples per control span
 
 // arclength of the control polygon, for laying the knot's slack along the line
@@ -136,43 +137,56 @@ function getLayout(ctx, S) {
   if (L) return L;
   const { u, W, H } = S, cy = H / 2;
   L = { cy, stats: [] };
-  const labO = { size: 1.55 * u, weight: 600, tracking: 0.18 };
   if (!S.portrait) {
+    // one line of name on the thread, the knot as its full stop; the numbers
+    // above in a row whose last column stands over the knot; role and
+    // address below the thread
     const xL = 13 * u;
-    const nameO = { size: 17.5 * u, weight: 900, tracking: -0.03 };
+    const nameO = { size: 18.5 * u, weight: 900, tracking: -0.03 };
     const nameW = measure(ctx, 'CHUN HEE', nameO);
-    L.name = [{ str: 'CHUN HEE', x: xL, y: cy - 2.6 * u, thread: true }];
+    L.name = [{ str: 'CHUN HEE', x: xL, y: cy - 2.8 * u, thread: true }];
     L.nameO = nameO;
-    L.k = 1.6 * u;
-    L.knotX = xL + nameW + 3.4 * u + (PIVOT - KMINX) * L.k;
-    const numO = { size: 7 * u, weight: 800, tracking: -0.02 };
-    const ny = cy - 27 * u, colW = 33 * u;
-    STATS.forEach((st, j) => L.stats.push({ x: xL + j * colW, y: ny, numO, lab: { x: xL + j * colW, y: ny + 4.4 * u, o: labO }, unitO: { size: 3 * u, weight: 500, tracking: 0 } }));
-    L.role = [{ str: ROLE, x: xL, y: cy + 7.4 * u }];
-    L.roleO = { size: 1.6 * u, weight: 600, tracking: 0.16 };
-    L.email = { x: xL, y: cy + 14.6 * u, o: { size: 3.1 * u, weight: 500, tracking: -0.005 } };
-    L.foot = { x: W - xL, y: H * 0.84, o: { size: 1.3 * u, weight: 700, tracking: 0.1, align: 'right' } };
+    L.k = 1.85 * u;
+    const knotL = xL + nameW + 4.4 * u;
+    L.knotX = knotL + (PIVOT - KMINX) * L.k;
+    const numO = { size: 8.6 * u, weight: 800, tracking: -0.02 };
+    const labO = { size: 1.6 * u, weight: 600, tracking: 0.18 };
+    const ny = cy - 28 * u, colW = (knotL - xL) / 3;
+    STATS.forEach((st, j) => L.stats.push({
+      x: xL + j * colW, y: ny, numO, unitO: { size: 3.4 * u, weight: 500, tracking: 0 },
+      lab: { x: xL + j * colW, y: ny + 4.9 * u, o: labO }
+    }));
+    L.role = [{ str: ROLE, x: xL, y: cy + 8.4 * u }];
+    L.roleO = { size: 1.7 * u, weight: 600, tracking: 0.16 };
+    L.email = { x: xL, y: cy + 16.2 * u, o: { size: 3.5 * u, weight: 500, tracking: -0.005 } };
+    L.foot = { x: W - xL, y: H * 0.84, o: { size: 1.35 * u, weight: 700, tracking: 0.1, align: 'right' } };
   } else {
-    const xL = 9 * u;
-    const nameO = { size: 18 * u, weight: 900, tracking: -0.03 };
+    // two lines of name, the knot after HEE on the thread; the numbers
+    // stacked above, the role and the address below
+    const xL = 8 * u;
+    const nameO = { size: 20 * u, weight: 900, tracking: -0.03 };
     const heeW = measure(ctx, 'HEE', nameO);
-    const y2 = cy - 2.6 * u, y1 = y2 - 16.4 * u;
+    const y2 = cy - 2.8 * u, y1 = y2 - 18.2 * u;
     L.name = [{ str: 'CHUN', x: xL, y: y1 }, { str: 'HEE', x: xL, y: y2, thread: true }];
     L.nameO = nameO;
-    L.k = 1.5 * u;
-    L.knotX = xL + heeW + 3 * u + (PIVOT - KMINX) * L.k;
-    const numO = { size: 7.5 * u, weight: 800, tracking: -0.02 };
-    const capName = layout(ctx, 'CHUN', nameO).ascent;
-    const rowH = 10.6 * u, last = y1 - capName - 7.5 * u;
-    const lo = { ...labO, size: 2.4 * u };
+    L.k = 1.75 * u;
+    L.knotX = xL + heeW + 5 * u + (PIVOT - KMINX) * L.k;
+    const numO = { size: 9 * u, weight: 800, tracking: -0.02 };
+    const labO = { size: 2.6 * u, weight: 600, tracking: 0.18 };
+    const capName = layout(ctx, 'CHUN', nameO).ascent, capNum = layout(ctx, '17', numO).ascent;
+    const capLab = layout(ctx, 'ORIGINAL', labO).ascent;
+    const rowH = 12 * u, last = y1 - capName - 8 * u;
     STATS.forEach((st, j) => {
       const y = last - (3 - j) * rowH;
-      L.stats.push({ x: xL, y, numO, lab: { x: xL + 25 * u, y: y - 2.5 * u, o: lo }, unitO: { size: 3.4 * u, weight: 500, tracking: 0 } });
+      L.stats.push({
+        x: xL, y, numO, unitO: { size: 3.8 * u, weight: 500, tracking: 0 },
+        lab: { x: xL + 27 * u, y: y - (capNum - capLab) / 2, o: labO }
+      });
     });
-    L.role = [{ str: ROLE_2[0], x: xL, y: cy + 8.6 * u }, { str: ROLE_2[1], x: xL, y: cy + 13 * u }];
-    L.roleO = { size: 2.5 * u, weight: 600, tracking: 0.14 };
-    L.email = { x: xL, y: cy + 22 * u, o: { size: 4.4 * u, weight: 500, tracking: -0.005 } };
-    L.foot = { x: xL, y: H * 0.84, o: { size: 2.1 * u, weight: 700, tracking: 0.1 } };
+    L.role = [{ str: ROLE_2[0], x: xL, y: cy + 9 * u }, { str: ROLE_2[1], x: xL, y: cy + 13.6 * u }];
+    L.roleO = { size: 2.6 * u, weight: 600, tracking: 0.14 };
+    L.email = { x: xL, y: cy + 22.5 * u, o: { size: 4.9 * u, weight: 500, tracking: -0.005 } };
+    L.foot = { x: xL, y: H * 0.84, o: { size: 2.2 * u, weight: 700, tracking: 0.1 } };
   }
   const h = L.stats[3], hl = layout(ctx, '1', h.numO);
   L.hero = { x: h.x + hl.width / 2, y: h.y - hl.ascent / 2 };
@@ -183,32 +197,42 @@ function getLayout(ctx, S) {
 // ── the knot, frame by frame ─────────────────────────────────────────────
 function knotFrame(S, t, L) {
   const k = L.k, ax = L.knotX, cy = L.cy;
-  // gather: the loops lift out of the line and the slack is drawn in
-  const gy = seg(t, T_IN, 0.40, outCubic), gx = seg(t, 0.10, 0.56, inOutCubic);
-  // release: the thread slides out to the right and the loops lie back down
-  const rx = 1 - seg(t, 4.46, 4.86, inOutCubic);
-  const ry = 1 - seg(t, 4.50, 4.84, inOutCubic);
-  const py = Math.min(gy, ry) - 0.07 * Math.sin(Math.PI * seg(t, 4.78, 4.9, inOutQuad));
-  const late = t > 2.5;
-  const px = late ? rx : gx;
+  const late = t > SLAM;
   const restX = late ? REST_OUT : REST_IN;
 
   // scale: loose, then the cinch on beat 1 (with a little recoil), a tug on
   // every stat, a hard one on the bar line, and a loosening before the pull
-  let s = 1.45 - 0.45 * seg(t, 0.34, CINCH, inCubic);
+  let s = 1.45 - 0.45 * seg(t, 0.36, CINCH, inCubic);
   const c = t - CINCH;
   if (c > 0) s -= 0.07 * Math.exp(-6 * c) * Math.sin(TAU * 2.4 * c);
   s *= 1 - 0.035 * (bump(t - 2 * BEAT, 0.05) + bump(t - 3 * BEAT, 0.05)) - 0.085 * bump(t - SLAM, 0.045);
   s *= 1 + 0.12 * seg(t, 4.40, 4.64, inOutQuad);
 
   // a slow, living wobble in the loops while the knot holds
-  const wob = 0.16 * gy * ry;
+  const wob = 0.16 * seg(t, 0.3, 0.8) * (1 - seg(t, 4.4, 4.7));
+  // the settle after the pull: the line overshoots flat by a hair and comes back
+  const settle = 0.06 * Math.sin(Math.PI * seg(t, 4.74, 4.9, inOutQuad));
   const px_ = new Float64Array(NK), py_ = new Float64Array(NK);
   for (let i = 0; i < NK; i++) {
+    const f = KM[i] / KM[NK - 1];
+    let gx, gy;
+    if (!late) {
+      // tied in order along the thread: the loop is thrown first, then the
+      // wrap round the standing part, then the end goes through
+      const a = 0.14 + 0.2 * f;
+      gx = outCubic(clamp((t - a) / 0.24));
+      gy = inOutCubic(clamp((t - a - 0.01) / 0.26));
+    } else {
+      // pulled from the right: the far end straightens first and the pull
+      // runs back through the knot
+      const a = 4.44 + 0.16 * (1 - f);
+      gx = 1 - inOutCubic(clamp((t - a) / 0.26));
+      gy = 1 - inOutCubic(clamp((t - a - 0.02) / 0.22)) - settle;
+    }
     let kx = PIVOT + s * (KNOT[i][0] - PIVOT), ky = s * KNOT[i][1];
     if (!ON_LINE[i]) { kx += wob * noise1(t * 0.9 + i * 0.61, 3); ky += wob * noise1(t * 0.9 + i * 0.61, 11); }
-    px_[i] = ax + k * (lerp(restX[i], kx, px) - PIVOT);
-    py_[i] = cy - k * ky * py;
+    px_[i] = ax + k * (lerp(restX[i], kx, gx) - PIVOT);
+    py_[i] = cy - k * ky * gy;
   }
   return sampleCR(px_, py_, STEPS);
 }
@@ -250,6 +274,13 @@ function drawKnot(ctx, S, t, L) {
     c.lineTo(1.05 * S.W, cy);
   }, { width: w, glow });
 
+  // light running along the taut line: in from both edges before the knot
+  // is thrown (the slack being drawn in), out to the right when it is pulled
+  const gxK = L.knotX + (KMINX - PIVOT) * L.k, gxR = L.knotX + (KMAXX - PIVOT) * L.k;
+  comet(ctx, S, t, 0.08, 0.31, -0.02 * S.W, gxK, cy, w);
+  comet(ctx, S, t, 0.08, 0.31, 1.02 * S.W, gxR, cy, w);
+  comet(ctx, S, t, 4.5, 4.9, L.knotX, 1.1 * S.W, cy, w);
+
   // a glint that runs along the knot when it cinches, on the bar line, and once in the hold
   for (const [g0, gd] of [[0.5, 0.75], [SLAM, 0.6], [3.5, 1.1]]) {
     const τ = (t - g0) / gd;
@@ -265,20 +296,53 @@ function drawKnot(ctx, S, t, L) {
     ctx.restore();
   }
 
-  // over and under: break the under-strand along the over-strand, then lay the over-strand back
+  // over and under: at each crossing, a narrow band along the over-strand is
+  // cleared (that is the break in the under-strand) and the over-strand is
+  // drawn back inside it exactly as it was, glow and all, so nothing doubles
   for (const c of crossings(P)) {
     const aOver = zAt(c.ua) >= zAt(c.ub);
     const i = aOver ? c.i : c.j, ta = aOver ? c.ta : c.tb;
-    const len = (2.2 * w) / Math.max(0.3, c.sin) + w;
+    const len = (2.4 * w) / Math.max(0.28, c.sin) + 1.5 * w;
     const pts = around(P, i, ta, len);
     if (pts.length < 2) continue;
     ctx.save();
-    ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
-    linePts(ctx, pts);
-    ctx.strokeStyle = PAL.bg; ctx.lineWidth = w * 3.4; ctx.stroke();
+    bandPath(ctx, pts, w * 1.75);
+    ctx.fillStyle = PAL.bg; ctx.fill();
+    ctx.clip();
+    thread(ctx, S, pts, { sharp: true, width: w, glow });
     ctx.restore();
-    thread(ctx, S, pts, { sharp: true, width: w, glow: 0.4 });
   }
+}
+
+/** a streak of light sliding along the flat line from x0 to x1 between t0 and t1 */
+function comet(ctx, S, t, t0, t1, x0, x1, cy, w) {
+  const τ = (t - t0) / (t1 - t0);
+  if (τ <= 0 || τ >= 1) return;
+  const x = lerp(x0, x1, inCubic(τ)), dir = Math.sign(x1 - x0);
+  const a = Math.sin(Math.PI * Math.min(1, τ * 1.25)) ** 0.7;
+  const len = (6 + 30 * τ) * S.u;       // it stretches as it accelerates
+  ctx.save(); ctx.lineCap = 'round';
+  for (const [f, al, lw] of [[1, 0.22, 5], [0.6, 0.45, 2.4], [0.25, 1, 1.15]]) {
+    ctx.beginPath(); ctx.moveTo(x - dir * len * f, cy); ctx.lineTo(x, cy);
+    ctx.strokeStyle = `rgba(255,246,222,${al * a})`; ctx.lineWidth = w * lw; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** the outline of a strip of half-width hw along a polyline */
+function bandPath(ctx, pts, hw) {
+  const n = pts.length, R = [];
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const a = pts[i > 0 ? i - 1 : 0], b = pts[i < n - 1 ? i + 1 : n - 1];
+    let dx = b[0] - a[0], dy = b[1] - a[1];
+    const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+    const x = pts[i][0], y = pts[i][1];
+    if (i) ctx.lineTo(x - dy * hw, y + dx * hw); else ctx.moveTo(x - dy * hw, y + dx * hw);
+    R.push(x + dy * hw, y - dx * hw);
+  }
+  for (let i = n - 1; i >= 0; i--) ctx.lineTo(R[2 * i], R[2 * i + 1]);
+  ctx.closePath();
 }
 
 // ── type ────────────────────────────────────────────────────────────────
@@ -341,7 +405,7 @@ function statValue(st, j, t) {
   const a = SLAM - 0.36;
   if (t < SLAM) return -1 + (st.roll + 1) * inQuart(clamp((t - a) / 0.36));
   const h = t - SLAM;
-  return st.roll + 0.34 * Math.exp(-9 * h) * Math.sin(TAU * 4.2 * h);
+  return st.roll + 0.09 * Math.exp(-11 * h) * Math.sin(TAU * 3 * h);
 }
 
 function mixHex(a, b, f) {
@@ -356,7 +420,8 @@ function drawStats(ctx, S, t, L) {
     const g = L.stats[j], t0 = (j + 1) * BEAT;
     if (t < t0 - 0.4) return;
     const out = seg(t, 4.22 + j * 0.05, 4.48 + j * 0.05, inCubic);
-    const v = statValue(st, j, t), vel = (v - statValue(st, j, t - 1 / 60)) * 60;
+    const v = statValue(st, j, t);
+    const vel = st.hero && t >= SLAM ? 0 : (v - statValue(st, j, t - 1 / 60)) * 60;
     const numAsc = layout(ctx, st.num, g.numO).ascent;
     const dropN = out * (numAsc + g.numO.size * 0.3);
     // the hero: gold, a flash of white-gold on impact and a punch in scale
@@ -364,7 +429,7 @@ function drawStats(ctx, S, t, L) {
     if (st.hero) {
       const h = t - SLAM;
       color = h < 0 ? PAL.gold : mixHex(PAL.goldHi, PAL.gold, clamp(h / 0.5));
-      sc = 1 + 0.2 * decay(h, 0.07) * (h >= 0 ? 1 : 0);
+      sc = 1 + 0.13 * decay(h, 0.06);
     }
     ctx.save();
     if (sc !== 1) { const Lt = layout(ctx, st.num, g.numO); ctx.translate(g.x + Lt.width / 2, g.y - numAsc / 2); ctx.scale(sc, sc); ctx.translate(-(g.x + Lt.width / 2), -(g.y - numAsc / 2)); }
@@ -425,8 +490,9 @@ function lens(S, t, L) {
   const h = t - SLAM;
   if (h >= 0 && h < 0.7) {
     const e = decay(h, 0.085);
-    fx.ab += 0.55 * e; fx.shake += 0.5 * u * e;
-    fx.warp = h / 0.7; fx.warpX = L.hero.x / S.W; fx.warpY = L.hero.y / S.H;
+    fx.ab += 0.42 * e; fx.shake += 0.5 * u * e;
+    // the shock leaves the knot, which tugs tight as the one lands
+    fx.warp = h / 0.7; fx.warpX = L.knotX / S.W; fx.warpY = 0.5 - 2.5 * L.k / S.H;
   }
 }
 

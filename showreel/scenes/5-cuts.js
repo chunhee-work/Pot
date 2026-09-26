@@ -19,7 +19,7 @@ import {
 // ── the score ─────────────────────────────────────────────────────────────
 const CUT = [0.625, 2.5, 5, 7.5, 9.375];      // the five slashes
 const IN = 0.08, OUT = 9.9;                    // pure rest outside these
-const SLIDE = 0.5;                             // how long the halves take to leave
+const SLIDE = 0.44;                            // how long the halves take to leave
 const CREDIT = ['STORY,', ' VISUALS, EDIT,', ' VO AND MUSIC:', ' ONE PERSON.'];
 const CREDIT_T = [1.875, 3.75, 6.25, 8.125];   // one phrase of the credit per film, on a beat
 
@@ -40,28 +40,28 @@ const FILMS = [
     title: ['CCATS'], titleP: ['CCATS'],
     log: ['A factory cat, a coffee-powered idea, a city saved.'],
     logP: ['A factory cat, a coffee-powered idea,', 'a city saved.'],
-    L: { fx: 0.3, fy: 0.42 }, P: { fx: 0.13, fy: 0.4 }, pan: 1, motes: 'ember', gradeA: 0.5
+    L: { fx: 0, fy: 0.4, z: 1.16 }, P: { fx: 0.13, fy: 0.4, z: 1 }, pan: 1, motes: 'ember', grade: ['color', 0.42]
   },
   {
     img: 'assets/og10.jpg', kick: 'TEASER', rt: '1:14',
     title: ['OG10 ARE BACK'], titleP: ['OG10', 'ARE BACK'],
     log: ['Ten characters walk off the page.'],
     logP: ['Ten characters walk off the page.'],
-    L: { fx: 0.62, fy: 0.55 }, P: { fx: 0.9, fy: 0.5 }, pan: -1, motes: 'dust', gradeA: 0.28
+    L: { fx: 1, fy: 0.55, z: 1 }, P: { fx: 0.9, fy: 0.5, z: 1 }, pan: -1, motes: 'dust', grade: ['overlay', 0.24]
   },
   {
     img: 'assets/sket.jpg', kick: 'OG10 ORIGIN', rt: '4:22',
     title: ['SKET'], titleP: ['SKET'],
     log: ['A student’s gi, a moonlit road, the armor he came back for.'],
     logP: ['A student’s gi, a moonlit road,', 'the armor he came back for.'],
-    L: { fx: 0.3, fy: 0.35 }, P: { fx: 0.09, fy: 0.35 }, pan: 1, motes: 'petal', gradeA: 0.44
+    L: { fx: 0.02, fy: 0.35, z: 1.08 }, P: { fx: 0.09, fy: 0.35, z: 1 }, pan: 1, motes: 'petal', grade: ['color', 0.3]
   },
   {
     img: 'assets/bounty-board.jpg', kick: 'COMMUNITY', rt: '1:13',
     title: ['BOUNTY BOARD'], titleP: ['BOUNTY', 'BOARD'],
     log: ['Pick a platform, share the heroes, earn your reward.'],
     logP: ['Pick a platform, share the heroes,', 'earn your reward.'],
-    L: { fx: 0.5, fy: 0.45 }, P: { fx: 0.52, fy: 0.45 }, pan: -1, motes: 'speck', gradeA: 0.3
+    L: { fx: 0.5, fy: 0.45, z: 1 }, P: { fx: 1, fy: 0.45, z: 1 }, pan: -1, motes: 'speck', grade: ['soft-light', 0.4]
   }
 ];
 
@@ -87,8 +87,8 @@ const tiltE = p => {
     : (Math.pow(2 * p - 2, 2) * ((c + 1) * (p * 2 - 2) + c) + 2) / 2;
 };
 /** a damped settle that overshoots once and lands exactly on 1 at p = 1 */
-const settle = p => 1 - Math.exp(-4.5 * p) * Math.cos(TAU * 0.9 * p) * (1 - p);
-const SLIDE_E = bezier(0.42, 0, 0.18, 1);
+const settle = p => 1 - Math.exp(-3.2 * p) * Math.cos(TAU * 1.1 * p) * (1 - p);
+const SLIDE_E = bezier(0.36, 0, 0.16, 1);
 const wrapf = (v, a, b) => a + ((((v - a) % (b - a)) + (b - a)) % (b - a));
 const filmAt = lt => (lt < CUT[1] ? 0 : lt < CUT[2] ? 1 : lt < CUT[3] ? 2 : 3);
 
@@ -103,17 +103,20 @@ function geo(ctx, S) {
   G.Lb = 0.62 * G.diag;           // half-length of a blade (always past the corners)
   G.D = 1.2 * G.diag;             // how far a half slides to leave the frame
   G.mx = (P ? 0.07 : 0.062) * W;
-  G.plate = P ? { x: 0, y: 0, w: W, h: 0.64 * H } : { x: 0, y: 0, w: W, h: H };
+  // the film's plate: the top of the phone, the right-hand panel of the landscape
+  // frame (cropped to the character, so the key art's own lettering stays out)
+  G.plate = P ? { x: 0, y: 0, w: W, h: 0.64 * H } : { x: 0.4 * W, y: 0, w: 0.6 * W, h: H };
 
   // type sizes: the phone gets proportionally bigger type (its u is a narrow side)
   G.tS = (P ? 15.5 : 13) * u;     // film title
-  G.kS = (P ? 2.7 : 1.7) * u;     // kicker
-  G.rS = (P ? 3.4 : 2.15) * u;    // runtime
-  G.lS = (P ? 3.85 : 2.55) * u;   // logline
-  G.hS = (P ? 2.4 : 1.5) * u;     // header
-  G.cS = (P ? 2.4 : 1.45) * u;    // credit
-  G.hdS = (P ? 8.6 : 9.6) * u;    // the opening heading
-  G.ebS = (P ? 2.6 : 1.7) * u;    // its eyebrow
+  G.kS = (P ? 2.8 : 2.0) * u;     // kicker
+  G.rS = (P ? 3.5 : 2.5) * u;     // runtime
+  G.lS = (P ? 3.9 : 2.9) * u;     // logline
+  G.hS = (P ? 2.5 : 1.8) * u;     // header
+  G.cS = (P ? 2.45 : 1.7) * u;    // credit
+  G.nS = 24 * u;                  // the landscape's big cut numeral
+  G.hdS = (P ? 8.8 : 11) * u;     // the opening heading
+  G.ebS = (P ? 2.8 : 2.2) * u;    // its eyebrow
   G.yH = 0.1 * H + G.hS * 0.8;    // header baseline
 
   // the five slashes: landscape runs them near the frame's diagonal, the phone
@@ -130,32 +133,27 @@ function geo(ctx, S) {
 
   // the type stack of each film
   const yc2 = 0.852 * H, yc1 = yc2 - G.cS * 1.65;
+  // (both orientations stack the same way, bottom up from the logline)
   G.type = FILMS.map(F => {
-    const lines = P ? F.titleP : F.title, logs = P ? F.logP : F.log;
+    const lines = F.titleP, logs = F.logP;
     const to = { size: G.tS, weight: 900, tracking: -0.012 };
     const tW = Math.max(...lines.map(s => measure(ctx, s, to)));
-    let yL, yR, yT;
-    if (!P) {
-      const yl = 0.836 * H;
-      yL = [yl]; yR = yl - G.lS - 2.1 * u; yT = [yR - 2.7 * u];
-    } else {
-      const n = logs.length;
-      yL = logs.map((_, j) => yc1 - 5.6 * u - (n - 1 - j) * G.lS * 1.42);
-      yR = yL[0] - G.lS - 2.5 * u;
-      const yTn = yR - 3.1 * u;
-      yT = lines.map((_, j) => yTn - (lines.length - 1 - j) * G.tS * 0.94);
-    }
-    const yK = yT[0] - G.tS * 0.73 - (P ? 3.6 : 3.0) * u;
-    return { x: G.mx, tW, lines, logs, yL, yR, yT, yK };
+    const n = logs.length, yLn = P ? yc1 - 5.6 * u : 0.835 * H - G.cS - 4.2 * u;
+    const yL = logs.map((_, j) => yLn - (n - 1 - j) * G.lS * 1.42);
+    const yR = yL[0] - G.lS - (P ? 2.5 : 2.3) * u;
+    const yTn = yR - (P ? 3.1 : 2.8) * u;
+    const yT = lines.map((_, j) => yTn - (lines.length - 1 - j) * G.tS * 0.94);
+    const yK = yT[0] - G.tS * 0.73 - (P ? 3.6 : 3.2) * u;
+    return { x: G.mx, tW, lines, logs, yL, yR, yT, yK, yN: yK - 4.4 * u };
   });
 
   // the credit that builds a phrase per film
   const lab = { size: G.cS, weight: 600, tracking: 0.2 }, hv = { size: G.cS, weight: 800, tracking: 0.2 };
   const starts = []; let acc = 0; CREDIT.forEach(s => { starts.push(acc); acc += s.length; });
   if (!P) {
+    // closes the type column, under the logline
     const Lf = layout(ctx, CREDIT.join(''), lab);
-    const total = Lf.xs[starts[3]] + measure(ctx, CREDIT[3], hv);
-    const x0 = W - G.mx - total, y = 0.836 * H;
+    const x0 = G.mx, y = 0.835 * H;
     G.credit = CREDIT.map((s, i) => ({ s, x: x0 + Lf.xs[starts[i]], y, o: i === 3 ? hv : lab, c: i === 3 ? PAL.goldHi : PAL.dim, t: CREDIT_T[i] }));
   } else {
     const a = CREDIT[0] + CREDIT[1], b0 = CREDIT[2].trimStart();
@@ -179,15 +177,20 @@ function makeScrim(W, H, P) {
   const g = c.getContext('2d');
   let gr;
   if (!P) {
-    gr = g.createLinearGradient(0, H, 0, H * 0.38);
-    gr.addColorStop(0, css(C.bg, 0.95)); gr.addColorStop(0.3, css(C.bg, 0.72)); gr.addColorStop(0.62, css(C.bg, 0.22)); gr.addColorStop(1, css(C.bg, 0));
-    g.fillStyle = gr; g.fillRect(0, 0, W, H);
-    gr = g.createRadialGradient(W * 0.06, H * 0.98, 0, W * 0.06, H * 0.98, W * 0.6);
-    gr.addColorStop(0, css(C.bg, 0.55)); gr.addColorStop(1, css(C.bg, 0));
-    g.fillStyle = gr; g.fillRect(0, 0, W, H);
-    gr = g.createLinearGradient(0, 0, 0, H * 0.24);
-    gr.addColorStop(0, css(C.bg, 0.62)); gr.addColorStop(1, css(C.bg, 0));
-    g.fillStyle = gr; g.fillRect(0, 0, W, H * 0.24);
+    // the panel's left edge leans like a cut, and feathers into the black type column
+    const xt = 0.475 * W, xb = 0.405 * W, f = 0.1 * W;
+    const ex = xb - xt, ey = H, el = Math.hypot(ex, ey), nx = ey / el, ny = -ex / el;
+    gr = g.createLinearGradient(xt, 0, xt + nx * f, ny * f);
+    gr.addColorStop(0, css(C.bg, 1)); gr.addColorStop(0.45, css(C.bg, 0.62)); gr.addColorStop(1, css(C.bg, 0));
+    g.fillStyle = gr;
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(xt + nx * f * 1.2, 0); g.lineTo(xb + nx * f * 1.2 + ex * 0, H); g.lineTo(0, H); g.closePath();
+    g.fill();
+    gr = g.createLinearGradient(0, H, 0, H * 0.55);
+    gr.addColorStop(0, css(C.bg, 0.9)); gr.addColorStop(0.35, css(C.bg, 0.55)); gr.addColorStop(1, css(C.bg, 0));
+    g.fillStyle = gr; g.fillRect(0, H * 0.55, W, H * 0.45);
+    gr = g.createLinearGradient(0, 0, 0, H * 0.2);
+    gr.addColorStop(0, css(C.bg, 0.45)); gr.addColorStop(1, css(C.bg, 0));
+    g.fillStyle = gr; g.fillRect(0, 0, W, H * 0.2);
   } else {
     const y0 = H * 0.36, y1 = H * 0.64;
     gr = g.createLinearGradient(0, y0, 0, y1);
@@ -222,7 +225,7 @@ const typeDrift = (S, k, ft) => S.u * 1.1 * (0.5 - clamp(ft / 2.5)) * (k % 2 ? -
 function drawFilm(ctx, S, G, k, ft) {
   const F = FILMS[k], img = S.img(F.img), pr = G.plate, o = S.portrait ? F.P : F.L;
   // push in: a punch on the cut settling into a slow creep, the plate panning against the type
-  const z = 1.035 + 0.07 * clamp(ft / 2.5) + 0.08 * (1 - outExpo(clamp(ft / 0.75)));
+  const z = o.z * (1.02 + 0.07 * clamp(ft / 2.5) + 0.08 * (1 - outExpo(clamp(ft / 0.75))));
   const m = 0.028 * pr.w, dx = lerp(m, -m, clamp(ft / 2.5)) * F.pan;
   ctx.save();
   ctx.beginPath(); ctx.rect(pr.x, pr.y, pr.w, pr.h); ctx.clip();
@@ -236,8 +239,8 @@ function drawFilm(ctx, S, G, k, ft) {
 
 function grade(ctx, S, G, k, ft) {
   const pr = G.plate, c = scriptAt(k, ft), F = FILMS[k];
-  ctx.globalCompositeOperation = 'overlay';
-  ctx.globalAlpha = F.gradeA;
+  ctx.globalCompositeOperation = F.grade[0];
+  ctx.globalAlpha = F.grade[1];
   ctx.fillStyle = css(c); ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
   ctx.globalCompositeOperation = 'lighter';
   const R = Math.max(pr.w, pr.h);
@@ -340,6 +343,15 @@ function typeBlock(ctx, S, G, k, ft) {
   const F = FILMS[k], T = G.type[k], u = S.u;
   const x = T.x + typeDrift(S, k, ft);
   const acc = css(mixc(scriptAt(k, ft), C.white, 0.3));
+  if (!S.portrait) {
+    // the cut's number, outlined large at the head of the column, rising out of its own sill
+    const nr = seg(ft, 0.06, 0.5);
+    const nb = text(ctx, S, '0' + (k + 1), x - G.nS * 0.05, T.yN, {
+      size: G.nS, weight: 800, tracking: -0.02, stroke: true, strokeWidth: Math.max(1, S.lw * 0.6),
+      color: 'rgba(216,178,106,.62)', reveal: nr, mask: true, window: 0.7
+    });
+    text(ctx, S, '/ 04', nb.x1 + 1.6 * u, T.yN, { size: G.hS, weight: 700, tracking: 0.22, color: PAL.faint, reveal: seg(ft, 0.2, 0.55), mask: true, window: 0.5 });
+  }
   // beat 1, with the cut: the title slams in
   T.lines.forEach((s, j) => slam(ctx, S, s, x, T.yT[j], G.tS, seg(ft, 0.03 + j * 0.08, 0.42 + j * 0.08), G.cut[k].dir * -4 * u));
   // up to beat 2: the kicker rises, the runtime spins and lands on the beat
@@ -361,10 +373,16 @@ function typeBlock(ctx, S, G, k, ft) {
 // ── the chrome that stays put while films cut under it ───────────────────
 function overlays(ctx, S, G, lt) {
   if (lt < 0.7) return;
-  const u = S.u, W = S.W;
+  const W = S.W;
   const hb = text(ctx, S, 'BRAND FILMS', G.mx, G.yH, { size: G.hS, weight: 700, tracking: 0.22, color: PAL.gold, reveal: seg(lt, 0.7, 1.1), mask: true, window: 0.5 });
   text(ctx, S, '·  FOUR MORE CUTS', hb.x1 + G.hS * 0.9, G.yH, { size: G.hS, weight: 600, tracking: 0.22, color: PAL.dim, reveal: seg(lt, 0.78, 1.2), mask: true, window: 0.5 });
-  // the cut counter, its digit rolling over on each slash
+  // the credit, a phrase per film
+  for (const c of G.credit) {
+    const r = seg(lt, c.t - 0.12, c.t + 0.3);
+    if (r > 0) text(ctx, S, c.s, c.x, c.y, { ...c.o, color: c.c, reveal: r, mask: true, window: 0.4 });
+  }
+  if (!S.portrait) return;   // landscape carries the count in the type column
+  // the phone's cut counter, its digit rolling over on each slash
   const k = filmAt(lt), co = { size: G.hS, weight: 700, tracking: 0.22 };
   const tail = ' / 04', wT = measure(ctx, tail, co), w0 = measure(ctx, '00', co);
   const xr = W - G.mx, x0 = xr - wT - w0 - co.tracking * G.hS;
@@ -376,12 +394,6 @@ function overlays(ctx, S, G, lt) {
   if (k > 0 && f < 1) text(ctx, S, '0' + k, x0, G.yH - f * lh, { ...co, color: PAL.ink });
   text(ctx, S, '0' + (k + 1), x0, G.yH + (1 - f) * lh, { ...co, color: PAL.ink, alpha: k ? 1 : cr });
   ctx.restore();
-  // the credit, a phrase per film
-  for (const c of G.credit) {
-    const r = seg(lt, c.t - 0.12, c.t + 0.3);
-    if (r > 0) text(ctx, S, c.s, c.x, c.y, { ...c.o, color: c.c, reveal: r, mask: true, window: 0.4 });
-  }
-  void u;
 }
 
 // ── the opening: the rest line leans into a blade with the heading riding it ─
@@ -467,8 +479,8 @@ function drawThread(ctx, S, G, lt) {
   if (st.fast) {
     // a fast thread smears: a few ghosts where it just was
     for (let i = 3; i >= 1; i--) {
-      const g = threadState(S, G, lt - i * 0.013);
-      thread(ctx, S, g.pts, { width: g.w, glow: 0.5, alpha: 0.32 / i });
+      const g = threadState(S, G, lt - i * 0.008);
+      thread(ctx, S, g.pts, { width: g.w, glow: 0.4, alpha: 0.26 / i });
     }
   }
   thread(ctx, S, st.pts, { width: st.w, glow: st.glow, twist: st.twist, twistPhase: lt * 5 });
@@ -517,7 +529,7 @@ function halves(ctx, S, G, j, fc) {
   const cv = frozen(S, G, j), cu = G.cut[j], B = G.diag * 2, c = cu.c, t = cu.t, n = cu.n;
   const edge = 1 - seg(fc, 0.02, 0.32);
   for (const side of [-1, 1]) {
-    for (const [lag, a] of [[0.04, 0.3], [0, 1]]) {
+    for (const [lag, a] of [[0.022, 0.28], [0, 1]]) {
       if (lag && fc < lag) continue;
       const [ox, oy] = halfOffset(S, G, j, fc - lag, side);
       ctx.save();
@@ -527,12 +539,13 @@ function halves(ctx, S, G, j, fc) {
       ctx.lineTo(c.x + t.x * B + side * n.x * B, c.y + t.y * B + side * n.y * B);
       ctx.lineTo(c.x - t.x * B + side * n.x * B, c.y - t.y * B + side * n.y * B);
       ctx.closePath(); ctx.clip();
+      ctx.beginPath(); ctx.rect(0, 0, S.W, S.H); ctx.clip();   // the piece is only as big as the frame it was
       ctx.globalAlpha = a;
       ctx.drawImage(cv, 0, 0);
       if (a === 1 && edge > 0) {
         // the cut face, still hot
         ctx.beginPath(); ctx.moveTo(c.x - t.x * B, c.y - t.y * B); ctx.lineTo(c.x + t.x * B, c.y + t.y * B);
-        ctx.globalAlpha = edge * 0.3; ctx.strokeStyle = PAL.gold; ctx.lineWidth = S.lw * 14; ctx.stroke();
+        ctx.globalAlpha = edge * 0.2; ctx.strokeStyle = PAL.gold; ctx.lineWidth = S.lw * 10; ctx.stroke();
         ctx.globalAlpha = edge; ctx.strokeStyle = PAL.goldHi; ctx.lineWidth = S.lw * 3; ctx.stroke();
       }
       ctx.restore();
@@ -549,7 +562,7 @@ function lens(S, G, lt) {
     return;
   }
   const j = lt < CUT[4] ? filmAt(lt) : 4, fc = lt - CUT[j];
-  if (fc < 0.03) fx.flash = 0.55 * (1 - fc / 0.03);
+  if (fc < 0.03) fx.flash = 0.45 * (1 - fc / 0.03);
   fx.ab = 0.9 * (1 - outCubic(clamp(fc / 0.42)));
   fx.shake = 1.4 * S.u * Math.pow(1 - clamp(fc / 0.34), 2);
   if (j < 4) {

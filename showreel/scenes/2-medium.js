@@ -43,11 +43,11 @@ const B = k => k * BEAT;
 const T0 = 0.08;                        // first motion, after the required rest
 const T_TO = B(1), T_CAM = B(2), T_AMP = B(3), T_STOP = B(4), T_CAP = B(4) + 0.06, T_SHUT = B(7);
 const OPEN_FRONT = 0.14, OPEN_DUR = 0.3, OPEN_END = T0 + OPEN_FRONT * 1.05 + OPEN_DUR;
-const TRACE = [1.27, 1.55], LOCK = [1.55, 1.75];
+const TRACE = [1.27, 1.5], LOCK = [1.5, 1.7];
 const DROP = 1.71;                      // the caret's strand leaves the bottom rail
 const TYPE_T = i => B(4) - (4 - i) * BEAT / 6;    // c o d e . on sixteenth triplets, the stop on b4
 const EXIT = 3.85;                      // the type dives into the strip
-const SHUT0 = 4.12;                     // the rails start to close
+const SHUT0 = 4.06;                     // the rails start to close
 const T_REST = 4.9;                     // pure rest from here to the cut
 
 const BASE = '#15140f';                 // the film base, a lifted black
@@ -56,7 +56,7 @@ const BASE = '#15140f';                 // the film base, a lifted black
 const mod = (a, n) => ((a % n) + n) % n;
 /** a decaying accent that starts at t0 and is gone after dur */
 const hit = (lt, t0, dur, pw = 2) => (lt < t0 || lt > t0 + dur ? 0 : Math.pow(1 - (lt - t0) / dur, pw));
-const traceE = bezier(0.3, 0.05, 0.3, 1);
+const traceE = bezier(0.5, 0.05, 0.3, 1);
 const kickE = bezier(0.28, 0, 0.22, 1);
 
 /** the film's travel, in frames — a kick on the downbeat, a pull on every
@@ -88,38 +88,40 @@ function geometry(ctx, S) {
   const key = S.W + 'x' + S.H;
   if (geo && geo.key === key) return geo;
   const { W, H, u } = S, P = S.portrait;
-  const cy = H / 2, hh = (P ? 17 : 14) * u;
+  const cy = H / 2, hh = (P ? 19 : 14) * u;
   const size = (P ? 20 : 17) * u;
   const Lt = { size, weight: 200 }, Hv = { size, weight: 800 };
   const capH = layout(ctx, 'camera', Hv).ascent;
-  const sp = 0.27 * size;
+  const sp = 0.27 * size, lead = capH + 0.5 * size;   // word space, line pitch
   const wTo = measure(ctx, 'to', Lt), wCam = measure(ctx, 'camera', Hv);
   const wAmp = measure(ctx, '&', Lt), wCode = measure(ctx, 'code.', Hv);
   const railT = cy - hh, railB = cy + hh;
   const gap = 0.46 * size;                        // type to rail
   const yA = railT - gap;                         // "camera" baseline
-  const yB = railB + gap + capH;                  // "& code." baseline
-  let xL, xTo, yTo, xCam, cap;
+  const yAmp = railB + gap + capH;                // "&" baseline
+  let xL, xTo, yTo, xCam, xAmp, xCode, yCode, cap;
   const capSize = (P ? 2.9 : 2) * u;
   if (!P) {
     // a Z: the first line hangs left above the strip, the answer right below
     // it; "to" stands clear of the viewfinder
     xL = W * 0.12; xTo = xL; yTo = yA; xCam = xL + wTo + 0.5 * size;
+    xAmp = W - xL - (wAmp + sp + wCode); xCode = xAmp + wAmp + sp; yCode = yAmp;
+    // the dateline, printed along the film's edge
+    cap = { x: W - xL, y: railT - 2.3 * u, align: 'right', top: true };
   } else {
-    // on the phone the words stack: to / camera, strip, & code.
-    xL = 10 * u; xTo = xL + 0.02 * size; xCam = xL; yTo = yA - capH - 0.5 * size;
+    // on the phone the words stack on one left edge, light over heavy either
+    // side of the strip: to / camera / — / & / code.
+    xL = 9.5 * u; xTo = xL + 0.02 * size; xCam = xL; yTo = yA - lead;
+    xAmp = xL + 0.02 * size; xCode = xL; yCode = yAmp + lead;
+    cap = { x: xL, y: yTo - capH - 0.62 * size, align: 'left', top: true };
   }
-  const xR = W - xL;
-  const xAmp = xR - (wAmp + sp + wCode), xCode = xAmp + wAmp + sp;
-  // the dateline: printed along the film's edge in landscape, a footer on the phone
-  if (!P) cap = { x: xR, y: railT - 2.3 * u, align: 'right' };
-  else cap = { x: xR, y: yB + 0.95 * size, align: 'right' };
   const padX = 0.2 * size, padY = 0.2 * size;
   const brk = { x0: xCam - padX, x1: xCam + wCam + padX, y0: yA - capH - padY, y1: yA + padY };
   geo = {
     key, cy, hh, size, Lt, Hv, capH, sp, railT, railB,
-    xTo, yTo, wTo, xCam, yA, wCam, xAmp, xCode, yB, wAmp, wCode,
-    codeL: layout(ctx, 'code.', Hv), cap, capSize, brk, arm: 0.27 * size
+    xTo, yTo, wTo, xCam, yA, wCam, xAmp, yAmp, xCode, yCode, wAmp, wCode,
+    codeL: layout(ctx, 'code.', Hv), cap, capSize, brk, arm: 0.27 * size,
+    inflX: (P ? 0.07 : 0.17) * size       // how loose the viewfinder is before it locks
   };
   return geo;
 }
@@ -160,7 +162,7 @@ function filmStrip(S, g) {
   }
   // perforations: eight to a frame, light through the base
   const hp = pitch / 8, hw = hh * 0.165, hH = hh * 0.108, rowY = hh * 0.815;
-  c.fillStyle = 'rgba(238,233,220,.9)';
+  c.fillStyle = 'rgba(236,230,214,.84)';
   for (let k = -4; k * hp < cw; k++) {
     const x = pad + k * hp + (hp - hw) / 2;
     rrect(c, x, cy - rowY - hH / 2, hw, hH, hH * 0.32); c.fill();
@@ -191,7 +193,7 @@ function railPoints(S, g, lt) {
   const sig = 7 * u;
   // the strand that draws the viewfinder pulls the top rail up; the caret's
   // strand pulls the bottom rail down
-  const tx = g.brk.x0 - 0.17 * g.size, bx = g.xAmp - 0.07 * g.size;
+  const tx = g.brk.x0 - g.inflX, bx = g.xAmp - 0.07 * g.size;
   const tA = tug(lt, TRACE[0] - 0.01, LOCK[0] + 0.03, 1.9 * u);
   const bA = tug(lt, DROP, T_AMP - 0.02, 1.9 * u);
   const top = [], bot = [];
@@ -228,7 +230,7 @@ function drawStrip(ctx, S, g, lt, R) {
   ctx.globalAlpha = 1;
   if (R.opening) {
     // the strip unfolds from edge-on, a column at a time from the centre out
-    const nS = 48, sw = W / nS, m = Math.min(n, 5);
+    const nS = 72, sw = W / nS, m = Math.min(n, 5);
     for (let s = 0; s < nS; s++) {
       const x0 = s * sw, o = openAt(S, lt, x0 + sw / 2);
       if (o < 0.004) continue;
@@ -253,11 +255,11 @@ function drawStrip(ctx, S, g, lt, R) {
 // ── type ──────────────────────────────────────────────────────────────────
 /** a slam: the word falls in from big, accelerating, and lands on t0 */
 const PICK = 0.12;
-function slam(lt, t0) {
+function slam(lt, t0, amp = 1.2) {
   if (lt < t0 - PICK) return null;
   if (lt < t0) {
     const q = (lt - (t0 - PICK)) / PICK;
-    return { s: 1 + 1.2 * (1 - q * q), v: 2.4 * q, a: Math.min(1, q * 2.5), pre: true };
+    return { s: 1 + amp * (1 - q * q), v: 2 * amp * q, a: Math.min(1, q * 2.5), pre: true };
   }
   const k = lt - t0;
   return { s: 1 - 0.05 * Math.exp(-13 * k) * Math.cos(TAU * 5 * k), a: 1, pre: false };
@@ -300,7 +302,7 @@ function drawTop(ctx, S, g, lt) {
   slammed(ctx, s1, g.xTo + g.wTo / 2, g.yTo - g.capH / 2, a =>
     text(ctx, S, 'to', g.xTo, g.yTo, { ...g.Lt, color: PAL.ink, alpha: a, glyph: i => ({ dy: dive(lt, i, distTo) }) }));
   // "camera"
-  const s2 = slam(lt, T_CAM);
+  const s2 = slam(lt, T_CAM, 0.7);
   const r = focusBlur(lt, u);
   const drawCam = a => {
     const o = { ...g.Hv, color: PAL.ink, glyph: i => ({ dy: dive(lt, i + 2, distCam) }) };
@@ -317,15 +319,15 @@ function drawTop(ctx, S, g, lt) {
 }
 
 function drawBottom(ctx, S, g, lt) {
-  const dist = -(g.yB - g.railB + 0.15 * g.size);
+  const distAmp = -(g.yAmp - g.railB + 0.15 * g.size), dist = -(g.yCode - g.railB + 0.15 * g.size);
   // "&"
   const s3 = slam(lt, T_AMP);
-  slammed(ctx, s3, g.xAmp + g.wAmp / 2, g.yB - g.capH / 2, a =>
-    text(ctx, S, '&', g.xAmp, g.yB, { ...g.Lt, color: PAL.ink, alpha: a, glyph: i => ({ dy: dive(lt, i, dist, 0.03) }) }));
+  slammed(ctx, s3, g.xAmp + g.wAmp / 2, g.yAmp - g.capH / 2, a =>
+    text(ctx, S, '&', g.xAmp, g.yAmp, { ...g.Lt, color: PAL.ink, alpha: a, glyph: i => ({ dy: dive(lt, i, distAmp, 0.03) }) }));
   // "code." — typed
   if (lt >= TYPE_T(0)) {
     const L = g.codeL;
-    text(ctx, S, 'code.', g.xCode, g.yB, {
+    text(ctx, S, 'code.', g.xCode, g.yCode, {
       ...g.Hv, color: PAL.ink,
       glyph: i => {
         const t = TYPE_T(i);
@@ -351,7 +353,7 @@ function head(ctx, S, x, y) {
 function drawBrackets(ctx, S, g, lt, dy) {
   if (lt < TRACE[0]) return;
   const t = g.brk, sz = g.size;
-  const big = { x0: t.x0 - 0.17 * sz, x1: t.x1 + 0.17 * sz, y0: t.y0 - 0.1 * sz, y1: t.y1 + 0.08 * sz };
+  const big = { x0: t.x0 - g.inflX, x1: t.x1 + g.inflX, y0: t.y0 - 0.1 * sz, y1: t.y1 + 0.08 * sz };
   if (lt < LOCK[0]) {
     // the thread leaves the rail and runs the frame's perimeter
     const p = traceE(seg(lt, TRACE[0], TRACE[1]));
@@ -388,19 +390,27 @@ function mixGold(k) {
 }
 
 // ── the caret ─────────────────────────────────────────────────────────────
-function caretX(g, lt) {
-  const L = g.codeL, s = g.size;
-  const xs = [g.xAmp - 0.07 * s, g.xCode - 0.06 * s];
-  for (let i = 0; i < 5; i++) xs.push(g.xCode + (i < 4 ? L.xs[i + 1] : L.width) + 0.05 * s);
-  const ts = [DROP, T_AMP, TYPE_T(0), TYPE_T(1), TYPE_T(2), TYPE_T(3), TYPE_T(4)];
-  let x = xs[0];
-  for (let i = 1; i < xs.length; i++) x += (xs[i] - xs[i - 1]) * outExpo(seg(lt, ts[i], ts[i] + 0.07));
-  return x;
+/** where the caret stands (x, baseline): before "&", after it, (on the phone
+   a new line,) then after each typed key */
+function caretAt(g, lt) {
+  const L = g.codeL, s = g.size, two = g.yCode !== g.yAmp;
+  const st = [[DROP, g.xAmp - 0.07 * s, g.yAmp]];
+  if (two) {
+    st.push([T_AMP, g.xAmp + g.wAmp + 0.07 * s, g.yAmp]);
+    st.push([T_AMP + BEAT / 6, g.xCode - 0.06 * s, g.yCode]);
+  } else st.push([T_AMP, g.xCode - 0.06 * s, g.yCode]);
+  for (let i = 0; i < 5; i++) st.push([TYPE_T(i), g.xCode + (i < 4 ? L.xs[i + 1] : L.width) + 0.05 * s, g.yCode]);
+  let x = st[0][1], y = st[0][2];
+  for (let i = 1; i < st.length; i++) {
+    const e = outExpo(seg(lt, st[i][0], st[i][0] + 0.07));
+    x += (st[i][1] - st[i - 1][1]) * e; y += (st[i][2] - st[i - 1][2]) * e;
+  }
+  return { x, y };
 }
 function drawCaret(ctx, S, g, lt, dy) {
   if (lt < DROP) return;
-  const s = g.size, x = caretX(g, lt);
-  const top = g.yB - g.capH - 0.09 * s, bot = g.yB + 0.11 * s, cw = 0.085 * s;
+  const s = g.size, c = caretAt(g, lt), x = c.x;
+  const top = c.y - g.capH - 0.09 * s, bot = c.y + 0.11 * s, cw = 0.085 * s;
   let y0, y1, w, a = 1;
   if (lt < T_AMP + 0.04) {
     // a strand drops from the rail and gathers itself into the bar
@@ -424,9 +434,9 @@ function drawCaret(ctx, S, g, lt, dy) {
   ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1);
   // a soft halo, built up in rounded layers so it has no hard edge
   ctx.lineCap = 'round';
-  ctx.strokeStyle = 'rgba(216,178,106,.035)'; ctx.lineWidth = w * 6; ctx.stroke();
-  ctx.strokeStyle = 'rgba(216,178,106,.05)'; ctx.lineWidth = w * 3.8; ctx.stroke();
-  ctx.strokeStyle = 'rgba(243,223,168,.08)'; ctx.lineWidth = w * 2.2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(216,178,106,.05)'; ctx.lineWidth = w + S.lw * 6; ctx.stroke();
+  ctx.strokeStyle = 'rgba(216,178,106,.07)'; ctx.lineWidth = w + S.lw * 3.6; ctx.stroke();
+  ctx.strokeStyle = 'rgba(243,223,168,.1)'; ctx.lineWidth = w + S.lw * 1.6; ctx.stroke();
   ctx.lineCap = 'butt';
   ctx.strokeStyle = PAL.gold; ctx.lineWidth = w; ctx.stroke();
   ctx.strokeStyle = PAL.goldHi; ctx.globalAlpha *= 0.8; ctx.lineWidth = w * 0.38; ctx.stroke();
@@ -448,8 +458,8 @@ function drawCaption(ctx, S, g, lt) {
 // ── the close: the rails meet and the thread rings out ────────────────────
 function twang(ctx, S, lt) {
   const k = lt - T_SHUT, u = S.u, W = S.W, H = S.H;
-  const a1 = 1.5 * u * Math.exp(-8 * k) * Math.sin(TAU * 6 * k);
-  const a3 = 0.45 * u * Math.exp(-11 * k) * Math.sin(TAU * 15 * k);
+  const a1 = 2 * u * Math.exp(-7.5 * k) * Math.sin(TAU * 5.5 * k);
+  const a3 = 0.5 * u * Math.exp(-11 * k) * Math.sin(TAU * 14 * k);
   const pts = [];
   for (let i = 0; i <= 40; i++) {
     const x = -0.02 * W + (i / 40) * 1.04 * W, xn = (i / 40);
