@@ -56,7 +56,10 @@ export async function loadModels(names, onProgress) {
       loaded[name] = { group, size };
       onProgress && onProgress(name);
       res();
-    }, null, e => { console.warn('[reel] model', name, e); res(); });
+    }, null, e => {
+      // settle it anyway: renderModel returns null for it and the chapter plays without the mark
+      console.warn('[reel] model', name, e); onProgress && onProgress(name); res();
+    });
   })));
 }
 

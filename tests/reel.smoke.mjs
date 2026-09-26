@@ -187,6 +187,48 @@ async function open(vw, vh, dpr = 1, opts = {}) {
   await ctx.close();
 }
 
+// 2c · a 3D model that fails to load does not stall the reel
+{
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 720 } });
+  const page = await ctx.newPage();
+  await page.route(/\.glb$/, r => r.abort());
+  await page.goto(`${url}/reel?t=10`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__reel);
+  await page.evaluate(() => window.__reel.allReady);
+  // it must get past the 11 s seam into Land of Hope rather than wait there for good
+  const passed = await page.waitForFunction(() => window.__reel.t > 11.6, null, { timeout: 8000 }).then(() => true, () => false);
+  const t = await page.evaluate(() => window.__reel.t);
+  check('a failed 3D model: Land of Hope plays on without it', passed, `t = ${t.toFixed(2)}`);
+  await ctx.close();
+}
+
+// 2d · while a chapter waits for its pictures the score waits too, even through pause and play
+{
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 720 } });
+  const page = await ctx.newPage();
+  let release;
+  const gate = new Promise(r => (release = r));
+  await page.route(/p-storyboard\.jpg$/, async r => { await gate; r.continue(); });
+  await page.goto(`${url}/reel?t=5`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__reel);
+  await page.evaluate(() => window.__reel.ready);
+  await page.keyboard.press('m');
+  // let the picture reach the seam and start waiting, then pause and play (which restarts the score)
+  await page.waitForFunction(() => /Loading · Medium/.test(document.getElementById('chapterLabel').textContent), null, { timeout: 8000 });
+  await page.keyboard.press('Space'); await page.waitForTimeout(150); await page.keyboard.press('Space');
+  const seen = [];
+  for (let i = 0; i < 10; i++) { await page.waitForTimeout(150); seen.push(await page.evaluate(() => ({ t: window.__reel.t, a: window.__reel.audio.position, label: document.getElementById('chapterLabel').textContent }))); }
+  release();
+  const as = seen.map(x => x.a || 0), maxT = Math.max(...seen.map(x => x.t));
+  const spread = Math.max(...as) - Math.min(...as);
+  // the score is muted on the seam from the audio thread and paused on the next frame; it must not run on or loop
+  check('waiting for pictures: picture and score both hold at the seam', maxT < 6.001 && Math.max(...as) < 7 && spread < 0.3 && seen.every(x => /Loading · Medium/.test(x.label)), `playhead ≤ ${maxT.toFixed(3)}, score ${Math.min(...as).toFixed(3)}–${Math.max(...as).toFixed(3)} over 1.5 s, label “${seen[seen.length - 1].label}”`);
+  await page.waitForTimeout(1500);
+  const after = await page.evaluate(() => ({ t: window.__reel.t, label: document.getElementById('chapterLabel').textContent }));
+  check('waiting for pictures: playback resumes once they land', after.t > 6.3 && /02 \/ 07/.test(after.label), `t = ${after.t.toFixed(2)}, label “${after.label}”`);
+  await ctx.close();
+}
+
 // 3 · phone
 {
   const { page, ctx, errors } = await open(390, 844, 2, { touch: true });
@@ -194,6 +236,22 @@ async function open(vw, vh, dpr = 1, opts = {}) {
   const m = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, playBtn: document.getElementById('playBtn').getBoundingClientRect().toJSON() }));
   check('phone: no horizontal scroll', m.sw <= m.cw, `${m.sw} vs ${m.cw}`);
   check('phone: play button is a 44 px target inside the screen', m.playBtn.width >= 44 && m.playBtn.height >= 44 && m.playBtn.left >= 0 && m.playBtn.bottom <= 844, JSON.stringify(m.playBtn));
+  await ctx.close();
+}
+
+// 3b · shorter upright frames (Safari with its bars showing, a tablet held upright) keep everything inside the frame
+for (const [w, h, dpr] of [[390, 664, 2], [768, 1024, 1]]) {
+  const { page, ctx } = await open(w, h, dpr);
+  const edges = await page.evaluate(() => {
+    const R = window.__reel, out = [];
+    for (const t of [8.5, 17, 21.7, 34.6, 42.8, 54.3, 59.9]) {
+      const s = R.sample(t, 64, 96), row = y => Math.max(...s.slice(y * 64, y * 64 + 64));
+      out.push({ t, top: Math.max(row(0), row(1), row(2)), bottom: Math.max(row(93), row(94), row(95)) });
+    }
+    return out;
+  });
+  const bad = edges.filter(e => e.top > 40 || e.bottom > 40);
+  check(`${w}×${h}: nothing runs off the top or bottom edge`, bad.length === 0, bad.map(e => `t=${e.t} top ${e.top} bottom ${e.bottom}`).join(', '));
   await ctx.close();
 }
 

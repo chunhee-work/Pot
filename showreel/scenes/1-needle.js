@@ -157,7 +157,7 @@ const sewD = (G, t) => G.Dt * sewQ(invlerp(T.sew[0], T.sew[1], t));
 // ── geometry, built once per frame size ───────────────────────────────────
 let GEO = null;
 function geometry(ctx, S) {
-  const key = S.W + 'x' + S.H;
+  const key = S.W + 'x' + S.H + '@' + S.lw;   // the stitches are sized from the thread's width, which follows dpr
   if (GEO && GEO.key === key) return GEO;
   const { W, H, u } = S, cy = H / 2, P = S.portrait;
   // landscape: the name stands on the thread; phone: the thread runs between CHUN and HEE

@@ -135,6 +135,7 @@ function getLayout(ctx, S) {
   const key = S.W + 'x' + S.H;
   let L = LAYOUTS.get(key);
   if (L) return L;
+  if (LAYOUTS.size > 8) LAYOUTS.clear();   // a resize drag must not pile these up
   const { u, W, H } = S, cy = H / 2;
   L = { cy, stats: [] };
   if (!S.portrait) {
@@ -163,32 +164,34 @@ function getLayout(ctx, S) {
     L.email = { x: xL, y: cy + 16.2 * v, o: { size: 3.5 * v, weight: 500, tracking: -0.005 } };
     L.foot = { x: W - xL, y: H * 0.84, o: { size: 1.35 * v, weight: 700, tracking: 0.1, align: 'right' } };
   } else {
+    // tuned on a 9:19.5 phone; a shorter upright frame scales the stack down to fit
+    const v = u * Math.min(1, H / u / 205);
     // two lines of name, the knot after HEE on the thread; the numbers
     // stacked above, the role and the address below
-    const xL = 8 * u;
-    const nameO = { size: 20 * u, weight: 900, tracking: -0.03 };
+    const xL = 8 * v;
+    const nameO = { size: 20 * v, weight: 900, tracking: -0.03 };
     const heeW = measure(ctx, 'HEE', nameO);
-    const y2 = cy - 2.8 * u, y1 = y2 - 18.2 * u;
+    const y2 = cy - 2.8 * v, y1 = y2 - 18.2 * v;
     L.name = [{ str: 'CHUN', x: xL, y: y1 }, { str: 'HEE', x: xL, y: y2, thread: true }];
     L.nameO = nameO;
-    L.k = 1.75 * u;
-    L.knotX = xL + heeW + 5 * u + (PIVOT - KMINX) * L.k;
-    const numO = { size: 9 * u, weight: 800, tracking: -0.02 };
-    const labO = { size: 2.6 * u, weight: 600, tracking: 0.18 };
+    L.k = 1.75 * v;
+    L.knotX = xL + heeW + 5 * v + (PIVOT - KMINX) * L.k;
+    const numO = { size: 9 * v, weight: 800, tracking: -0.02 };
+    const labO = { size: 2.6 * v, weight: 600, tracking: 0.18 };
     const capName = layout(ctx, 'CHUN', nameO).ascent, capNum = layout(ctx, '17', numO).ascent;
     const capLab = layout(ctx, 'ORIGINAL', labO).ascent;
-    const rowH = 12 * u, last = y1 - capName - 8 * u;
+    const rowH = 12 * v, last = y1 - capName - 8 * v;
     STATS.forEach((st, j) => {
       const y = last - (3 - j) * rowH;
       L.stats.push({
-        x: xL, y, numO, unitO: { size: 3.8 * u, weight: 500, tracking: 0 },
-        lab: { x: xL + 27 * u, y: y - (capNum - capLab) / 2, o: labO }
+        x: xL, y, numO, unitO: { size: 3.8 * v, weight: 500, tracking: 0 },
+        lab: { x: xL + 27 * v, y: y - (capNum - capLab) / 2, o: labO }
       });
     });
-    L.role = [{ str: ROLE_2[0], x: xL, y: cy + 9 * u }, { str: ROLE_2[1], x: xL, y: cy + 13.6 * u }];
-    L.roleO = { size: 2.6 * u, weight: 600, tracking: 0.14 };
-    L.email = { x: xL, y: cy + 22.5 * u, o: { size: 4.9 * u, weight: 500, tracking: -0.005 } };
-    L.foot = { x: xL, y: H * 0.84, o: { size: 2.2 * u, weight: 700, tracking: 0.1 } };
+    L.role = [{ str: ROLE_2[0], x: xL, y: cy + 9 * v }, { str: ROLE_2[1], x: xL, y: cy + 13.6 * v }];
+    L.roleO = { size: 2.6 * v, weight: 600, tracking: 0.14 };
+    L.email = { x: xL, y: cy + 22.5 * v, o: { size: 4.9 * v, weight: 500, tracking: -0.005 } };
+    L.foot = { x: xL, y: H * 0.84, o: { size: 2.2 * v, weight: 700, tracking: 0.1 } };
   }
   const h = L.stats[3], hl = layout(ctx, '1', h.numO);
   L.hero = { x: h.x + hl.width / 2, y: h.y - hl.ascent / 2 };

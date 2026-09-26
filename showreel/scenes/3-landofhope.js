@@ -52,19 +52,23 @@ function lay(S) {
     L.bugX = 0.055 * W + L.bugW / 2;
     L.cntX = 0.945 * W; L.cntY = 0.165 * H; L.cntAlign = 'right';
   } else {
+    /* tuned on a 9:19.5 phone; a shorter upright frame (Safari with its bars
+       showing, a tablet held upright) scales the stack down so the bug and
+       the counter stay inside the safe frame */
+    const v = u * Math.min(1, H / u / 220);
     Object.assign(L, {
-      R1: 0.45 * W, A1: 66 * u,
-      heroW: 86 * u, heroLift: 13 * u,
-      bugW: 44 * u, bugY: H / 2 - 84 * u,
+      R1: 0.45 * W, A1: 66 * v,
+      heroW: 86 * v, heroLift: 13 * v,
+      bugW: 44 * v, bugY: H / 2 - 84 * v,
       drop: 0,
-      ph: 66 * u, pw: 52.8 * u, sp: 56 * u, D0: 110 * u, gap: 1.4 * u, side: 0.74,
-      refl: 26 * u,
-      eyeDy: 14 * u, eyeS: 2.7 * u,
-      labDy: 12 * u, labS: 2.7 * u, titDy: 24 * u, titS: 6.6 * u, rtDy: 33 * u,
-      cntS: 13 * u, cntMin: 3.4 * u, cntLab: 2.5 * u
+      ph: 66 * v, pw: 52.8 * v, sp: 56 * v, D0: 110 * v, gap: 1.4 * v, side: 0.74,
+      refl: 26 * v,
+      eyeDy: 14 * v, eyeS: 2.7 * v,
+      labDy: 12 * v, labS: 2.7 * v, titDy: 24 * v, titS: 6.6 * v, rtDy: 33 * v,
+      cntS: 13 * v, cntMin: 3.4 * v, cntLab: 2.5 * v
     });
     L.bugX = W / 2;
-    L.cntX = W / 2; L.cntY = H / 2 + 62 * u; L.cntAlign = 'center';
+    L.cntX = W / 2; L.cntY = H / 2 + 62 * v; L.cntAlign = 'center';
   }
   // the 3D lockup renders into one fixed-size canvas (resizing the renderer is
   // what costs), which is then drawn at hero size and scaled down for the bug
@@ -323,6 +327,7 @@ function titleLines(ctx, S, L, str) {
   const key = L.key + str;
   let v = LINES.get(key);
   if (v) return v;
+  if (LINES.size > 16) LINES.clear();   // one frame size at a time; a resize drag must not pile these up
   const max = S.W * (L.P ? 0.86 : 0.6);
   if (measure(ctx, str, { font: 'serif', size: L.titS, tracking: 0.02 }) <= max) v = [str];
   else {

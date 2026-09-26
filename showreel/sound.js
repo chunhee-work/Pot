@@ -25,7 +25,7 @@ export function createSound({ duration, chapters }) {
 
   let on = false, playing = false;
   let el = null, ac = null, master = null, scoreGain = null;
-  let lastT = null, duckUntil = 0;
+  let lastT = null, duckUntil = 0, guardAt = null;
   const buffers = {}, onsets = {};
   let voicesLoading = null, speaking = null, fired = 0;
 
@@ -75,6 +75,7 @@ export function createSound({ duration, chapters }) {
 
   function start(t) {
     ensure();
+    guardAt = null;
     // WebKit reports 'interrupted' after a call or Siri, not 'suspended'
     if (ac && ac.state !== 'running') ac.resume().catch(() => {});
     if (Math.abs(el.currentTime - t) > 0.04) el.currentTime = t;
@@ -139,6 +140,20 @@ export function createSound({ duration, chapters }) {
       el.currentTime = t;
       if (scoreGain) { scoreGain.gain.cancelScheduledValues(ac.currentTime); scoreGain.gain.setValueAtTime(0, ac.currentTime); }
       setLevel(t);
+    },
+    /** mute the score `sec` seconds from now — scheduled on the audio thread, so
+        it lands on time even if the page is busy — because the chapter after
+        the next seam has not loaded and the picture will wait there; null lifts it */
+    guard(sec) {
+      if (!scoreGain || !on || !playing) { guardAt = null; return; }
+      if (sec == null) {
+        if (guardAt !== null) { guardAt = null; scoreGain.gain.cancelScheduledValues(ac.currentTime); setLevel(lastT ?? 0, true); }
+        return;
+      }
+      const at = ac.currentTime + Math.max(0, sec);
+      if (guardAt !== null && Math.abs(guardAt - at) < 0.03) return;
+      guardAt = at;
+      scoreGain.gain.setValueAtTime(0, at);
     },
     tick(t) {
       if (!on || !playing || !el) { lastT = t; return; }

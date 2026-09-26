@@ -99,7 +99,7 @@ function setBacking(W, H, dpr) {
 }
 
 // ── clock and loop ────────────────────────────────────────────────────────
-let t = T0, playing = false, dirty = true, raf = 0, last = 0, dragging = false, frames = 0, started = false, waiting = false;
+let t = T0, playing = false, dirty = true, raf = 0, last = 0, dragging = false, frames = 0, started = false, waitingFor = null;
 const start = parseFloat(qs.get('t'));
 if (isFinite(start)) t = K.clamp(start, T0, T1 - 0.001);
 
@@ -126,16 +126,26 @@ function loop(now) {
   const dt = last ? Math.min(0.25, Math.max(0, (now - last) / 1000)) : 0;
   last = now;
   if (playing && !dragging) {
-    let next = advance(dt);
-    if (next >= T1) { next = wrap(next); sound.seek(next); }
-    const c = chapterAt(next);
-    if (!chapterReady(c)) {
-      // wait on the seam (or wherever a seek left us) until its pictures arrive
-      if (!waiting) { waiting = true; sound.pause(); chapterLabel.textContent = `Loading · ${c.scene.title}`; }
-      next = t < c.start && next >= c.start ? c.start - 1e-4 : Math.min(t, next);
-    } else if (waiting) { waiting = false; lastCh = null; if (playing) sound.play(next); }
-    t = next;
-    sound.tick(t);
+    if (waitingFor && chapterReady(waitingFor)) { waitingFor = null; sound.play(t); lastCh = null; }
+    if (waitingFor) {
+      // held on the seam (or wherever a seek left us) until that chapter's
+      // pictures arrive; the score is held on every waiting frame, whatever
+      // tried to restart it
+      sound.pause();
+    } else {
+      let next = advance(dt);
+      if (next >= T1) { next = wrap(next); sound.seek(next); }
+      const c = chapterAt(next);
+      if (!chapterReady(c)) {
+        waitingFor = c; sound.pause(); lastCh = null;
+        next = t < c.start && next >= c.start ? c.start - 1e-4 : Math.min(t, next);
+      }
+      t = next;
+      sound.tick(t);
+      // if the chapter after the coming seam is still loading, have the score fall silent right on it
+      const here = chapterAt(t), after = CHAPTERS[(CHAPTERS.indexOf(here) + 1) % CHAPTERS.length];
+      sound.guard(!waitingFor && !chapterReady(after) && here.end - t < 0.75 ? here.end - t : null);
+    }
     dirty = true;
   }
   if (dirty) {
@@ -191,7 +201,7 @@ CHAPTERS.forEach((c, i) => {
   chaptersNav.appendChild(b);
 });
 
-let lastSec = -1, lastCh = null;
+let lastSec = -1, lastCh = null, lastReady = null;
 function updateUI(c) {
   const p = t / DURATION;
   fill.style.transform = `scaleX(${p})`;
@@ -203,10 +213,13 @@ function updateUI(c) {
     scrub.setAttribute('aria-valuenow', t.toFixed(1));
     scrub.setAttribute('aria-valuetext', `${sec} seconds, ${c.scene.title}`);
   }
-  if (c !== lastCh) {
-    lastCh = c;
+  const ready = !waitingFor && chapterReady(c);
+  if (c !== lastCh || ready !== lastReady) {
+    lastCh = c; lastReady = ready;
     const i = CHAPTERS.indexOf(c);
-    chapterLabel.textContent = `${String(i + 1).padStart(2, '0')} / ${String(CHAPTERS.length).padStart(2, '0')} · ${c.scene.title}`;
+    chapterLabel.textContent = ready
+      ? `${String(i + 1).padStart(2, '0')} / ${String(CHAPTERS.length).padStart(2, '0')} · ${c.scene.title}`
+      : `Loading · ${(waitingFor || c).scene.title}`;
     [...chaptersNav.children].forEach((b, k) => b.setAttribute('aria-current', k === i ? 'true' : 'false'));
   }
 }
@@ -216,7 +229,7 @@ function setPlaying(p) {
   $('icoPause').style.display = p ? '' : 'none';
   $('icoPlay').style.display = p ? 'none' : '';
   playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
-  if (p) sound.play(t); else sound.pause();
+  if (p && !waitingFor) sound.play(t); else sound.pause();
   wake();
 }
 function play() { if (!playing) setPlaying(true); run(); }
@@ -225,6 +238,7 @@ function toggle() { playing ? pause() : play(); }
 
 function seek(x, announce) {
   t = wrap(K.clamp(x, T0, T1 - 1e-3));
+  waitingFor = null;   // the loop decides afresh whether the new spot has to wait
   sound.seek(t);
   updateUI(chapterAt(t));   // the transport answers at once, even if the new frame is slow to draw
   invalidate();
@@ -233,7 +247,7 @@ function seek(x, announce) {
 function jump(i) { const c = CHAPTERS[K.clamp(i, 0, CHAPTERS.length - 1)]; seek(c.start + 1e-3, true); }
 
 function setSound(on) {
-  sound.setOn(on, t, playing);
+  sound.setOn(on, t, playing && !waitingFor);
   const now = sound.on;
   soundBtn.setAttribute('aria-pressed', String(now));
   soundBtn.setAttribute('aria-label', now ? 'Turn sound off' : 'Turn sound on');
@@ -277,7 +291,7 @@ scrub.addEventListener('pointermove', e => { if (dragging) scrubTo(e); });
 const endDrag = () => {
   if (!dragging) return;
   dragging = false; scrub.removeAttribute('data-drag');
-  if (wasPlaying) sound.play(t);
+  if (wasPlaying && !waitingFor) sound.play(t);
   live.textContent = `${chapterAt(t).scene.title}, ${fmt(t)}`;
 };
 scrub.addEventListener('pointerup', endDrag);
@@ -326,7 +340,7 @@ function wake() {
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { halt(); sound.pause(); }
-  else if (started && !body.hasAttribute('data-still')) { if (playing) sound.play(t); invalidate(); }
+  else if (started && !body.hasAttribute('data-still')) { if (playing && !waitingFor) sound.play(t); invalidate(); }
 });
 
 // repaint inside the resize itself, so no step of a resize shows a cleared canvas
