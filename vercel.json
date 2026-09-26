@@ -16,6 +16,10 @@
     {
       "source": "/gameui-staging",
       "destination": "/gameui-staging.html"
+    },
+    {
+      "source": "/reel",
+      "destination": "/reel.html"
     }
   ],
   "headers": [
