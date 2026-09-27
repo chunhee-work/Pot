@@ -28,7 +28,7 @@
    A frame is a pure function of S.lt; the only caches are the node and
    glow sprites, the edge band and the layout for a frame size. */
 import {
-  clamp, lerp, seg, outCubic, outQuart, inOutCubic, inCubic, inQuad, outBack, bezier, rrect, text
+  clamp, lerp, seg, smoothstep, outCubic, outQuart, inOutCubic, inCubic, inQuad, outBack, bezier, rrect, text
 } from '../../kit.js';
 import { camera } from '../../space.js';
 import { seam, space, metal, chip, numeral, stamp, readPx, UI, MONO } from '../kit3.js';
@@ -142,9 +142,10 @@ function geo(S, ctx) {
   g.th1 = Math.atan((g.vpx - 0.5) * wf);
   g.B0 = 60; g.b1 = P ? 4.5 : 9;                         // the camera's offset from the plan, at rest and in flight
   g.w0 = Math.max(1.5, 0.32 * u);                        // the seam wire's width
-  // type meant to be read: k type units, never under 10 CSS px
-  const rp = k => readPx(S, k * tu / u);
-  const idxS = readPx(S, 1.45), chipS = readPx(S, 1.4);   // the stage index and the chip, on the other stations' scale
+  /* type meant to be read: k type units, never under 10 CSS px — rounded up to whole backing pixels, never
+     down (a capped backing store makes the floor fractional: 10 CSS px at dpr 1.712 is 17.12, and 17 is 9.93) */
+  const rp = k => Math.ceil(readPx(S, k * tu / u));
+  const idxS = Math.ceil(readPx(S, 1.45)), chipS = Math.ceil(readPx(S, 1.4));   // the stage index and the chip, on the other stations' scale
   const ms = rp(P ? 1.12 : 1.4);                          // the readout
   g.hudS = rp(1.02);                                      // MISSION CLOCK, SETUPS
   g.clockS = rp(1.32); g.slashS = rp(1.35);
@@ -218,7 +219,7 @@ function wrap(ctx, g, S, ms, pad, plan) {
   const cw = ctx.measureText('MMMMMMMMMM').width / 10;
   ctx.restore();
   const tw = g.pane.w - 2 * pad, cols = Math.max(20, Math.floor(tw / cw));
-  const small = Math.max(ms * 0.86, 10 * S.dpr);          // the subtitle and the field tags: smaller, never under 10 CSS px
+  const small = Math.ceil(Math.max(ms * 0.86, 10 * S.dpr));   // the subtitle and the field tags: smaller, never under 10 CSS px
   const lh = ms * 1.55, rows = [];
   // the kept fields, each broken into lines
   const kept = [];
@@ -454,28 +455,34 @@ function waypoints(S, g, V) {
        They grow with nearness; the near ones read (the setup ≥ 13, its timecode ≥ 10 CSS px), the far ones are
        telemetry (never under 7) */
     const rd = clamp((sc - 0.6) / 0.4);
-    const sz = Math.max((g.P ? 1.36 : 1.62) * tu * sc, lerp(7, 13, rd) * dpr), ts = Math.max(0.7 * sz, lerp(7, 10, rd) * dpr);
+    // (set to a tenth of a backing pixel, rounded up so a floor is never shaved under by the font string)
+    const up10 = v => Math.ceil(v * 10 - 1e-6) / 10;
+    const sz = up10(Math.max((g.P ? 1.36 : 1.62) * tu * sc, lerp(7, 13, rd) * dpr)), ts = up10(Math.max(0.7 * sz, lerp(7, 10, rd) * dpr));
     const stem = 4.6 * sc * tu * (g.P ? 0.84 : 1) * outCubic(seg(age, 0.04, 0.3));
     const top = p.y - r * 0.9 - stem, lb = top + sz * 0.62, tb = lb + 0.3 * sz + ts, bot = tb + 0.37 * ts;
     const la = clamp((sc - 0.5) / 0.16) * outCubic(seg(age, 0.06, 0.34)) * (1 - seg(t, T.outA + (22 - i) * 0.012, T.outA + 0.3 + (22 - i) * 0.012));
-    const edge = clamp((0.875 * S.H - bot) / (0.05 * S.H));     // annotations let go before the bottom band
+    const ex = (0.875 * S.H - bot) / (0.05 * S.H), edge = clamp(ex);     // annotations let go before the bottom band
     const wide = Math.max(sz * 4.6, ts * 5.6 + sz * 0.72);
-    N.push({ i, W, age, ret, p, r, sz, ts, lb, tb, stem, top, la: la * edge, box: [p.x - wide, top - sz * 0.15, p.x, bot] });
+    /* how firmly it keeps its place from the labels beyond it: wholly while it shows at all (from 5 %), and
+       once the bottom band has taken it, still for the next half band of its fall — so the next label in
+       comes up only after this one has gone, and comes up with the flight, not in a frame */
+    const hold = Math.max(smoothstep(0.01, 0.05, la * edge), smoothstep(0.01, 0.05, la) * (1 - smoothstep(0, 0.5, -ex)));
+    N.push({ i, W, age, ret, p, r, sz, ts, lb, tb, stem, top, la: la * edge, hold, box: [p.x - wide, top - sz * 0.15, p.x, bot] });
   }
   /* a label only shows where it has room: setups tick on at the far end on top of each other, so
      each label gives way to the nearer labels below it and comes in as the flight opens the spacing */
-  /* (it gives way to a nearer label's own presence, not to what is left of it after that one gave way:
-     two labels that overlap never both show, even faintly — the farther one waits a step longer; and it
-     waits until the nearer one has all but gone, so a hand-off dips through nothing rather than crossing) */
+  /* (it gives way to a nearer label's own hold, not to what is left of it after that one gave way: two
+     labels that overlap never both show, even faintly — the nearer one holds its place until it is under
+     5 % and for a beat of its fall after that, so a hand-off dips through nothing rather than crossing) */
   const near = [];
   for (const n of N) {
-    if (n.la <= 0.01) continue;
-    const own = n.la, [x0, y0, x1, y1] = n.box;
+    const hold = n.hold, [x0, y0, x1, y1] = n.box;
+    if (hold <= 0 && n.la <= 0) continue;
     for (const q of near) {
       const gap = Math.max(q.box[1] - y1, y0 - q.box[3], q.box[0] - x1, x0 - q.box[2]);
-      n.la *= 1 - clamp(q.own / 0.4) * (1 - clamp(gap / (0.5 * n.sz)));
+      n.la *= 1 - q.hold * (1 - clamp(gap / (0.5 * n.sz)));
     }
-    near.push({ own, box: n.box });
+    near.push({ hold, box: n.box });
   }
   return N;
 }

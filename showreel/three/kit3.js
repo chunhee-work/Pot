@@ -18,8 +18,10 @@ export const UI = {
 export const MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace";
 
 /** a size for type meant to be read: k·u, but never under `min` CSS px (on a
-    phone, or a phone held sideways, k·u alone lands at 4–7 px) */
-export const readPx = (S, k, min = 10) => Math.max(k * S.u, min * S.dpr);
+    phone, or a phone held sideways, k·u alone lands at 4–7 px). Whole backing
+    px, rounded up: fonts are set in whole px, and where the player caps the
+    backing store S.dpr is fractional, so rounding to nearest could land under */
+export const readPx = (S, k, min = 10) => Math.ceil(Math.max(k * S.u, min * S.dpr) - 1e-6);
 
 // ── liquid metal ──────────────────────────────────────────────────────────
 /* /process's `metalflow`, stop for stop: dark steel, bright bands, and the
