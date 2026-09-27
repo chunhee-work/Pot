@@ -68,13 +68,17 @@ const EPS = [
 const REF = 100, CAP = 70;           // fonts are set at 100px; a capital is 70px in both faces
 const F900 = `900 ${REF}px ${FONT.sans}`, F800 = `800 ${REF}px ${FONT.sans}`, FSERIF = `700 ${REF}px ${FONT.serif}`;
 const widths = new Map();
+// metrics are cached only once both faces are in, so a fallback font can never stick
+let fontsIn = false;
+const fontsReady = () => fontsIn || (fontsIn = typeof document === 'undefined' || !document.fonts ||
+  (document.fonts.check(F900) && document.fonts.check(FSERIF)));
 function textW(ctx, font, str) {
   const key = font + '|' + str;
   let w = widths.get(key);
   if (w === undefined) {
     ctx.save(); ctx.font = font; ctx.letterSpacing = '0px'; w = ctx.measureText(str).width; ctx.restore();
     if (widths.size > 400) widths.clear();
-    widths.set(key, w);
+    if (fontsReady()) widths.set(key, w);
   }
   return w;
 }
@@ -194,7 +198,7 @@ function geometry(S, ctx) {
   // measured on Archivo 900: the O's left stroke is centred 0.224 caps in from
   // the glyph's origin and is 0.32 caps thick at mid-height (kept inside that)
   G.target = { x: G.hope.xO + 0.224 * hc, y: G.hope.y, hw: 0.13 * hc, hh: 0.22 * hc };
-  GEO = G;
+  if (fontsReady()) GEO = G;
   return G;
 }
 
@@ -245,8 +249,10 @@ function cameraAt(S, G, lt) {
   x = lerp(x, G.hold.x, settle); y = lerp(y, G.hold.y, settle);
   const aim = inOutCubic(clamp(D.u / 0.7));
   x = lerp(x, G.target.x, aim); y = lerp(y, G.target.y, aim);
-  // bank into the slalom; a quarter roll through the dive
+  // bank into the slalom
   let roll = ((G.port ? 0.03 : -0.08) * dL + 0.03 * Math.sin(lt * 1.7)) * (1 - settle);
+  // a wind-up the other way while the lockup holds, then a quarter roll through the dive
+  roll -= 0.07 * inOutCubic(seg(lt, SLAM + 0.3, DIVE + 0.1));
   roll += (Math.PI / 2) * inOutCubic(clamp((D.u - 0.05) / 0.8));
   // the lens opens a touch as the speed builds
   const zoom = 1.1 - 0.15 * clamp(D.v / 10.5) * (1 - settle);
@@ -432,7 +438,7 @@ const scene = {
   bg: BLOCK.ink,
   assets: EPS.map(e => e.src),
   models: [],
-  still: 6.3,
+  still: 0.95,
   sfx: [
     { at: PASS[0] - 0.03, type: 'whoosh' },
     { at: PASS[1] - 0.03, type: 'whoosh' },
