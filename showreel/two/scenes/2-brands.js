@@ -137,19 +137,44 @@ function run(items, C, w, fog) {
             const u = c & 1 ? x1 : x0, v = c & 2 ? y1 : y0;
             disp = Math.max(disp, Math.hypot((m.a - mb.a) * u + (m.c - mb.c) * v + m.e - mb.e, (m.b - mb.b) * u + (m.d - mb.d) * v + m.f - mb.f));
           }
-          st.mb = mb; st.nl = Math.min(ns > 1 ? 10 : 18, Math.ceil(disp / 1.6)); st.sp = disp / Math.max(1, st.nl);
+          st.mb = mb; st.nl = Math.min(ns > 1 ? 16 : 36, Math.ceil(disp / 1.6));
         }
       }
       if (!onFrame(m, W, H) && !(st.mb && onFrame(st.mb, W, H))) continue;
       strips.push(st);
     }
     if (!strips.length) continue;
-    items.push({ z: zc + (w.bias || 0), ch, strips, clip: ns > 1, face: fogged(w.face || INK, f), side: fogged(w.side || SIDE, f), back: fogged(w.back || w.face || INK, f) });
+    items.push({ z: zc + (w.bias || 0), ch, strips, clip: ns > 1, face: fogged(w.face || INK, f), side: fogged(w.side || SIDE, f), back: fogged(w.back || w.face || INK, f), bmp: st0(strips) ? glyphBitmap(ch, w.side || SIDE) : null, fogBmp: st0(strips) && f > 0.02 ? glyphBitmap(ch, OR) : null, f });
   }
 }
 function setM(ctx, m) { ctx.setTransform(m.a, m.b, m.c, m.d, m.e, m.f); }
 function setLerp(ctx, a, b, t) {
   ctx.setTransform(lerp(a.a, b.a, t), lerp(a.b, b.b, t), lerp(a.c, b.c, t), lerp(a.d, b.d, t), lerp(a.e, b.e, t), lerp(a.f, b.f, t));
+}
+/* A glyph's silhouette as a bitmap, for the copies that make its flank.
+   Drawn as text, every copy under its own skewed transform is a new glyph
+   rasterisation for the browser (a spinning, extruded word asks for hundreds
+   a frame, and the caches that hold them overflow into long stalls); drawn as
+   an image each copy is one textured quad. The face on top stays vector.
+   One bitmap per letter and colour (flank colours, plus orange for fog). */
+const BMP = new Map(), BK = 2.5, BPAD = 5;
+const st0 = strips => strips.some(s => s.mb && s.nl > 0);
+function glyphBitmap(ch, col) {
+  const key = ch + css(col);
+  let b = BMP.get(key);
+  if (b) return b;
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas'), x = c.getContext('2d');
+  x.font = `900 ${100 * BK}px ${FONT.sans}`;
+  const adv = x.measureText(ch).width;
+  c.width = Math.ceil(adv + BPAD * 2 + 8 * BK); c.height = Math.ceil((BOX_T + BOX_B) * BK + BPAD * 2);
+  x.font = `900 ${100 * BK}px ${FONT.sans}`;
+  x.fillStyle = css(col); x.textBaseline = 'alphabetic';
+  x.fillText(ch, BPAD, BPAD + BOX_T * BK);
+  b = { cv: c, k: 1 / BK, ox: -BPAD / BK, oy: -BPAD / BK - BOX_T };
+  if (BMP.size > 64) BMP.clear();
+  BMP.set(key, b);
+  return b;
 }
 const HULL = [];
 /** clip to the convex hull of a strip's rect at its front and at its back */
@@ -172,25 +197,22 @@ function hullClip(ctx, st) {
 function paint(ctx, g) {
   if (g.fn) { g.fn(ctx); return; }
   const m0 = g.strips[0].m, front = m0.a * m0.d - m0.b * m0.c > 0;
-  // the flanks first, for every strip, then the face on top
-  ctx.fillStyle = g.side;
-  for (const st of g.strips) {
+  // the flank first: copies of the silhouette from the back face to the
+  // front (or front to back, seen from behind), fogged by an orange copy
+  const bm = g.bmp, fb = g.fogBmp;
+  if (bm) for (const st of g.strips) {
     const n = st.nl, m = st.m, mb = st.mb;
     if (!mb || n <= 0) continue;
     if (g.clip) { ctx.save(); hullClip(ctx, st); }
-    // copies spaced wider than a couple of px are fattened with a stroke of
-    // the spacing, so the flank reads as one surface instead of steps
-    const sc = Math.sqrt(Math.abs(m.a * m.d - m.b * m.c));
-    const thick = st.sp > 2.2 && sc > 0.08;
-    const lw = thick ? Math.min(CAP * 0.2, st.sp * 1.15 / sc) : 0;
-    if (thick) { ctx.strokeStyle = g.side; ctx.lineJoin = 'round'; }
     for (let k = 0; k < n; k++) {
-      const i = front ? k : n - k;             // back to front, or front to back seen from behind
-      setLerp(ctx, mb, m, i / n); ctx.fillText(g.ch, 0, 0);
-      if (thick) { ctx.lineWidth = lw * Math.min(1, (n - k) / 2.5); ctx.strokeText(g.ch, 0, 0); }
+      setLerp(ctx, mb, m, (front ? k : n - k) / n);
+      ctx.transform(bm.k, 0, 0, bm.k, bm.ox, bm.oy);
+      ctx.drawImage(bm.cv, 0, 0);
+      if (fb) { ctx.globalAlpha = g.f; ctx.drawImage(fb.cv, 0, 0); ctx.globalAlpha = 1; }
     }
     if (g.clip) ctx.restore();
   }
+  // then the face, as vector type
   ctx.fillStyle = front ? g.face : g.back;
   for (const st of g.strips) {
     const m = front || !st.mb ? st.m : st.mb;
@@ -356,16 +378,17 @@ function pose(lt, G) {
   const lv = inOutCubic(seg(lt, T_LEVEL, T_LEVELED));
   const cam = { x: 0, y, z: C.SZ, yaw: 0, pitch: lerp(HALF_PI, D.lookUp, lv), roll: -C.twist * helix(kappa) * (1 - lv) };
   if (lt < T_D) return cam;
-  // bar 4: a slow push, then the drive into the dot
+  // bar 4: a slow push, rising to the word's level as the camera levels off
+  // (so it stays centred), then the drive into the dot
   const dot = dotWorld(G);
-  const push = clamp((lt - T_D) / (T_DRIVE - T_D));
+  const push = clamp((lt - T_D) / (T_DRIVE - T_D)), lvl = inOutCubic(clamp(push * 1.15));
   const d0 = D.dist * 0.86, dPush = lerp(D.dist, d0, outQuad(push));
   const q = seg(lt, T_DRIVE, T_INK);
   const dist = q > 0 ? Math.exp(lerp(Math.log(d0), Math.log(0.04), inCubic(q))) : dPush;
-  const aim = 0.1 * outQuad(push) + 0.9 * outCubic(q);
+  const aim = outCubic(q);
   return {
-    x: lerp(0, dot[0], aim), y: lerp(D.yCam, dot[1], aim), z: dot[2] - dist,
-    yaw: 0, pitch: lerp(D.lookUp, 0, clamp(push * 1.2 + q)), roll: 0.06 * inQuad(q)
+    x: lerp(0, dot[0], aim), y: lerp(lerp(D.yCam, D.pivot[1], lvl), dot[1], aim), z: dot[2] - dist,
+    yaw: 0, pitch: lerp(D.lookUp, 0, lvl), roll: 0.06 * inQuad(q)
   };
 }
 function dotWorld(G) {
@@ -565,18 +588,13 @@ const scene = {
     const items = [];
     if (lt < T_B + 0.05) wall(items, C, G, lt, fog);
     if (lt > T_WHIP && lt < T_C + 0.05) plaza(items, C, G, lt, fog);
-    if (lt > T_TILT && lt < T_LEVELED) stack(items, C, G, { near: 5, far: 30 });
-    if (lt > T_LEVEL + 0.1) ark(items, C, G, lt, { near: 22, far: 90 });
+    if (lt > T_TILT && lt < T_LEVELED) stack(items, C, G, { near: 4, far: 25 });
+    if (lt > T_LEVEL + 0.1) ark(items, C, G, lt, { near: 200, far: 300 });
 
     ctx.save();
     ctx.font = FONT100; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
     items.sort((p, q) => q.z - p.z);
-    const PROF = typeof window !== 'undefined' && window.__bprof;   // TEMP
-    for (const g of items) {
-      const t0 = PROF ? performance.now() : 0;
-      paint(ctx, g);
-      if (PROF) PROF.push([performance.now() - t0, g.fn ? 'fn' : g.ch, g.strips ? g.strips.length : 0, g.strips ? g.strips.map(s => s.nl + '/' + (s.sp || 0).toFixed(1) + '/' + Math.sqrt(Math.abs(s.m.a * s.m.d - s.m.b * s.m.c)).toFixed(2) + '/' + Math.hypot(s.m.a, s.m.b).toFixed(1) + ',' + Math.hypot(s.m.c, s.m.d).toFixed(1)).join(' ') : '']);
-    }
+    for (const g of items) paint(ctx, g);
     ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
