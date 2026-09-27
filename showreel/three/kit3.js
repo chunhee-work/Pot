@@ -17,6 +17,10 @@ export const UI = {
 };
 export const MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace";
 
+/** a size for type meant to be read: k·u, but never under `min` CSS px (on a
+    phone, or a phone held sideways, k·u alone lands at 4–7 px) */
+export const readPx = (S, k, min = 10) => Math.max(k * S.u, min * S.dpr);
+
 // ── liquid metal ──────────────────────────────────────────────────────────
 /* /process's `metalflow`, stop for stop: dark steel, bright bands, and the
    cold-white-warm triplet that reads as chromatic aberration on chrome */
