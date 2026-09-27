@@ -5,7 +5,6 @@
 
 ## Done
 - R3-T1 骨架（22:33 MYT，提交 `2907944`）：共用视觉工具 `showreel/three/kit3.js`、8 个占位章节、`reel3.html`、`/reel3` 路由、测试加上 reel3；演示帧里导航胶囊、阶段卡片、金属线、星空、交界帧都能正常画出
-
 - R2-T13 Go-Live 上 staging（20:16 MYT）
   - PR https://github.com/chunhee00/Pot/pull/2 已合并进 `staging`（合并提交 `c7f901c`），CI（Vercel）绿，无 review 评论
   - staging 部署 `dpl_Av4iiosCNCoAVdvHa4zNWjUH4Hwk` 状态 READY：https://chunhee-portfolio-jvq3m59qw-chunhee00s-projects.vercel.app/reel2
