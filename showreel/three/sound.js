@@ -455,13 +455,15 @@ function engine(ac, score, D, dest, bank) {
   function kick(T, when, v) {
     const K = globalThis.__KICK ?? { kf: 230, kf1: 150, kv: 0.2, kd: 0.05, cf: 2200, cq: 0.9, cv: 0.25, cd: 0.014 };
     const o = O('sine', 130), g = G(0), s = N(), bp = F('bandpass', K.cf, K.cq), cg = G(0), k = O('sine', K.kf), kg = G(0);
-    env(o.frequency, when, [[0, 140, 0], [0.05, 58, 2], [0.36, 42, 2]], 0);
+    env(o.frequency, when, [[0, K.bf || 140, 0], [0.05, 58, 2], [0.36, 42, 2]], 0);
     env(g.gain, when, [[0, 0, 0], [0.002, 0.48 * v, 1], [0.09, 0.33 * v, 1], [0.42, 1e-4, 2]], 0);
     env(k.frequency, when, [[0, K.kf, 0], [0.04, K.kf1, 2]], 0);
     env(kg.gain, when, [[0, 0, 0], [0.002, K.kv * v, 1], [K.kd, 1e-4, 2]], 0);
     env(cg.gain, when, [[0, 0, 0], [0.0008, K.cv * v, 1], [K.cd, 1e-4, 2]], 0);
-    wire(o, g, T.music); wire(k, kg, T.music); wire(s, bp, cg, T.music);
-    go(T, [o, k, s], [g, kg, bp, cg], when, when + 0.44, when);
+    let sh = null, sg = null;
+    if (K.dr) { sh = ac.createWaveShaper(); sh.curve = kit.drive; sg = G(K.dr); wire(o, sg, sh, g, T.music); } else wire(o, g, T.music);
+    wire(k, kg, T.music); wire(s, bp, cg, T.music);
+    go(T, [o, k, s], [g, kg, bp, cg, sh, sg], when, when + 0.44, when);
     // the pad leans back from the kick
     env(T.pump.gain, when, [[0, 1, 0], [0.015, 0.66, 1], [0.2, 0.9, 1], [0.45, 1, 1]], 0);
   }

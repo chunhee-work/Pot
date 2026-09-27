@@ -128,9 +128,9 @@ function frame(S) {
     const chipY = t2 + 2.2 * u;
     const ms = 1.65 * u, tel1 = chipY + 7.8 * u;
     const ss = Math.min(3.1 * u, 0.024 * W);
-    // the wreath behind the hero: as steep as 0.62 allows while its front dock stays
-    // above 0.9 H (never cut by the frame) and its back below 0.05 H, at the closest push
-    const fit = fitOrbit(S, 1.1, 0.05 * H, 0.9 * H, 0.62);
+    // the wreath behind the hero: its front dock tucked half behind the hero's lower edge
+    // (never tangent to it, never cut by the frame), as steep as the frame's top allows
+    const fit = fitWreath(S, 1.1, hero.cy + hero.h / 2, 0.06 * H, 0.9 * H, 0.62);
     return {
       land: true, x, stageY, ts, t1, t2, chipY, ms, tel1, tel2: tel1 + ms * 1.6,
       sentY: tel1 + ms * 1.6 + 3.2 * u + ss, sentSize: ss,
@@ -174,6 +174,21 @@ function orbitSpan(Fp, al, Z) {
   const s = Math.sin(al), c = Math.cos(al), yc = -1.2, hh = SW_A * ASPECT / 2;
   const dF = Z - R * c, dB = Z + R * c, yC = yc * Fp / Z;
   return [(yc - R * s - hh) * Fp / dB - yC, (yc + R * s + hh) * Fp / dF - yC];
+}
+
+/* Landscape: the steepest tilt (≤ alMax) at which the ring, placed so its front
+   sheet's centre sits on the hero's lower edge (at half the push), keeps its back
+   sheets below `top` and its front sheet above `bottom` even at the closest push. */
+function fitWreath(S, zoom, edge, top, bottom, alMax) {
+  const Fp = zoom * Math.min(S.W, S.H), hh = SW_A * ASPECT / 2, Zm = Z0 - 0.5 * PUSH, Zc = Z0 - PUSH;
+  let al = 0.12, cy = edge;
+  for (let k = Math.round(alMax * 50); k >= 6; k--) {
+    al = k / 50;
+    cy = edge - (orbitSpan(Fp, al, Zm)[1] - hh * Fp / (Zm - R * Math.cos(al)));
+    const [hi, lo] = orbitSpan(Fp, al, Zc);
+    if (cy + hi >= top && cy + lo <= bottom) break;
+  }
+  return { al, cy };
 }
 
 /* The hero's orbit has to fit its band of the frame (on a phone, between the
