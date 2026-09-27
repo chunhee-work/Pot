@@ -1,26 +1,34 @@
-/* 8 — Arrival. The flight drops out of warp at the film itself: the thread
-   bends into the horizon of Aurea, the chrome LAND OF HOPE lockup rises over
+/* 8 — Arrival. The edit's warp has already dropped the ship at the film
+   itself; this chapter opens calm, on the thread at rest, and the thread
+   bends into the horizon of Aurea. The chrome LAND OF HOPE lockup rises over
    it like a sunrise, and the four episodes flash past, one to a beat. Then
    the cockpit closes back into the nav pill it opened from in chapter 1 —
    the sign-off sits around it — and the pill opens out into the straight
    thread: the seam, and the loop point back into the launch.
 
    Local clock (s), 96 bpm, beats at k × 0.625:
-     0.00  seam            0.08  out of warp: a streak burst, the thread races
-     0.16  the thread bends into the planet's limb; Aurea fills in beneath it
-     0.55  the lockup rises from behind the horizon into a gold sunrise
-     1.30  '4 EPISODES · 17 MIN …' types on under it
-     2.20  the lockup docks to the top, and steps back (dims) for the cards
-     2.50 · 3.125 · 3.75 · 4.375   one episode card per beat, out of the sun
-     4.62  the cockpit glass closes — the viewport's rounded window narrows, then
+     0.00  seam (chapter 7 owns the warp and its collapse: no burst here)
+     0.08  the thread bends into the planet's limb as the ship glides in and
+           brakes; Aurea fills in beneath it
+     0.38  the lockup rises from behind the horizon into a gold sunrise
+     0.98  '4 EPISODES · 17 MIN …' types on under it (whole 1.48–1.60)
+     1.58  the lockup docks to the top, and steps back (dims) for the cards
+     1.875 · 2.50 · 3.125 · 3.75   one episode card per beat, out of the sun;
+           each title is whole ≥ 0.42 s, the last ~0.7 s before the close
+     4.62  the instruments go dark (the view's type fades before it recedes) and
+           the cockpit glass closes — the viewport's rounded window narrows, then
            shuts top to bottom (chapter 1's opening, reversed) and lands as
            the nav pill on the downbeat, 5.00
      5.00  the sign-off: CHUN HEE, the role, the address (all legible 5.44–7.00)
      7.00  it is drawn back into the pill, which opens out into the thread
-     7.42  seam */
+     7.42  seam
+
+   Type meant to be read (THE FILM, the film line, the episode labels, titles
+   and runtimes, the HUD labels, the nav links, the role and the address)
+   never falls under 10 CSS px: readPx() from kit3. */
 import { clamp, lerp, seg, TAU, rrect, text, layout, cover, outExpo, outCubic, inQuad, inCubic, inOutQuad, inOutCubic, bezier, whip } from '../../kit.js';
 import { camera, list } from '../../space.js';
-import { seam, space, wire, metal, navLinks, NAV, numeral, mono, stamp, UI, MONO } from '../kit3.js';
+import { seam, space, wire, metal, navLinks, NAV, numeral, mono, stamp, readPx, UI, MONO } from '../kit3.js';
 import { BEAT } from '../palette.js';
 
 const AUREA = 'assets/process/img-86e21caec4.webp';
@@ -39,50 +47,72 @@ const HOT = NAV.indexOf('Process');
 
 // ── the clock ─────────────────────────────────────────────────────────────
 const IN = 0.08, END = 7.42;                  // seam until IN, and again from END
-const BEND = [0.16, 1.1];
-const RISE = [0.55, 2.15];
-const TYPE = [1.3, 1.95];
-const DOCK = [2.2, 2.62];
-const CARD = [0, 1, 2, 3].map(k => 2.5 + k * BEAT);
-const DIM = [2.42, 2.85];                     // the docked lockup steps back for the cards
+const BEND = [IN, 0.95];                      // straight out of the resting thread
+const RISE = [0.38, 1.78];
+const TYPE = [0.98, 1.48];
+const DOCK = [1.58, 1.96];
+const CARD = [0, 1, 2, 3].map(k => 3 * BEAT + k * BEAT);   // beats 3–6: the last title holds into the close
+const DIM = [1.8, 2.22];                      // the docked lockup steps back for the cards
 const CLOSE = [4.62, 5.0];
 const SIGN = 5.0;
 const OUT = [7.0, 7.42];
 
-// the lockup is rendered at one fixed size and scaled on draw
-const LOGO = { w: 1120, h: 350 };
+// the lockup is rendered at one fixed size and scaled on draw. The render
+// keeps room around it for the widest pose it reaches (yaw −0.32 on the rise,
+// plus the turn of the wrist at the dock): FIT is the camera's margin, and
+// the drawn rect is grown by GROW so the lockup itself keeps the size the
+// layout gives it (w × h below is the lockup's box, FIT0 = 1.06 of it)
+const FIT0 = 1.06, FIT = 1.3, GROW = FIT / FIT0;
+const LOGO = { w: 1376, h: 430 };                        // 1120 × 350 at FIT0, grown by GROW
 const LOGO_AR = LOGO.w / LOGO.h;
+const logoAt = (S, yaw, pitch, exposure) => S.logo3d('landofhope', { w: LOGO.w, h: LOGO.h, yaw, pitch, fit: FIT, exposure });
 const rise = bezier(0.3, 0, 0.15, 1);
+const glide = bezier(0.42, 0, 0.22, 1);                  // off the rest frame: a soft start, a long brake
 
 // ── layout (by frame size) ────────────────────────────────────────────────
 let LAY = null;
 function lay(ctx, S) {
-  const { W, H, u } = S, key = W + 'x' + H;
+  const { W, H, u } = S, key = W + 'x' + H + '@' + S.dpr;       // (type floors depend on dpr)
   if (LAY && LAY.key === key) return LAY;
   const L = { key };
   const wide = W / H >= 1.2;
   L.wide = wide;
+  // the HUD row (clock, place): its baseline sits inside the text-safe band
+  L.hudM = (wide ? 3.2 : 3.6) * u; L.hudFs = readPx(S, wide ? 1.2 : 1.7);
+  L.hudY = Math.max(L.hudM + 1.2 * u + L.hudFs, 0.08 * H + 0.9 * L.hudFs);
+  L.hudX = Math.max(L.hudM + 1.2 * u, 0.055 * W);
   if (wide) {
     L.R = 0.8 * W; L.apex = 0.71 * H;
     L.heroW = Math.min(0.56 * W, 1.02 * H); L.heroY = 0.435 * H;
     L.dockW = 0.2 * W; L.dockY = 0.14 * H;
     L.cardW = Math.min(0.38 * W, 0.62 * H); L.cardX = 0.4 * W; L.cardY = 0.47 * H;
     L.vp = [0.5, 0.66];
-    L.mono = 1.45 * u; L.cap = 3.1 * u; L.micro = 1.2 * u;
+    L.mono = readPx(S, 1.45); L.cap = readPx(S, 3.1, 12); L.micro = readPx(S, 1.2);
   } else {
     L.R = 1.3 * W; L.apex = 0.68 * H;
-    L.heroW = Math.min(0.9 * W, 0.66 * H); L.heroY = 0.5 * H;
-    L.dockW = Math.min(0.5 * W, 0.38 * H); L.dockY = 0.12 * H;
+    L.heroW = Math.min(0.86 * W, 0.64 * H); L.heroY = 0.5 * H;     // (room for the yawed rise inside the frame)
+    L.dockW = Math.min(0.46 * W, 0.36 * H); L.dockY = 0.12 * H;
     L.cardW = Math.min(0.86 * W, 0.52 * H); L.cardX = 0.5 * W; L.cardY = 0.4 * H;
     L.vp = [0.5, 0.64];
-    L.mono = 2.1 * u; L.cap = 4.3 * u; L.micro = 1.75 * u;
+    L.mono = readPx(S, 2.1); L.cap = readPx(S, 4.3, 12); L.micro = readPx(S, 1.75);
   }
-  L.heroH = L.heroW / LOGO_AR; L.dockH = L.dockW / LOGO_AR;
+  L.heroH = L.heroW / LOGO_AR; L.dockH = L.dockW / LOGO_AR;   // the lockup's own box (drawn GROW× larger)
+  // docked, the lockup shares the top with the HUD row: where the clock and the
+  // place label leave too little room beside it (a phone), it sits under them
+  ctx.save(); ctx.font = `500 ${Math.round(L.hudFs)}px ${MONO}`;
+  const hudW = Math.max(ctx.measureText('AUREA · ARRIVAL').width, ctx.measureText('T+00:00.00').width);
+  ctx.restore();
+  if (L.dockW / 2 + 1.5 * u > W / 2 - L.hudX - hudW) L.dockY = Math.max(L.dockY, L.hudY + 1.4 * u + L.dockH / 2);
+  // the film line, docked with it: still ≥ 10 px
+  L.monoDock = Math.max(L.mono * (wide ? 0.82 : 0.86), readPx(S, 0));
   L.cardH = L.cardW * 9 / 16;
   if (!wide) {
-    // keep the caption's tick row clear of the sun on the horizon (768×1024)
-    const ticks = L.cardY + L.cardH / 2 + 8.4 * u + 1.5 * L.cap, room = L.apex - 5 * u;
+    // the caption under the card: its label clears the card at its fullest push (×1.06)
+    const off = 0.53 * L.cardH + 2.2 * u + 1.25 * L.cap + 0.75 * L.micro;
+    // and its tick row stays clear of the sun on the horizon (768×1024)
+    const ticks = L.cardY + off + 1.5 * L.cap, room = L.apex - 5 * u;
     if (ticks > room) L.cardY -= Math.min(ticks - room, 0.04 * H);
+    L.capY = L.cardY + off;
   }
   L.texS = L.R / PL.r;
   // the nav pill: chapter 1's pill exactly (this close is its opening, reversed) —
@@ -90,7 +120,7 @@ function lay(ctx, S) {
   // 0.92 W and its strip is scrolled, as the site's phone nav is, to bring
   // Process toward the centre (as far as it can scroll)
   const tall = H > W;
-  const size = (tall ? 2.75 : 2.05) * u;
+  const size = readPx(S, tall ? 2.75 : 2.05);
   const widths = NAV.map(s => layout(ctx, s, { size, weight: 600, tracking: 0.02 }).width);
   const gap = size * 1.9;
   const strip = widths.reduce((a, b) => a + b, 0) + gap * (NAV.length - 1);
@@ -107,8 +137,8 @@ function lay(ctx, S) {
   L.r0 = (tall ? 3.2 : 2.6) * u;
   // sign-off
   L.name = wide ? 7.6 * u : Math.min(10.5 * u, 0.13 * W);
-  L.role = wide ? 1.75 * u : 2.45 * u;
-  L.mail = wide ? 1.6 * u : 2.3 * u;
+  L.role = readPx(S, wide ? 1.75 : 2.45);
+  L.mail = readPx(S, wide ? 1.6 : 2.3);
   LAY = L;
   return L;
 }
@@ -133,22 +163,20 @@ function horizon(S, L, t) {
 function curvePath(c, pts) { c.beginPath(); pts.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]))); }
 
 // ── the view through the cockpit (everything before the close) ─────────────
-function starsAt(t) {
-  // out of warp: a burst on the downbeat that collapses as the ship slows;
-  // then a slow drift, and a push on every episode beat
-  const burst = seg(t, IN, IN + 0.035) * (1 - outCubic(seg(t, IN + 0.03, 0.9)));
-  let zoom = 1 + 0.32 * outExpo(seg(t, IN, 1.6)) + 0.05 * seg(t, 1.6, 2.5);
-  let warp = 0.92 * burst;
+function zoomAt(t) {
+  // no burst: chapter 7's warp has already collapsed onto the seam. The ship
+  // glides in off the resting frame and brakes over the world, then drifts;
+  // a push on every episode beat (no streaks: the warp is chapter 7's)
+  let zoom = 1 + 0.3 * glide(seg(t, IN, 1.9)) + 0.04 * seg(t, 1.9, 2.8);
   for (let k = 0; k < 4; k++) {
     const b = CARD[k];
     zoom += 0.075 * outExpo(seg(t, b - 0.05, b + 0.4));
-    warp = Math.max(warp, 0.42 * bump(t, b - 0.04, 7) * seg(t, b - 0.06, b - 0.02));
   }
-  return { zoom, warp };
+  return zoom;
 }
 
 function drawSunrise(ctx, S, L, g, t) {
-  const s = seg(t, 0.35, 1.9) * g.k;
+  const s = seg(t, 0.3, 1.6) * g.k;
   if (s <= 0) return;
   const { W } = S, cx = W / 2, y = g.apex;
   ctx.save();
@@ -165,7 +193,7 @@ function drawSunrise(ctx, S, L, g, t) {
 }
 
 function drawGlint(ctx, S, L, g, t) {
-  const s = seg(t, 0.45, 1.5) * g.k;
+  const s = seg(t, 0.38, 1.3) * g.k;
   if (s <= 0) return;
   const { W, u } = S, cx = W / 2, y = g.apex;
   ctx.save();
@@ -214,7 +242,7 @@ function band(S, L) {
 }
 
 function drawPlanet(ctx, S, L, g, t) {
-  const a = seg(t, 0.3, 1.25) * g.k;
+  const a = seg(t, 0.2, 1.05) * g.k;
   const { W, H, u } = S;
   const ga = ctx.globalAlpha;                            // (relative: the closing glass fades this view)
   ctx.save();
@@ -230,8 +258,17 @@ function drawPlanet(ctx, S, L, g, t) {
     ctx.drawImage(B.cv, DRIFT * t * B.s - B.pad, g.apex - 1);
     ctx.globalAlpha = ga;
   }
+  // on an upright frame the world runs off the bottom edge: below its lit crown
+  // the night side dissolves into space before it reaches the frame's edge, so
+  // the bottom rows are the seam's space again
+  if (!L.wide) {
+    const y0 = L.apex + 0.26 * (H - L.apex), f = ctx.createLinearGradient(0, y0, 0, H);
+    f.addColorStop(0, 'rgba(5,6,10,0)'); f.addColorStop(0.35, 'rgba(5,6,10,.36)'); f.addColorStop(0.62, 'rgba(5,6,10,.74)');
+    f.addColorStop(0.84, 'rgba(5,6,10,.95)'); f.addColorStop(1, UI.space);
+    ctx.fillStyle = f; ctx.fillRect(-0.02 * W, y0, 1.04 * W, H - y0 + 12);
+  }
   // and the sunrise catches the crown of the world
-  const sun = seg(t, 0.45, 1.9) * g.k;
+  const sun = seg(t, 0.38, 1.6) * g.k;
   if (sun > 0) {
     ctx.globalCompositeOperation = 'lighter';
     ctx.translate(W / 2, g.apex); ctx.scale(1, 0.42);
@@ -279,7 +316,7 @@ function lockState(S, L, g, t) {
 
 function drawLockup(ctx, S, L, g, st) {
   if (!st) return;
-  const cv = S.logo3d('landofhope', { w: LOGO.w, h: LOGO.h, yaw: st.yaw, pitch: st.pitch, fit: 1.06, exposure: st.exposure });
+  const cv = logoAt(S, st.yaw, st.pitch, st.exposure);
   if (!cv) return;
   ctx.save();
   if (st.d < 1) {
@@ -290,7 +327,9 @@ function drawLockup(ctx, S, L, g, st) {
     ctx.clip('evenodd');
   }
   ctx.globalAlpha *= st.alpha;
-  ctx.drawImage(cv, st.x - st.w / 2, st.y - st.h / 2, st.w, st.h);
+  // the render has room around the lockup for its widest pose: draw it GROW× the box
+  const dw = st.w * GROW, dh = st.h * GROW;
+  ctx.drawImage(cv, st.x - dw / 2, st.y - dh / 2, dw, dh);
   ctx.restore();
 }
 
@@ -301,10 +340,10 @@ function drawTitleCopy(ctx, S, L, st, t) {
   if (a <= 0) return;
   // the eyebrow, over the lockup
   const ey = st.y - st.h * 0.36 - (L.wide ? 2.4 : 3.0) * u;
-  const ea = seg(t, 1.05, 1.5);
+  const ea = seg(t, 0.88, 1.28);
   if (st.d < 0.5) text(ctx, S, 'THE FILM', W / 2, ey, { size: L.micro, weight: 700, tracking: 0.3, align: 'center', color: UI.gold, alpha: ea * (1 - seg(st.d, 0, 0.4)) });
   // the mono line, typed on under it
-  const size = lerp(L.mono, L.mono * (L.wide ? 0.82 : 0.86), st.d);
+  const size = lerp(L.mono, L.monoDock, st.d);
   ctx.save();
   ctx.font = `500 ${Math.round(size)}px ${MONO}`;
   const lw = ctx.measureText(LINE).width;
@@ -383,7 +422,7 @@ function drawCaption(ctx, S, L, t) {
   const rev = seg(t, b - 0.02, b + 0.18);                 // complete by b + 0.18: ~0.42 s held whole
   let x, y, align;
   if (L.wide) { x = L.cardX + L.cardW / 2 + 3.6 * u; y = L.cardY + 0.4 * u; align = 'left'; }
-  else { x = W / 2; y = L.cardY + L.cardH / 2 + 8.4 * u; align = 'center'; }
+  else { x = W / 2; y = L.capY; align = 'center'; }
   if (L.wide) numeral(ctx, S, String(k + 1).padStart(2, '0'), x - 0.3 * u, y - L.cap * 2.3, 8.5 * u, { align: 'left', alpha: seg(t, b - 0.02, b + 0.12), metal: true, phase: 0.2 + t * 0.25 });
   text(ctx, S, e.ep, x, y - L.cap * 1.25, { size: L.micro, weight: 800, tracking: 0.22, color: UI.muted, align, reveal: rev, window: 0.4 });
   text(ctx, S, e.title, x, y + L.cap * 0.2, { size: L.cap, weight: 700, tracking: -0.01, color: UI.ink, align, reveal: rev, mask: true, window: 0.35 });
@@ -409,12 +448,12 @@ function drawCaption(ctx, S, L, t) {
 
 function drawHud(ctx, S, L, t) {
   const { W, H, u } = S;
-  const a = seg(t, 0.5, 1.0);
+  const a = seg(t, 0.4, 0.9);
   if (a <= 0) return;
   ctx.save();
   ctx.globalAlpha *= a;
   // the corner ticks of the cockpit glass
-  const m = (L.wide ? 3.2 : 3.6) * u, len = 2.2 * u;
+  const m = L.hudM, len = 2.2 * u;
   ctx.strokeStyle = 'rgba(245,244,240,.28)'; ctx.lineWidth = Math.max(1, 0.12 * u);
   ctx.beginPath();
   for (const [x, y, sx, sy] of [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]]) {
@@ -422,7 +461,7 @@ function drawHud(ctx, S, L, t) {
   }
   ctx.stroke();
   // the mission clock and where we are, inside the title-safe frame
-  const fs = (L.wide ? 1.2 : 1.7) * u, ty = Math.max(m + 1.2 * u + fs, 0.085 * H), tx = Math.max(m + 1.2 * u, 0.055 * W);
+  const fs = L.hudFs, ty = L.hudY, tx = L.hudX;
   ctx.font = `500 ${Math.round(fs)}px ${MONO}`;
   ctx.fillStyle = UI.faint; ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left'; ctx.fillText(stamp(S.t), tx, ty);
@@ -430,21 +469,22 @@ function drawHud(ctx, S, L, t) {
   ctx.restore();
 }
 
-function view(ctx, S, L, t) {
-  const sa = starsAt(t);
-  space(ctx, S, { zoom: sa.zoom, warp: sa.warp });
+function view(ctx, S, L, t, ta = 1) {
+  space(ctx, S, { zoom: zoomAt(t) });
   const g = horizon(S, L, t);
   const st = lockState(S, L, g, t);
   drawSunrise(ctx, S, L, g, t);
   drawLockup(ctx, S, L, g, st);
   drawPlanet(ctx, S, L, g, t);
-  // the thread is now the limb of the world; its highlights race, then slow
-  wire(ctx, S, c => curvePath(c, g.pts), { phase: 3 * outExpo(seg(t, IN, 1.5)) });
+  // the thread is now the limb of the world; its highlights flow along it and settle
+  wire(ctx, S, c => curvePath(c, g.pts), { phase: 1.2 * glide(seg(t, IN, 1.8)) });
   drawGlint(ctx, S, L, g, t);
-  drawTitleCopy(ctx, S, L, st, t);
+  // (ta: the instruments go dark as the glass starts to close, before the view
+  // recedes, so no line of type is ever read smaller than it was set)
+  const typed = draw => { if (ta <= 0) return; ctx.save(); ctx.globalAlpha *= ta; draw(); ctx.restore(); };
+  typed(() => drawTitleCopy(ctx, S, L, st, t));
   drawCards(ctx, S, L, t);
-  drawCaption(ctx, S, L, t);
-  drawHud(ctx, S, L, t);
+  typed(() => { drawCaption(ctx, S, L, t); drawHud(ctx, S, L, t); });
 }
 
 // ── the pill, the sign-off, and the way back to the thread ─────────────────
@@ -596,7 +636,7 @@ function drawPillPhase(ctx, S, L, t) {
     ctx.save();
     ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.translate(-cx, -cy);
     if (sc < 1) { ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip(); }   // nothing from past the frame's edge
-    view(ctx, S, L, Math.min(t, CLOSE[1]));
+    view(ctx, S, L, Math.min(t, CLOSE[1]), 1 - seg(t, CLOSE[0], CLOSE[0] + 0.08));
     ctx.restore();
     if (sc < 1) {
       // soft edges wherever the receding picture no longer reaches the glass
@@ -631,8 +671,8 @@ function drawPillPhase(ctx, S, L, t) {
 
 function lens(S, t) {
   const fx = S.fx;
-  const b = t - IN;
-  if (b > 0 && b < 0.8) { fx.flash = 0.1 * Math.exp(-b * 18); fx.ab = 0.5 * Math.exp(-b * 6); }
+  // (no flash or aberration off the seam: the calm opening is the point; the
+  // lens only answers the card hits and the pill's landing)
   for (let k = 0; k < 4; k++) {
     const d = t - CARD[k];
     if (d > -0.03 && d < 0.5) { fx.ab = Math.max(fx.ab, 0.3 * Math.exp(-Math.max(0, d) * 10)); }
@@ -648,12 +688,11 @@ function lens(S, t) {
 export default {
   id: 'arrival',
   title: 'Arrival',
-  caption: 'Out of the warp at the film itself: the thread bends into the horizon of Aurea, the chrome Land of Hope title rises over it, the four episodes flash past on the beat, and the cockpit closes back into the nav pill for the sign-off.',
+  caption: 'Arrival at the film itself: the thread bends into the horizon of Aurea, the chrome Land of Hope title rises over it, the four episodes flash past on the beat, and the cockpit closes back into the nav pill for the sign-off.',
   assets: [AUREA, ...EPS.map(e => e.img)],
   models: ['landofhope'],
-  still: 2.1,
+  still: 1.56,
   sfx: [
-    { at: IN, type: 'whoosh', gain: 0.8 },
     { at: RISE[0] + 0.05, type: 'sub', gain: 0.7 },
     { at: CARD[0], type: 'impact', gain: 0.45 },
     { at: CARD[1], type: 'tick', gain: 0.7 },
@@ -665,7 +704,7 @@ export default {
   ],
   prepare(S) {
     // size the shared renderer once, off the frame loop
-    S.logo3d('landofhope', { w: LOGO.w, h: LOGO.h, yaw: -0.32, pitch: 0.3, fit: 1.06, exposure: 0.3 });
+    logoAt(S, -0.32, 0.3, 0.3);
     const c = document.createElement('canvas'); c.width = 96; c.height = 54;
     const x = c.getContext('2d');
     band(S, lay(x, S));
@@ -678,7 +717,7 @@ export default {
     const t = S.lt;
     if (t < IN || t >= END) {
       seam(ctx, S);
-      if (t < IN) S.logo3d('landofhope', { w: LOGO.w, h: LOGO.h, yaw: -0.32, pitch: 0.3, fit: 1.06, exposure: 0.3 });
+      if (t < IN) logoAt(S, -0.32, 0.3, 0.3);
       return;
     }
     const L = lay(ctx, S);

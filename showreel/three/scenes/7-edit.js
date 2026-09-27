@@ -42,7 +42,7 @@ import {
   cover, rrect, text, layout
 } from '../../kit.js';
 import { camera } from '../../space.js';
-import { seam, space, wireAcross, metal, chip, numeral, glass, mono, stamp, UI, MONO } from '../kit3.js';
+import { seam, space, wireAcross, metal, chip, numeral, glass, mono, stamp, readPx, UI, MONO } from '../kit3.js';
 import { BEAT, BAR } from '../palette.js';
 
 const B = BEAT;
@@ -64,7 +64,23 @@ const CODE = [
   '    return CHAPTERS[CHAPTERS.length - 1];',
   '  }'
 ];
-const CODE_COLS = Math.max(...CODE.map(l => l.length));
+/* the pane's rows: the lines as they are, or — where the frame is too narrow to set the long
+   line at a readable size — soft-wrapped the way an editor shows it: the text untouched, the
+   wrap after the loop's head, the continuation indented one step and without a line number */
+const ROWS_FLAT = CODE.map((s, i) => ({ s, n: CODE_FROM + i, src: i }));
+const WRAP_AT = CODE[1].indexOf(' if (');
+const ROWS_WRAP = [
+  ROWS_FLAT[0],
+  { s: CODE[1].slice(0, WRAP_AT), n: CODE_FROM + 1, src: 1 },
+  { s: '      ' + CODE[1].slice(WRAP_AT + 1), n: 0, src: 1 },
+  ROWS_FLAT[2], ROWS_FLAT[3]
+];
+// the pane's rhythm, in multiples of its type size: line height, header block, footer block
+const SPACING = {
+  normal: { lf: 1.62, hk: 3.1, tk: 3.6 },
+  tall: { lf: 1.72, hk: 3.1, tk: 3.6 },
+  compact: { lf: 1.5, hk: 2.7, tk: 3.4 }
+};
 const KEYWORDS = /^(function|for|const|of|if|return)$/;
 const HIT_REF = { size: 100, weight: 900, tracking: -0.01 };
 
@@ -146,25 +162,75 @@ function sill(ctx, S, str, x, y, o, pIn, pOut = 0) {
 }
 
 // ── geometry for the frame's shape ────────────────────────────────────────
+/* Type meant to be read (the index, chips, lane names, captions, the code pane) is never set
+   under 10 CSS px: readPx(). Running timecodes are telemetry, never under 7. On a phone, or a
+   phone held sideways, those floors are 2–2.6× what k·u alone gives, so the layout is worked out
+   from the measured type rather than scaled: the chips wrap to a second row where one will not
+   hold them, the lane names get the column they need, and the code pane is fitted to its box. */
+const telePx = (S, k) => Math.max(k * S.u, 7 * S.dpr);
+const intPx = S => Math.ceil(10 * S.dpr - 1e-6);          // the floor, as a font size in whole px
+function paneH(P, u) { return P.size * (P.hk + P.rows.length * P.lf + P.tk) + 0.8 * u; }
+/** the code pane in its box: the largest size up to `target` that fits, flat before wrapped */
+function fitPane(ctx, S, box, target, specs) {
+  const { u } = S, floor = intPx(S), padX = 1.6 * u;
+  ctx.save(); ctx.font = `400 100px ${MONO}`;
+  const cw = (ctx.measureText('0').width / 100) * 1.01;
+  ctx.restore();
+  let P = null;
+  search: for (const rows of [ROWS_FLAT, ROWS_WRAP]) {
+    for (const sp of specs) {
+      const cols = Math.max(...rows.map(r => r.s.length)) + 3;       // + the line-number gutter
+      const sW = (box.x1 - box.x0 - 2 * padX) / (cols * cw);
+      const sH = (box.bot - box.top - 0.8 * u) / (sp.hk + rows.length * sp.lf + sp.tk);
+      const size = Math.floor(Math.min(target, sW, sH) + 1e-6);
+      P = { rows, ...sp, cols, size: Math.max(size, floor) };
+      if (size >= floor) break search;
+    }
+  }
+  P.padX = padX;
+  P.w = box.shrink ? P.cols * cw * P.size + 2 * padX : box.x1 - box.x0;
+  P.x = box.shrink ? box.x1 - P.w : box.x0;
+  P.y = box.anchor === 'bottom' ? Math.max(box.top, box.bot - paneH(P, u)) : box.top;
+  P.small = Math.max(Math.round(0.92 * P.size), floor);          // its header and telemetry
+  return P;
+}
+/** the chips set left to right from (x0, y0), onto a second row where the first will not hold them */
+function flowChips(ctx, S, x0, y0, xMax, size) {
+  const gap = Math.max(0.6 * S.u, 0.3 * size), rowH = size * 2.6 + gap;
+  let x = x0, y = y0;
+  return CHIPS.map(([str]) => {
+    const w = layout(ctx, str, { size, weight: 700, tracking: 0.15 }).width + size * 3.2;
+    if (x > x0 && x + w > xMax) { x = x0; y += rowH; }
+    const at = { x, y };
+    x += w + gap;
+    return at;
+  });
+}
 const geoCache = new Map();
-function geo(S) {
-  const key = `${S.W}x${S.H}`;
+function geo(ctx, S) {
+  const key = `${S.W}x${S.H}@${S.dpr}`;
   let g = geoCache.get(key);
   if (g) return g;
   const { W, H, u, portrait } = S, mid = H / 2;
   if (!portrait) {
     const tx = 0.07 * W;
+    const laneLabel = readPx(S, 1.1), ls = Math.max(3.6 * u, 1.5 * laneLabel);
+    const lane = [0, 1, 2].map(k => mid + 4.4 * u + k * ls);
+    // the pane hangs from the thread at the right, as narrow as its code allows
+    const pane = fitPane(ctx, S, { x0: 0.57 * W, x1: 0.93 * W, top: mid + 1.8 * u, bot: 0.885 * H, shrink: true },
+      readPx(S, 1.4), [SPACING.normal, SPACING.compact]);
     g = {
-      tx, label: 11.6 * u, labelSize: 1.45 * u,
-      title: 20.6 * u, titleSize: 7.4 * u, chipY: 23.3 * u, chipSize: 1.2 * u,
+      tx, label: 11.6 * u, labelSize: readPx(S, 1.45),
+      title: 20.6 * u, titleSize: 7.4 * u, chipY: 23.3 * u, chipSize: readPx(S, 1.2),
       hit: 22.4 * u, hitSize: 10.4 * u,
-      lines: [['I DIRECTED IT, SO I KNOW HOW TO CUT IT.', 29 * u]], lineSize: 2.55 * u,
+      lines: [['I DIRECTED IT, SO I KNOW HOW TO CUT IT.', 29 * u]], lineSize: readPx(S, 2.55),
       numX: 0.93 * W, numY: 22.8 * u, numSize: 17 * u,
-      lx: tx, xa: tx + 9.6 * u, xb: 0.6 * W,
-      lane: [mid + 4.4 * u, mid + 8 * u, mid + 11.6 * u], laneH: 1.8 * u,
-      laneLabel: 1.1 * u, rulerLabel: 1.15 * u, band: [mid - 5.6 * u, mid + 14 * u], bandFill: 0.74,
-      pane: { x: 0.645 * W, y: mid + 2.2 * u, w: 0.285 * W, size: 1.36 * u },
-      cap: ['THREE CRAFTS, ONE SEAT. THESE ARE THE REAL TIMELINES.'], capY: mid + 35 * u, capSize: 1.7 * u,
+      lx: tx, xa: tx + 9.6 * u, xb: Math.min(0.6 * W, pane.x - 3 * u),
+      lane, laneH: 1.8 * u,
+      laneLabel, rulerLabel: telePx(S, 1.15), band: [mid - 5.6 * u, lane[2] + 2.4 * u], bandFill: 0.74,
+      pane,
+      cap: ['THREE CRAFTS, ONE SEAT. THESE ARE THE REAL TIMELINES.'], capY: mid + 35 * u, capSize: readPx(S, 1.7),
+      dispLabel: readPx(S, 0.95),
       disp: { top: 37 * u, bot: mid + 31 * u, maxW: 0.35 * W, yaw: 0.5, side: 0.66, gap: 2.4 * u, strips: 20 }
     };
   } else {
@@ -176,22 +242,24 @@ function geo(S) {
     const dispBot = mid + 13 * u;
     const y0 = Math.max(0.08 * H + 11 * u, Math.min(0.44 * H - 38 * u, dispBot - 83 * u));   // the stage index's baseline
     const dispTop = y0 + 33 * u;
-    let paneSize = clamp((0.86 * H - (mid + 19 * u)) / 13.8, 1.7 * u, 2.35 * u);
-    let paneY = Math.min(mid + 25 * u, 0.86 * H - paneSize * 13.4 - 0.8 * u);
-    // a tall phone has room below the thread: the pane sits lower and larger, so bar 2 fills the frame
-    if (tall) { paneSize = 2.5 * u; paneY = Math.max(mid + 30 * u, 0.82 * H - paneSize * 13.6 - 0.8 * u); }
+    const lane = [mid + 5 * u, mid + 9.2 * u, mid + 13.4 * u], band = [mid - 6.4 * u, mid + 16.2 * u];
+    // the code: bottom-anchored under the timeline; on a tall phone lower and larger, so bar 2 fills the frame
+    const pane = tall
+      ? fitPane(ctx, S, { x0: 0.06 * W, x1: 0.94 * W, top: mid + 24 * u, bot: 0.84 * H, anchor: 'bottom' }, readPx(S, 3.0), [SPACING.tall, SPACING.normal, SPACING.compact])
+      : fitPane(ctx, S, { x0: 0.07 * W, x1: 0.93 * W, top: short ? mid + 19 * u : band[1] + 2 * u, bot: short ? 0.86 * H : 0.865 * H, anchor: 'bottom' },
+        readPx(S, short ? 2.35 : 2.8), [SPACING.normal, SPACING.compact]);
     g = {
-      tx, label: y0, labelSize: 2.0 * u,
-      title: y0 + 11 * u, titleSize: 9.6 * u, chipY: y0 + 14 * u, chipSize: 1.5 * u,
+      tx, label: y0, labelSize: readPx(S, 2.0),
+      title: y0 + 11 * u, titleSize: 9.6 * u, chipY: y0 + 14 * u, chipSize: readPx(S, 1.5),
       hit: y0 + 14.2 * u, hitSize: 12.6 * u,
-      lines: [['I DIRECTED IT,', y0 + 21 * u], ['SO I KNOW HOW TO CUT IT.', y0 + 25.6 * u]], lineSize: 3.3 * u,
+      lines: [['I DIRECTED IT,', y0 + 21 * u], ['SO I KNOW HOW TO CUT IT.', y0 + 25.6 * u]], lineSize: readPx(S, 3.3),
       numX: 0.93 * W, numY: y0 + 1.2 * u, numSize: 14 * u,
       lx: tx, xa: tx + 12 * u, xb: 0.93 * W,
-      lane: [mid + 5 * u, mid + 9.2 * u, mid + 13.4 * u], laneH: 2.1 * u,
-      laneLabel: 1.55 * u, rulerLabel: 1.6 * u, band: [mid - 6.4 * u, mid + 16.2 * u], bandFill: 0.74,
-      pane: tall ? { x: 0.06 * W, y: paneY, w: 0.88 * W, size: paneSize, lh: 1.72 } : { x: 0.07 * W, y: paneY, w: 0.86 * W, size: paneSize },
+      lane, laneH: 2.1 * u,
+      laneLabel: readPx(S, 1.55), rulerLabel: telePx(S, 1.6), band, bandFill: 0.74,
+      pane,
       // bar 1's caption: under the timeline, or anchoring the lower third of a tall phone
-      cap: ['THREE CRAFTS, ONE SEAT.', 'THESE ARE THE REAL TIMELINES.'], capY: tall ? 0.7 * H : paneY + 4 * u, capSize: (tall ? 2.7 : 2.4) * u,
+      cap: ['THREE CRAFTS, ONE SEAT.', 'THESE ARE THE REAL TIMELINES.'], capY: tall ? 0.7 * H : pane.y + 4 * u, capSize: readPx(S, tall ? 2.7 : 2.4),
       disp: { top: Math.min(dispTop, dispBot - 24 * u), bot: dispBot, maxW: 0.8 * W, yaw: 0.55, side: 0.66, gap: 2.2 * u, strips: 16 },
       short
     };
@@ -199,10 +267,28 @@ function geo(S) {
       /* a squat upright frame (a tablet): the line goes on one line, and the console rises above
          the timeline's glass instead of sitting behind it; only its foot tucks under the glass */
       g.lines = [['I DIRECTED IT, SO I KNOW HOW TO CUT IT.', y0 + 20.6 * u]];
-      g.lineSize = 2.45 * u;
+      g.lineSize = readPx(S, 2.45);
       g.disp = { ...g.disp, top: y0 + 25.4 * u, bot: mid + 1 * u };
       g.bandFill = 0.6;
     }
+  }
+  // the lane names get the column they need, however large the floor makes them
+  g.swatch = Math.max(0.6 * u, 0.3 * g.laneLabel);
+  g.laneX = g.lx + g.swatch + Math.max(0.8 * u, 0.45 * g.laneLabel);
+  const nameW = Math.max(...LANES.map(l => layout(ctx, l.name, { size: g.laneLabel, weight: 700, tracking: 0.2 }).width));
+  g.xa = Math.max(g.xa, g.laneX + nameW + 1.6 * u);
+  g.chips = flowChips(ctx, S, g.tx, g.chipY, 0.93 * W, g.chipSize);
+  if (!portrait) {
+    /* the displays' labels share bar 1 with the caption under them. Where the floor makes them
+       too large to clear it (a phone held sideways), the displays go unlabelled — the caption
+       already says what they are. Checked once, at the lowest the rims come while the caption
+       is up (displays fully open, the camera at the end of bar 1's push), with room for the drift. */
+    const cam = camera(S, { x: 0, y: 0, z: -6, zoom: ZOOM });
+    const quads = consoleOf(S, g).map(P => ({ o: 1, q: [0, 1, 1, 0].map((s, j) => panelPoint(cam, P, s, j < 2 ? 0 : 1)) }));
+    const capTop = g.capY - 0.9 * u - 0.75 * g.capSize - 0.8 * u;
+    const capR = g.tx + 3.2 * u + layout(ctx, g.cap[0], { size: g.capSize, weight: 600, tracking: 0.2 }).width + 3 * u;
+    g.dispLabels = quads.every(Q => !Q.q.some(p => !p)) &&
+      dispLabels(ctx, S, g, quads).every(L => !L || L.y + 0.2 * g.dispLabel < capTop || L.x > capR);
   }
   if (geoCache.size > 6) geoCache.clear();
   geoCache.set(key, g);
@@ -252,6 +338,20 @@ function consoleOf(S, G) {
 }
 function panelPoint(cam, P, s, v) {
   return cam.project(P.c[0] + P.r[0] * (s - 0.5) * P.w, P.c[1] + (v - 0.5) * P.h, P.c[2] + P.r[2] * (s - 0.5) * P.w);
+}
+/** where each display's label sits: under its bottom rim, below the rim across the label's whole width */
+function dispLabels(ctx, S, G, quads) {
+  const { W, u } = S, ls = G.dispLabel;
+  return [0, 1, 2].map(i => {
+    const Q = quads[i];
+    if (!Q || Q.o < 0.6) return null;
+    const str = `CAPCUT TIMELINE ${i + 1}`, w = layout(ctx, str, { size: ls, weight: 700, tracking: 0.22 }).width;
+    const bl = Q.q[3], br = Q.q[2];
+    const x = Math.max(bl.x, 0.06 * W) + 0.8 * u;
+    if (x + w > 0.95 * W) return null;
+    const rim = X => lerp(bl.y, br.y, clamp((X - bl.x) / Math.max(1, br.x - bl.x)));
+    return { str, x, w, y: Math.max(rim(x), rim(x + w)) + u + 0.9 * ls };
+  });
 }
 /** a display: its picture mapped strip by strip (true perspective across a yawed panel), its rows v0..v1 */
 function drawDisplay(ctx, S, cam, P, src, v0, v1, o) {
@@ -399,8 +499,8 @@ function drawRulerAndLanes(ctx, S, G, lt) {
     ctx.save();
     ctx.globalAlpha = la;
     ctx.fillStyle = rgba(col, 1);
-    ctx.fillRect(G.lx, y - 0.3 * u, 0.6 * u, 0.6 * u);
-    text(ctx, S, LANES[k].name, G.lx + 1.4 * u, y + G.laneLabel * 0.36, { size: G.laneLabel, weight: 700, tracking: 0.2, color: lit ? UI.ink : UI.muted });
+    ctx.fillRect(G.lx, y - G.swatch / 2, G.swatch, G.swatch);
+    text(ctx, S, LANES[k].name, G.laneX, y + G.laneLabel * 0.36, { size: G.laneLabel, weight: 700, tracking: 0.2, color: lit ? UI.ink : UI.muted });
     ctx.restore();
     // the empty track before it lights: a hairline
     ctx.save();
@@ -547,16 +647,9 @@ function drawPane(ctx, S, G, lt) {
   const { u } = S, P = G.pane, mid = S.H / 2;
   const open = siteE(seg(lt, T.pane, T.pane + 0.5)) * (1 - inOutCubic(seg(lt, T.paneOut, T.paneOut + 0.34)));
   if (open <= 0.002) return;
-  const lf = P.lh || 1.62, padX = 1.6 * u;
-  // the longest line (and its gutter) must fit inside the glass
-  let size = P.size;
-  for (let i = 0; i < 8; i++) {
-    ctx.font = `400 ${Math.round(size)}px ${MONO}`;
-    if (ctx.measureText('0').width * (CODE_COLS + 3) <= P.w - 2 * padX) break;
-    size *= 0.96;
-  }
-  const lh = size * lf, head = size * 3.1;
-  const fullH = head + CODE.length * lh + size * 3.6 + 0.8 * u;
+  // fitted once per frame shape (geo): its size, its rows (flat or soft-wrapped), its rhythm
+  const { size, lf, hk, rows, padX } = P, n = rows.length;
+  const lh = size * lf, head = size * hk, fullH = paneH(P, u);
   // it drops from the thread like a blind
   const y0 = lerp(mid, P.y, Math.min(1, open * 1.2)), h = fullH * open;
   ctx.save();
@@ -570,9 +663,9 @@ function drawPane(ctx, S, G, lt) {
   ctx.beginPath(); rrect(ctx, P.x, y0, P.w, h, 1.2 * u); ctx.clip();
   const ta = seg(lt, T.pane + 0.2, T.pane + 0.5);
   // header: the file, and where in it
-  const hy = y0 + size * 2.1;
+  const hy = y0 + size * (hk - 1);
   ctx.globalAlpha = ta;
-  ctx.font = `600 ${Math.round(size * 0.92)}px ${MONO}`; ctx.textBaseline = 'alphabetic';
+  ctx.font = `600 ${Math.round(P.small)}px ${MONO}`; ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = UI.muted; ctx.textAlign = 'left'; ctx.fillText(CODE_FILE, P.x + padX, hy);
   ctx.fillStyle = UI.faint; ctx.textAlign = 'right';
   ctx.fillText(`L${CODE_FROM}–${CODE_FROM + CODE.length - 1}`, P.x + P.w - padX, hy);
@@ -585,15 +678,16 @@ function drawPane(ctx, S, G, lt) {
   if (lt > T.type[1]) {
     // the running line — the loop that picks the chapter — lit on every beat once typed
     const k = 0.35 + 0.65 * decay(lt, Math.floor(lt / B) * B, 5);
-    ctx.fillStyle = `rgba(174,203,255,${0.07 * k})`; ctx.fillRect(P.x + 0.5 * u, yl(1) - size * 1.05, P.w - u, lh);
+    const r0 = rows.findIndex(r => r.src === 1), r1 = rows.findLastIndex(r => r.src === 1);
+    ctx.fillStyle = `rgba(174,203,255,${0.07 * k})`; ctx.fillRect(P.x + 0.5 * u, yl(r0) - size * 1.05, P.w - u, lh * (r1 - r0 + 1));
   }
   ctx.fillStyle = UI.faint;
-  for (let i = 0; i < CODE.length; i++) ctx.fillText(String(CODE_FROM + i), gx, yl(i));
-  mono(ctx, S, CODE, cx, yl(0), { size, lh: lf, color: UI.muted, reveal, cursor: true });
-  let left = Math.floor(clamp(reveal) * CODE.reduce((n, l) => n + l.length, 0));
+  rows.forEach((r, i) => { if (r.n) ctx.fillText(String(r.n), gx, yl(i)); });
+  mono(ctx, S, rows.map(r => r.s), cx, yl(0), { size, lh: lf, color: UI.muted, reveal, cursor: true });
+  let left = Math.floor(clamp(reveal) * rows.reduce((m, r) => m + r.s.length, 0));
   ctx.font = `400 ${Math.round(size)}px ${MONO}`;
-  for (let i = 0; i < CODE.length && left > 0; i++) {
-    const line = CODE[i], shown = line.slice(0, Math.min(line.length, left));
+  for (let i = 0; i < n && left > 0; i++) {
+    const line = rows[i].s, shown = line.slice(0, Math.min(line.length, left));
     left -= line.length;
     let col = 0;
     for (const m of shown.matchAll(/[A-Za-z_]\w*|\d+|\s+|./g)) {
@@ -606,15 +700,15 @@ function drawPane(ctx, S, G, lt) {
   // once typed, the caret blinks in eighths for a beat and a half
   if (reveal >= 1 && lt < T.type[1] + 0.9 && Math.floor(lt / (B / 2)) % 2 === 0) {
     ctx.fillStyle = UI.ink;
-    ctx.fillRect(cx + CODE[CODE.length - 1].length * cw + size * 0.1, yl(CODE.length - 1) - size * 0.8, size * 0.55, size * 0.95);
+    ctx.fillRect(cx + rows[n - 1].s.length * cw + size * 0.1, yl(n - 1) - size * 0.8, size * 0.55, size * 0.95);
   }
   // live telemetry: where the clock is, and what chapterAt says about it
-  const ry = y0 + head + CODE.length * lh + size * 2.1;
+  const ry = y0 + head + n * lh + size * (P.tk - 1.5);
   const ra = seg(lt, T.type[1] - 0.2, T.type[1] + 0.05);
   if (ra > 0) {
     ctx.globalAlpha = ra;
     ctx.fillStyle = 'rgba(245,244,240,.1)'; ctx.fillRect(P.x + padX, ry - size * 1.5, P.w - 2 * padX, Math.max(1, 0.1 * u));
-    ctx.font = `500 ${Math.round(size * 0.92)}px ${MONO}`;
+    ctx.font = `500 ${Math.round(P.small)}px ${MONO}`;
     ctx.fillStyle = UI.muted; ctx.fillText(stamp(S.t), gx, ry);
     ctx.fillStyle = UI.ink; ctx.textAlign = 'right';
     ctx.fillText(`→ EDIT · ${(S.t - S.lt).toFixed(2)}–${(S.t - S.lt + S.d).toFixed(2)}`, P.x + P.w - padX, ry);
@@ -643,7 +737,7 @@ export default {
   draw(ctx, S) {
     const lt = S.lt;
     if (lt < IN || lt > OUT) { seam(ctx, S); return; }
-    const { W, H, u } = S, mid = H / 2, G = geo(S);
+    const { W, H, u } = S, mid = H / 2, G = geo(ctx, S);
     const p = seg(lt, IN, OUT);
     // the hit is set as large as the frame's width allows
     const hitSize = Math.min(G.hitSize, (S.portrait ? 0.86 : 0.6) * W / (layout(ctx, 'NO HANDOFF.', HIT_REF).width / 100));
@@ -696,17 +790,13 @@ export default {
       });
       if (q) quads[i] = { q, o };
     }
-    // their labels, under the bottom rims (landscape only — a phone sees just the centre)
-    for (let i = 0; i < 3; i++) {
-      const Q = quads[i];
-      if (!Q || Q.o < 0.6) continue;
-      if (S.portrait) break;
-      const a = seg(Q.o, 0.6, 1) * (1 - seg(lt, T.hit - 0.2, T.hit + 0.2) * 0.4);
-      const bl = Q.q[3], br = Q.q[2];
-      const x = Math.max(bl.x, 0.06 * W) + 0.8 * u;
-      if (x > W * 0.94 - 12 * u) continue;
-      const y = lerp(bl.y, br.y, clamp((x - bl.x) / Math.max(1, br.x - bl.x))) + 2.4 * u;
-      text(ctx, S, `CAPCUT TIMELINE ${i + 1}`, x, y, { size: (S.portrait ? 1.35 : 0.95) * u, weight: 700, tracking: 0.22, color: UI.faint, alpha: a });
+    // their labels, under the bottom rims (landscape only — a phone sees just the centre); they
+    // name the displays while bar 1's caption talks about them, and clear the glass for the code
+    const labA = (1 - seg(lt, T.hit - 0.2, T.hit + 0.2) * 0.4) * (1 - seg(lt, T.pane, T.pane + 0.3));
+    if (G.dispLabels && labA > 0) {
+      dispLabels(ctx, S, G, quads).forEach((L, i) => {
+        if (L) text(ctx, S, L.str, L.x, L.y, { size: G.dispLabel, weight: 700, tracking: 0.22, color: UI.faint, alpha: seg(quads[i].o, 0.6, 1) * labA });
+      });
     }
 
     // ── the timeline band, the thread, the ruler, the lanes, the playhead
@@ -748,22 +838,21 @@ export default {
       const tg = ctx.createLinearGradient(0, G.title - G.titleSize * 0.75, 0, G.title);
       tg.addColorStop(0, UI.ink); tg.addColorStop(1, '#bdbbb4');
       sill(ctx, S, 'CapCut', G.tx - 0.04 * G.titleSize, G.title, { size: G.titleSize, weight: 800, tracking: -0.02, color: tg }, seg(lt, T.title, T.title + 0.5), identOut);
-      let x = G.tx;
-      for (const [str, lane, solid] of CHIPS) {
-        const tIn = T.lanes[lane];
+      CHIPS.forEach(([str, lane, solid], j) => {
+        const { x, y } = G.chips[j], tIn = T.lanes[lane];
         const pin = outExpo(seg(lt, tIn, tIn + 0.35));
-        const w = chip(ctx, S, str, x, G.chipY + (1 - pin) * 0.8 * u - identOut * 1.5 * u, { size: G.chipSize, solid, alpha: pin * (1 - identOut) });
+        const cy = y + (1 - pin) * 0.8 * u - identOut * 1.5 * u;
+        const w = chip(ctx, S, str, x, cy, { size: G.chipSize, solid, alpha: pin * (1 - identOut) });
         // the chip catches its lane's light
         const k = solid ? 0 : decay(lt, tIn, 5);
         if (k > 0.02 && identOut < 1) {
           ctx.save();
           ctx.strokeStyle = rgba(LANES[lane].color, 0.9 * k * (1 - identOut));
           ctx.lineWidth = Math.max(1, 0.14 * u);
-          rrect(ctx, x, G.chipY + (1 - pin) * 0.8 * u - identOut * 1.5 * u, w, G.chipSize * 2.6, G.chipSize * 1.3); ctx.stroke();
+          rrect(ctx, x, cy, w, G.chipSize * 2.6, G.chipSize * 1.3); ctx.stroke();
           ctx.restore();
         }
-        x += w + 0.6 * u;
-      }
+      });
     }
 
     // NO HANDOFF. — up out of its sill just ahead of the hit, seated on it, then settling from
