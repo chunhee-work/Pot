@@ -1,9 +1,14 @@
 # BUILD-STATUS — `/reel`、`/reel2`、`/reel3`
 
 ## Now
-- `/reel3` 三支 reel 完整测试（`node tests/run-all.mjs`，04:50 MYT 开始）
+- 无。`/reel3` 已上 staging（05:10 MYT）
 
 ## Done
+- R3-T12 Go-Live 上 staging（05:10 MYT）
+  - PR https://github.com/chunhee00/Pot/pull/3 已合并进 `staging`（合并提交 `8d2675d`），CI（Vercel）绿，无 review 评论
+  - staging 部署 `dpl_E6MaQehcV3Ux849oLDPuh86qnBq7` 状态 READY：https://chunhee-portfolio-h1idcjjkn-chunhee00s-projects.vercel.app/reel3 （固定地址 https://chunhee-portfolio-git-staging-chunhee00s-projects.vercel.app/reel3）
+  - 本地分支已删；远端 `claude/reel-three` 删不掉（git 代理在删除时断开），需要在 PR #3 页面点「Delete branch」
+- R3 完整测试（04:57 MYT）：`node tests/run-all.mjs` 全绿：`/reel` 51/51、`/reel2` 52/52、`/reel3` 50/50（跳过 2 项配音测试，这支没有配音）
 - R3 审查返修（04:48 MYT）：8 章全部返修，每章由不带上下文的复核员再查；复核又发现 3 个问题也已修好（launch 缓存没按像素密度区分；shots 在画布限尺寸的屏幕上字号四舍五入成 9.9px；worlds 横放手机上标签和正文一样大）
   - 片尾金属字不再被切；第 7→8 章只剩一次跃迁；「同一个地方」换成同一个村庄广场的三次回访（夜/昼/夜）；编造的星图坐标换成 /process 里真实的编号（SB 03 / 23、ENV-AUREA 25 / 29）；「BUILT AS」字距修好
   - 字号：8 章在 390×844、390×664、844×390、768×1024、1280×720 上，要读的文字全部 ≥ 10px（量出来 0 处小于 10px）
@@ -53,12 +58,10 @@
   - 首页、`/process`、`/work` 三个文件的 sha256 和开工前一致
 
 ## Queue
-- R3-T11 整片审查、分享图、三支 reel 完整测试
-- R3-T12 PR 合进 staging、删分支、截图
-- 生产分支等你明确说了才上线
+- 无（生产分支等你明确说了才上线）
 
 ## Blockers
-- 两个远端分支待你手动删除：PR #1 页面的 `claude/vibrant-allen-9mlymk`、PR #2 页面的 `claude/reel-two`（各点一下「Delete branch」）
+- 三个远端分支待你手动删除：PR #1 页面的 `claude/vibrant-allen-9mlymk`、PR #2 页面的 `claude/reel-two`、PR #3 页面的 `claude/reel-three`（各点一下「Delete branch」）
 
 ## Resume notes
 - 本地预览：`node tests/shoot.mjs <输出目录> <时间,…> [--size 390x844] [--debug]`
