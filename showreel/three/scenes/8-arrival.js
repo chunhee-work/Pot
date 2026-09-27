@@ -218,7 +218,7 @@ function drawGlint(ctx, S, L, g, t) {
 let BAND = null;
 const DRIFT = 4;                                        // source px per second the world turns
 function band(S, L) {
-  const key = S.W + 'x' + S.H;
+  const key = S.W + 'x' + S.H + '@' + S.dpr;            // as lay()'s: L's geometry is what it is drawn from
   if (BAND && BAND.key === key) return BAND;
   const img = S.img(AUREA);
   if (!img || !img.width) return null;
