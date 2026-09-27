@@ -1,9 +1,12 @@
 # BUILD-STATUS — `/reel`、`/reel2`、`/reel3`
 
 ## Now
-- `/reel3`（分支 `claude/reel-three`）：8 个章节和配乐正在由 5 个 Workflow 并行制作（22:42 MYT 开始），每项都走：制作 → 不带上下文的评审 → 返修 → 章节检查
+- `/reel3` 配乐返修中（评审后），完成后做整片审查
 
 ## Done
+- R3 分享图（00:48 MYT）：`assets/reel/og3-6def29404e.jpg`（1200×630，片尾 Land of Hope 金属字升过星球 Aurea）
+- R3-T2..T9 八个章节（00:43 MYT）：launch、story、shots、boards、characters、worlds、edit、arrival，每章都经过制作 → 独立评审 → 返修；我逐章看过横屏 12 帧 + 手机帧；`check-chapter` 八章全部 PASS，每帧平均绘制 0.8–2.9ms
+  - 播放器修正：`prepare()` 以前可能在字体加载前就生成文字缓存（评审在 Launch 里发现片名用了备用字体、字距不匀），现在等字体到了才生成，三支 reel 都受益
 - R3-T1 骨架（22:33 MYT，提交 `2907944`）：共用视觉工具 `showreel/three/kit3.js`、8 个占位章节、`reel3.html`、`/reel3` 路由、测试加上 reel3；演示帧里导航胶囊、阶段卡片、金属线、星空、交界帧都能正常画出
 - R2-T13 Go-Live 上 staging（20:16 MYT）
   - PR https://github.com/chunhee00/Pot/pull/2 已合并进 `staging`（合并提交 `c7f901c`），CI（Vercel）绿，无 review 评论

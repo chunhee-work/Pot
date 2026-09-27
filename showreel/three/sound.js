@@ -67,7 +67,7 @@ const GRACE = 0.012;       // a take also plays the short hits this close behind
 const SNIP = 0.6;          // seconds of a voice line
 const DUCK = 0.62;         // music level under a voice (≈ −4 dB)
 const VLEVEL = 1.2;        // a voice line's level into the master
-const OUT = 0.75;          // master gain after the glue compressor
+const OUT = globalThis.__OUT ?? 0.75;          // master gain after the glue compressor
 const CEIL = 0.88;         // the soft ceiling's limit (−1.1 dBFS): nothing leaves above it
 const VOICE = n => `assets/voice-${n}.mp3`;
 
@@ -138,10 +138,12 @@ function arrange(D, chapters) {
     for (let k = 0; k < 4; k++) {
       const tb = t0 + k * BEAT;
       // the pulse, every beat; 8ths in chapters 6–7
-      put(tb, 'pulse', { f: root, v: PULSEV[c8] * (k === 0 ? 1 : 0.86), len: 0.55 });
-      if (c8 === 5 || c8 === 6) put(tb + 2 * STEP, 'pulse', { f: root, v: 0.42, len: 0.55 });
       // the kick on 1 and 3 from chapter 2; a ghost on the and-of-4 in 6–7; only the 1 in the loop's last bar
-      if (ci >= 1 && (k === 0 || k === 2) && !(tail && k === 2)) put(tb, 'kick', { v: KICKV[c8], len: 0.45 });
+      const kicked = ci >= 1 && (k === 0 || k === 2) && !(tail && k === 2);
+      if (kicked) put(tb, 'kick', { v: KICKV[c8], len: 0.45 });
+      // the pulse, every beat (its sub leaning back where the kick lands); 8ths in chapters 6–7
+      put(tb, 'pulse', { f: root, v: PULSEV[c8] * (k === 0 ? 1 : 0.86), s: kicked ? (globalThis.__SC ?? 0.7) : 1, len: 0.55 });
+      if (c8 === 5 || c8 === 6) put(tb + 2 * STEP, 'pulse', { f: root, v: 0.42, s: 1, len: 0.55 });
       if ((c8 === 5 || c8 === 6) && k === 3) put(tb + 2 * STEP, 'kick', { v: 0.42 * KICKV[c8], len: 0.45 });
       // the hats: the off-beat, and ghosts as it builds
       for (let s = 0; s < 4; s++) {
@@ -256,7 +258,7 @@ function ceiling() {
 function masterChain(ac) {
   // gentle glue, a make-up gain, then a soft ceiling no sample can pass
   const comp = ac.createDynamicsCompressor();
-  comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 2;
+  comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = globalThis.__NOCOMP ? 1 : 2;
   comp.attack.value = 0.01; comp.release.value = 0.3;
   const out = ac.createGain(); out.gain.value = OUT / 4;
   const lim = ac.createWaveShaper(); lim.curve = ceiling(); lim.oversample = 'none';
@@ -343,7 +345,7 @@ function engine(ac, score, D, dest, bank) {
     const duck = G(1), music = G(1), pump = G(1), post = G(1), sfx = G(1), voice = G(1);
     wire(music, duck, out); wire(pump, music); wire(post, duck); wire(sfx, out); wire(voice, out);
     // the pulse runs through one soft drive and a lowpass
-    const bass = G(globalThis.__PRE ?? 2.4), drv = ac.createWaveShaper(), blp = F('lowpass', globalThis.__BLP ?? 950, 0.5), bout = G(globalThis.__BOUT ?? 0.3);
+    const bass = G(globalThis.__PRE ?? 2.2), drv = ac.createWaveShaper(), blp = F('lowpass', globalThis.__BLP ?? 950, 0.5), bout = G(globalThis.__BOUT ?? 0.24);
     drv.curve = kit.drive; wire(bass, drv, blp, bout, music);
     // the arpeggio: its own resonant lowpass (the chapter-long sweeps), then dry and into the ping-pong
     const arp = G(1), arpF = F('lowpass', 800, 3.2);
@@ -417,7 +419,7 @@ function engine(ac, score, D, dest, bank) {
 
   function fire(T, e, when, j) {
     switch (e.k) {
-      case 'pulse': return pulse(T, when, e.v, e.f);
+      case 'pulse': return pulse(T, when, e.v, e.f, e.s);
       case 'kick': return kick(T, when, e.v);
       case 'hat': return hat(T, when, e.v, e.n, e.pan);
       case 'arp': return arp(T, when, e.v, e.f, e.pan);
@@ -438,27 +440,28 @@ function engine(ac, score, D, dest, bank) {
   }
 
   // ── the rhythm ──
-  function pulse(T, when, v, f) {
+  function pulse(T, when, v, f, sv) {
     // a sine that drops into the root, through the take's soft drive
     const o = O('sine', f), g = G(0);
     env(o.frequency, when, [[0, f * 1.6, 0], [0.045, f, 2]], 0);
-    env(g.gain, when, [[0, 0, 0], [0.006, 0.34 * v, 1], [0.14, 0.24 * v, 1], [0.52, 1e-4, 2]], 0);
+    const w = v * sv;
+    env(g.gain, when, [[0, 0, 0], [0.006, 0.34 * w, 1], [0.14, 0.24 * w, 1], [0.52, 1e-4, 2]], 0);
     wire(o, g, T.bass);
     // the pluck on top: a saw an octave up, its lowpass closing fast — the part of the pulse a phone can play
-    const U = globalThis.__UP ?? { m: 2, v: 0.1, f0: 2400, f1: 420, q: 1.2 };
+    const U = globalThis.__UP ?? { m: 2, v: 0.3, f0: 2600, f1: 620, q: 1.2 };
     const u = O('sawtooth', f * U.m), ul = F('lowpass', U.f0, U.q), ug = G(0);
     env(ul.frequency, when, [[0, U.f0, 0], [0.12, U.f1, 2]], 0);
-    env(ug.gain, when, [[0, 0, 0], [0.004, U.v * v, 1], [0.1, 0.4 * U.v * v, 2], [0.4, 1e-4, 2]], 0);
+    env(ug.gain, when, [[0, 0, 0], [U.a ?? 0.004, (U.pk ?? 1) * U.v * v, 1], [0.12, 0.42 * U.v * v, 2], [0.42, 1e-4, 2]], 0);
     wire(u, ul, ug, T.music);
     go(T, [o, u], [g, ul, ug], when, when + 0.53, when);
   }
   function kick(T, when, v) {
-    const K = globalThis.__KICK ?? { kf: 230, kf1: 150, kv: 0.2, kd: 0.05, cf: 2200, cq: 0.9, cv: 0.25, cd: 0.014 };
+    const K = globalThis.__KICK ?? { bf: 180, kf: 250, kf1: 160, kv: 0.32, kd: 0.09, cf: 2200, cq: 0.9, cv: 0.38, cd: 0.025 };
     const o = O('sine', 130), g = G(0), s = N(), bp = F('bandpass', K.cf, K.cq), cg = G(0), k = O('sine', K.kf), kg = G(0);
     env(o.frequency, when, [[0, K.bf || 140, 0], [0.05, 58, 2], [0.36, 42, 2]], 0);
-    env(g.gain, when, [[0, 0, 0], [0.002, 0.48 * v, 1], [0.09, 0.33 * v, 1], [0.42, 1e-4, 2]], 0);
+    env(g.gain, when, [[0, 0, 0], [0.002, (K.bv ?? 0.48) * v, 1], [0.09, 0.33 * v, 1], [0.42, 1e-4, 2]], 0);
     env(k.frequency, when, [[0, K.kf, 0], [0.04, K.kf1, 2]], 0);
-    env(kg.gain, when, [[0, 0, 0], [0.002, K.kv * v, 1], [K.kd, 1e-4, 2]], 0);
+    env(kg.gain, when, [[0, 0, 0], [K.ka ?? 0.002, K.kv * v, 1], [K.kd, 1e-4, 2]], 0);
     env(cg.gain, when, [[0, 0, 0], [0.0008, K.cv * v, 1], [K.cd, 1e-4, 2]], 0);
     let sh = null, sg = null;
     if (K.dr) { sh = ac.createWaveShaper(); sh.curve = kit.drive; sg = G(K.dr); wire(o, sg, sh, g, T.music); } else wire(o, g, T.music);
