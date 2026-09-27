@@ -233,20 +233,23 @@ function fitPts(S, F, pts, o) {
   for (const q of pts) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
   k = Math.min(S.W * o.w / (x1 - x0), S.H * o.h / (y1 - y0));
   if (o.kMax) k = Math.min(k, o.kMax);
+  // measured on screen after the shot's roll, so a tilted frame still fits
+  const cr = Math.cos(o.roll || 0), sr = Math.sin(o.roll || 0);
   for (let it = 0; it < 8; it++) {
     const cz = zp - F / k;
     let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
     for (const q of pts) {
       const kk = F / (q[2] - cz);
       const px = (q[0] - x) * kk, py = (q[1] - y) * kk;
-      a0 = Math.min(a0, px); a1 = Math.max(a1, px); b0 = Math.min(b0, py); b1 = Math.max(b1, py);
+      const rx = px * cr - py * sr, ry = px * sr + py * cr;
+      a0 = Math.min(a0, rx); a1 = Math.max(a1, rx); b0 = Math.min(b0, ry); b1 = Math.max(b1, ry);
     }
     let sc = Math.min(S.W * o.w / (a1 - a0), S.H * o.h / (b1 - b0));
     if (o.kMax) sc = Math.min(sc, o.kMax / k);
     // recentre: put the projected box's centre at (fx, fy) of the frame
     const ex = (a0 + a1) / 2 - ((o.fx ?? 0.5) - 0.5) * S.W / sc;
     const ey = (b0 + b1) / 2 - ((o.fy ?? 0.5) - 0.5) * S.H / sc;
-    x += ex / k; y += ey / k;
+    x += (ex * cr + ey * sr) / k; y += (-ex * sr + ey * cr) / k;
     k *= sc;
   }
   return { x, y, k, zp, roll: o.roll || 0 };
@@ -285,9 +288,7 @@ function buildPlan(ctx, S) {
     : fitPts(S, F, allPts, { w: 0.86, h: 0.72, fy: 0.48, zp: L.res.z, roll: 0.012 });
   const sV2 = { ...drift(sV, T.eq - T.rule), k: sV.k * 0.972 };
   // after the sum lands: a slow push on it, keeping all of = ONE STUDIO in frame
-  const I = L.I, rb = L.resBox, rc = [(rb[0] + rb[2]) / 2, (rb[1] + rb[3]) / 2];
-  const kV = F / (L.res.z - sV2.zp + F / sV2.k);
-  const rOff = [(rc[0] - sV2.x) * kV, (rc[1] - sV2.y) * kV];
+  const I = L.I;
   const sF1 = S.portrait
     ? fitPts(S, F, allPts, { w: 0.86, h: 0.74, fy: 0.47, zp: L.res.z, roll: 0.02 })
     : fitPts(S, F, allPts, { w: 0.88, h: 0.73, fy: 0.485, zp: L.res.z, roll: 0.02 });
