@@ -13,8 +13,14 @@
 
    Beats (local, BEAT = 0.46875): 0.09 out of the O · 0.94 CLAUDE ·
    1.88 CLAUDE DESIGN (bar) · 2.81 CAPCUT · 3.28 HIGGSFIELD · 3.75 ELEVENLABS
-   (bar) · 4.69 the bar is ruled · 5.16 = · 5.63 ONE STUDIO (bar) · 6.56 the
-   drive into the I accelerates · 7.34 ink is the frame. */
+   (bar) · 4.69 the bar is ruled · 5.16 = · 5.63 ONE STUDIO (bar) · 6.33 the
+   drive into the I · 7.34 ink is the frame.
+
+   Landscape keeps the ledger at one size and lets the camera single out each
+   row; on a phone the column is justified — every line set to its full width
+   — and framed whole, so the ledger typesets itself down the page. Either
+   way each row sits a step nearer the lens than the last, so the column fans
+   out in perspective as it grows. */
 import { text as kitText, layout, seg, clamp, lerp, inCubic, outCubic, outBack, bezier, whip, siteE, rrect, cover } from '../../kit.js';
 import { camera, list, mix } from '../../space.js';
 import { BLOCK, BEAT } from '../palette.js';
@@ -68,7 +74,7 @@ function type3(D, S, str, o) {
     ctx.scale(s * (o.sx ?? 1), s * (o.sy ?? 1));
     kitText(ctx, S, str, 0, 0, {
       size: REF, weight: o.weight ?? 900, tracking: o.tracking ?? -0.02, align: o.align ?? 'left',
-      color: o.color ?? INK, reveal: o.reveal, window: o.window, rise: o.rise
+      color: o.color ?? INK, reveal: o.reveal, window: o.window, rise: o.rise, glyph: o.glyph
     });
   }, { x: o.x, y: o.y, alpha: o.alpha ?? 1, rotZ: o.rot || 0 });
 }
@@ -197,18 +203,6 @@ function buildLayout(ctx, portrait) {
 // ── the camera: shots, and the moves between them ─────────────────────────
 /* A shot is { x, y, k, zp, roll }: the camera looks at (x, y) with k pixels
    per world unit on the plane z = zp, so it stands at z = zp - F/k. */
-function fit(S, bb, o) {
-  const bw = bb[2] - bb[0], bh = bb[3] - bb[1];
-  let k = Math.min(S.W * o.w / bw, S.H * o.h / bh);
-  if (o.kMax) k = Math.min(k, o.kMax);
-  return {
-    x: (bb[0] + bb[2]) / 2 - ((o.fx ?? 0.5) - 0.5) * S.W / k,
-    y: (bb[1] + bb[3]) / 2 - ((o.fy ?? 0.5) - 0.5) * S.H / k,
-    k, zp: o.zp ?? 0, roll: o.roll || 0
-  };
-}
-const union = (a, b) => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])];
-
 /** from shot A to shot B at eased e, measured on B's plane: a zoom about the
     one point both shots put in the same place on screen, so nothing slides
     against the zoom. `bank` swings the roll through the move, like a whip-pan. */
@@ -268,7 +262,6 @@ function buildPlan(ctx, S) {
   const rowPts = L.rows.map(R => boxPts(R.box, R.z));
   const resPts = boxPts(L.resBox, L.res.z);
   const sO = { x: L.O.x, y: L.O.y, k: 1.3 * half / L.O.r, zp: L.O.z, roll: -0.55 };
-  const fyRow = 0.6;
   const sT = fitPts(S, F, headPts, { w: 0.8, h: 0.34, fy: 0.44, zp: L.head.z, roll: -0.02 });
   // on a phone the whole column is framed from the first row, so the ledger
   // typesets itself down the page; each landing still rolls and creeps the camera
@@ -277,7 +270,7 @@ function buildPlan(ctx, S) {
     ? fitPts(S, F, colPts, { w: 0.8, h: 0.8, fy: 0.47 + 0.006 * i, zp: R.z, roll: ROLLS[i] * 0.8 })
     : i === 0
       ? fitPts(S, F, [...headPts, ...rowPts[0]], { w: 0.84, h: 0.6, fy: 0.5, kMax, zp: R.z, roll: ROLLS[0] })
-      : fitPts(S, F, rowPts[i], { w: 0.86, h: 0.4, fy: fyRow, kMax, zp: R.z, roll: ROLLS[i] }));
+      : fitPts(S, F, rowPts[i], { w: 0.86, h: 0.4, fy: 0.6, kMax, zp: R.z, roll: ROLLS[i] }));
   if (S.portrait) sR.forEach((sh, i) => { sh.k *= 1 + 0.015 * i; });
   const sV = fitPts(S, F, [...rowPts.flat(), ...resPts], { w: 0.84, h: 0.76, fy: 0.47, zp: L.res.z, roll: 0.012 });
   const sV2 = { ...drift(sV, T.eq - T.rule), k: sV.k * 0.972 };
@@ -495,8 +488,10 @@ const scene = {
       const p = seg(lt, T.sum - APP * 1.3, T.sum), m = 1 + 3 * (1 - inCubic(p));
       const z = Z - P.Dsum * (1 - 1 / m);
       const q = ring(lt, T.sum, 13, 38);
+      // ONE in klein — the reel's first colour, its first word — STUDIO in ink
+      const one = (i, g) => (i < 3 ? { color: KLEIN } : null);
       for (const ln of L.res.lines) {
-        type3(D, S, ln.str, { x: ln.x + ln.w / 2, y: ln.y, z, cap: ln.cap, align: 'center', sx: 1 + 0.08 * q, sy: 1 - 0.16 * q });
+        type3(D, S, ln.str, { x: ln.x + ln.w / 2, y: ln.y, z, cap: ln.cap, align: 'center', sx: 1 + 0.08 * q, sy: 1 - 0.16 * q, glyph: ln.str.startsWith('ONE') ? one : null });
       }
     }
     D.draw(ctx, S, cam, { maxPx: 90 });

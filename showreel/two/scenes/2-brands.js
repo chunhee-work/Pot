@@ -30,7 +30,7 @@ const TAU = Math.PI * 2, HALF_PI = Math.PI / 2;
 const css = c => `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`;
 const mixc = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
 const SIDE = mixc(OR, INK, 0.58);      // the flanks of ink letters: burnt orange
-const SHADOW = mixc(OR, INK, 0.24);    // cast shadows on the ground plane
+const SHADOW = mixc(OR, INK, 0.2);    // cast shadows on the ground plane
 const fogged = (c, f) => css(f > 0 ? mixc(c, OR, f) : c);
 
 // ── the camera: position, yaw (turn right +), pitch (look up +), roll ──────
@@ -237,13 +237,13 @@ function geometry(ctx, S) {
 
   // bar 1 — the wall. A-local space: the camera looks down +z, the wall is
   // the plane x = -WX, the letters stand on the ground (y = 0) reading into +z.
-  const capA = P ? 3.4 : 4.6;
+  const capA = P ? 4 : 4.6;
   const linesA = P ? ['OWNERSHIP', 'COIN'] : ['OWNERSHIPCOIN'];
   G.A = {
-    WX: P ? 6 : 8, cap: capA, T: capA * 0.16, z0: 4,
-    yaw: P ? -0.55 : -0.4,
+    WX: P ? 7 : 8, cap: capA, T: capA * 0.16, z0: 4,
+    yaw: P ? -0.34 : -0.4,
     lines: linesA.map((str, i, a) => ({ L: lay(str), s: capA / CAP, y: -(a.length - 1 - i) * capA * 1.22 })),
-    eye: P ? -capA * 1.1 : -capA * 0.43
+    eye: P ? -capA * 1.11 : -capA * 0.43
   };
   G.A.top = -(linesA.length - 1) * capA * 1.22 - capA;
 
@@ -253,7 +253,7 @@ function geometry(ctx, S) {
   // sit on the frame, and its size from the share of the width it should fill.
   const camB = P ? { y: -11, z: 1.5, pitch: -0.56 } : { y: -9, z: 1.5, pitch: -0.42 };
   const rowsB = P
-    ? [['THE', 0.37, 0.4], ['CHILL', 0.52, 0.64], ['GALLERY', 0.69, 0.88]]
+    ? [['THE', 0.36, 0.4], ['CHILL', 0.52, 0.62], ['GALLERY', 0.69, 0.8]]
     : [['THE', 0.305, 0.22], ['CHILL', 0.5, 0.44], ['GALLERY', 0.74, 0.74]];
   const h = -camB.y, sp = Math.sin(camB.pitch), cp = Math.cos(camB.pitch);
   G.B = {
@@ -281,7 +281,7 @@ function geometry(ctx, S) {
   const Dd = 16, lookUp = 0.26;
   const dLines = P ? ['ARK.', 'TG'] : ['ARK.TG'];
   const L0 = lay(dLines[0]);
-  const sD = (P ? 0.76 : 0.78) * wide * Dd / L0.width, capD = sD * CAP, lead = capD * 1.14;
+  const sD = (P ? 0.74 : 0.78) * wide * Dd / L0.width, capD = sD * CAP, lead = capD * 1.14;
   const yCam = G.C.top - 6;             // where the rise leaves the camera, over the top floor
   G.D = {
     yCam, lookUp, pivot: [0, yCam - Math.tan(lookUp) * Dd, SZ + Dd], dist: Dd, s: sD, cap: capD, T: capD * 0.3,
@@ -358,10 +358,10 @@ function pose(lt, G) {
   // bar 4: a slow push, then the drive into the dot
   const dot = dotWorld(G);
   const push = clamp((lt - T_D) / (T_DRIVE - T_D));
-  const d0 = D.dist * 0.8, dPush = lerp(D.dist, d0, outQuad(push));
+  const d0 = D.dist * 0.86, dPush = lerp(D.dist, d0, outQuad(push));
   const q = seg(lt, T_DRIVE, T_INK);
   const dist = q > 0 ? Math.exp(lerp(Math.log(d0), Math.log(0.04), inCubic(q))) : dPush;
-  const aim = 0.25 * outQuad(push) + 0.75 * outCubic(q);
+  const aim = 0.1 * outQuad(push) + 0.9 * outCubic(q);
   return {
     x: lerp(0, dot[0], aim), y: lerp(D.yCam, dot[1], aim), z: dot[2] - dist,
     yaw: 0, pitch: lerp(D.lookUp, 0, clamp(push * 1.2 + q)), roll: 0.06 * inQuad(q)

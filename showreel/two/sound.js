@@ -678,7 +678,10 @@ export function createSound({ duration, chapters }) {
     },
     tick(t) {
       lastT = t;
-      if (!on || !playing || !ac) return;
+      if (!on || !ac) return;
+      // the player only ticks while it plays and is not waiting on a chapter; a
+      // seek that ended a wait did not say play again, so the tick does
+      if (!playing) { playing = true; begin(t); return; }
       if (ac.state !== 'running') { resume(); return; }
       if (!T) { begin(t); return; }
       run();

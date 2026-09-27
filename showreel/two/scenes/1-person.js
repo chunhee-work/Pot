@@ -35,7 +35,7 @@ const STEM = { a0: 7.4, a1: 29.5, h: 68.8 };     // the I at 100px: a plain rect
 const B = BEAT;
 
 // key instants
-const T_ONE = 0.09, T_PER = 2 * B, T_DOT = 3 * B, T_BAR2 = BAR, T_FLAT = 5 * B, T_THREAD = 3.08;
+const T_ONE = 0.09, T_PER = 2 * B, T_DOT = 3 * B, T_BAR2 = BAR, T_FLAT = 5 * B, T_THREAD = 7 * B;
 const T_BAR3 = 2 * BAR, T_BAR4 = 3 * BAR, T_ORANGE = 13 * B, T_DRIVE = 14 * B, T_FILL = 7.38;
 const HITS = [T_BAR3, 9 * B, 10 * B, 10.5 * B, 11 * B, 11.5 * B];
 const DEPTS = ['BRAND', 'ANIMATION', 'VOICES', 'FILMS', 'CODE', 'TOOLS'];
@@ -204,7 +204,7 @@ function clipNear(pts, n) {
 /* project a glyph's contours: curves stay curves while the glyph is shallow in
    depth; deep or lens-grazing glyphs are flattened, clipped at the near plane,
    then projected point by point */
-function outline(ctx, K, it) {
+function outline(ctx, K, it, key) {
   const { G, Oc, Uc, Vc } = it, xy = G.xy;
   const at = (u, v, o) => project(K, Oc[0] + Uc[0] * u + Vc[0] * v, Oc[1] + Uc[1] * u + Vc[1] * v, Oc[2] + Uc[2] * u + Vc[2] * v, o);
   ctx.beginPath();
@@ -243,6 +243,12 @@ function outline(ctx, K, it) {
     }
     flush();
   }
+  if (key > 0.6) {
+    const fs = ctx.fillStyle;
+    ctx.strokeStyle = BG; ctx.lineWidth = key; ctx.lineJoin = 'round';
+    ctx.stroke();
+    ctx.fillStyle = fs;
+  }
   ctx.fill();
 }
 
@@ -259,7 +265,12 @@ function drawQueue(ctx, K, Q) {
       ctx.beginPath();
       it.scr.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
       ctx.closePath(); ctx.fill();
-    } else outline(ctx, K, it);
+    } else {
+      /* a Klein keyline knocks each letter out of whatever stands behind it, so
+         overlapping words stay legible (it vanishes against the open frame) */
+      const capPx = g.sc * REFPX * CAP * K.F / Math.max(it.d, 0.2);
+      outline(ctx, K, it, Math.min(capPx * 0.07, 0.03 * K.H));
+    }
   }
   ctx.restore();
 }
@@ -282,10 +293,20 @@ function rowTex() {
   c.width = Math.ceil(w); c.height = Math.ceil(size * 0.95);
   x.font = font; x.fillStyle = INK; x.textBaseline = 'alphabetic';
   chars.forEach((ch, i) => x.fillText(ch, xs[i], Math.round(size * 0.82)));
-  ROWTEX = { c, w: c.width, h: c.height, capPx: size * CAP };
+  // filtered half-size copies, so the far end of the run does not sparkle
+  const mips = [c];
+  for (let l = 1; l < 5; l++) {
+    const p = mips[l - 1], m = document.createElement('canvas');
+    m.width = Math.max(1, Math.ceil(p.width / 2)); m.height = Math.max(1, Math.ceil(p.height / 2));
+    const mx = m.getContext('2d');
+    mx.imageSmoothingEnabled = true; mx.imageSmoothingQuality = 'high';
+    mx.drawImage(p, 0, 0, p.width, p.height, 0, 0, p.width / 2, p.height / 2);
+    mips.push(m);
+  }
+  ROWTEX = { c, mips, w: c.width, h: c.height, capPx: size * CAP };
   return ROWTEX;
 }
-function drawRow(ctx, K, row, alpha) {
+function drawRow(ctx, K, row, alpha, front) {
   const T = rowTex();
   if (!T || alpha <= 0) return;
   const s = row.cap / T.capPx;
@@ -318,10 +339,15 @@ function drawRow(ctx, K, row, alpha) {
           if (q[0] < x0) x0 = q[0]; if (q[0] > x1) x1 = q[0]; if (q[1] < y0) y0 = q[1]; if (q[1] > y1) y1 = q[1];
         }
         if (!(x1 < 0 || x0 > K.W || y1 < 0 || y0 > K.H) && affineAt(K, _p, Uc, Vc, uc, vm, _m) > 0) {
-          ctx.setTransform(_m[0], _m[1], _m[2], _m[3], _m[4], _m[5]);
-          ctx.globalAlpha = alpha * (1 - fogAt(_p[2], FOG.near, FOG.far));
+          // pick the copy whose texels are about a pixel across here
+          const sq = Math.min(Math.hypot(_m[0], _m[1]), Math.hypot(_m[2], _m[3]));
+          const l = Math.max(0, Math.min(4, Math.floor(-Math.log2(Math.max(sq, 1e-3)))));
+          const f = 1 << l;
+          ctx.setTransform(_m[0] * f, _m[1] * f, _m[2] * f, _m[3] * f, _m[4], _m[5]);
+          const zw = row.O[2] + row.U[2] * uc * s;
+          ctx.globalAlpha = alpha * (1 - fogAt(_p[2], FOG.near, FOG.far)) * clamp((front - zw) / 8);
           const sa = a - k * T.w, sw = Math.min(T.w - sa, b - a + 0.6);
-          ctx.drawImage(T.c, sa, 0, sw, T.h, a, 0, sw, T.h);
+          ctx.drawImage(T.mips[l], sa / f, 0, sw / f, T.h / f, a / f, 0, sw / f, T.h / f);
         }
       }
       a = b;
@@ -370,7 +396,7 @@ function world(S, ctx) {
     const t = (FLOOR - c.y) / dy;
     const w = w100(str);
     const capPx = Math.min(capU * short * fit, wmax * S.W * REFPX * CAP / w);
-    return { str, z: c.z + t * dz, cap: capPx * t / F, depth: t, w: capPx * t / F * w / (REFPX * CAP) };
+    return { str, sy, capPx, z: c.z + t * dz, cap: capPx * t / F, depth: t, w: capPx * t / F * w / (REFPX * CAP) };
   };
   const W = { key, P, F, FLOOR };
 
@@ -404,7 +430,7 @@ function world(S, ctx) {
   const holdF = { y: FLOOR - (P ? 5.2 : 4.6), z: zF, pitch: P ? 0.33 : 0.15 };
   W.holdF = holdF;
   if (P) W.fin = [place(holdF, 'A', 0.415, 0.14, 0.9), place(holdF, 'WHOLE', 0.515, 0.14, 0.9), place(holdF, 'STUDIO.', 0.615, 0.14, 0.9)];
-  else W.fin = [place(holdF, 'A WHOLE', 0.47, 0.205, 0.86), place(holdF, 'STUDIO.', 0.72, 0.215, 0.8)];
+  else W.fin = [place(holdF, 'A WHOLE', 0.462, 0.205, 0.86), place(holdF, 'STUDIO.', 0.728, 0.215, 0.8)];
   // the I in STUDIO. — its stem's centre is where the camera ends up
   {
     const st = W.fin[W.fin.length - 1];
@@ -428,7 +454,7 @@ function world(S, ctx) {
   }
 
   const gx = W.gapX;
-  W.cx = curve([[0, 0], [T_BAR2, 0, 0], [T_FLAT, gx * 0.1], [2.72, gx * 0.55], [T_THREAD, gx, 0], [3.45, gx * 0.15], [T_BAR3, 0, 0], [T_BAR4, 0, 0]]);
+  W.cx = curve([[0, 0], [T_BAR2, 0, 0], [T_FLAT, gx * 0.1], [2.72, gx * 0.55], [T_THREAD, gx, 0], [3.55, gx * 0.2], [T_BAR3, 0, 0], [T_BAR4, 0, 0]]);
   W.cy = curve([
     [0, 0, -0.06], [T_BAR2, -0.12, -2, -0.06],
     [T_FLAT, crane.y], [2.72, FLOOR - (P ? 1.35 : 1.3)], [T_THREAD, FLOOR - (P ? 1.7 : 1.6), 0],
@@ -436,13 +462,16 @@ function world(S, ctx) {
   ]);
   W.cz = curve([
     [0, -1.5, 0.8], [T_BAR2, 0, 9, 0.8],
-    [T_FLAT, crane.z], [2.72, ly1 + (P ? 1.4 : 1.8)], [T_THREAD, zO, 46],
+    [T_FLAT, crane.z], [2.72, ly1 + (P ? 1.4 : 1.8)], [T_THREAD, zO, 52],
     [T_BAR3, zH0, v0], [HITS[5], zH5, v1],
     [T_BAR4, zF - 2.2, 9], [T_DRIVE, zF + 0.9, 1.2]
   ]);
   W.pos = t => [W.cx(t), W.cy(t), W.cz(t)];
+  // ONE alone is framed dead centre; on beat 2 the camera tilts down to make room for PERSON.
+  const oneMid = (W.one.sy - W.one.capPx / 2 / S.H - 0.5) * S.H / F;
+  const p1 = hold.pitch + Math.atan(oneMid);
   W.pOpen = curve([
-    [0, hold.pitch], [T_BAR2, hold.pitch + 0.015, 0.4, 0], [T_FLAT + 0.04, crane.pitch, 0], [2.72, P ? 0.2 : 0.15], [T_THREAD, -0.05], [3.3, 0, 0]
+    [0, p1, 0], [T_PER - 0.05, p1, 0], [T_PER + 0.32, hold.pitch, 0.02], [T_BAR2, hold.pitch + 0.015, 0.4, 0.02], [T_FLAT + 0.04, crane.pitch, 0], [2.72, P ? 0.2 : 0.15], [T_THREAD, -0.05], [3.45, 0, 0]
   ]);
 
   // the departments: each set square to the lens at its hit
@@ -490,13 +519,13 @@ function world(S, ctx) {
 // ── the camera ─────────────────────────────────────────────────────────────
 function lookAt(W, t) {
   const pd = W.depts;
-  if (t < 3.2) return [0, W.pOpen(t)];
+  if (t < 3.3) return [0, W.pOpen(t)];
   if (t < HITS[5] + 0.03) {
     // hold on a department, then whip to the next just as it lands
     let i = 0;
     while (i < pd.length - 1 && t > pd[i].th + 0.03) i++;
     const a = i === 0 ? { yaw: 0, pitch: 0 } : pd[i - 1], b = pd[i];
-    const k = i === 0 ? inOutCubic(seg(t, 3.2, b.th - 0.02)) : whip(seg(t, b.th - Math.min(0.2, (b.th - a.th) * 0.75), b.th - 0.01));
+    const k = i === 0 ? inOutCubic(seg(t, 3.3, b.th - 0.02)) : whip(seg(t, b.th - Math.min(0.2, (b.th - a.th) * 0.75), b.th - 0.01));
     return [lerp(a.yaw, b.yaw, k), lerp(a.pitch, b.pitch, k)];
   }
   const a = pd[pd.length - 1], k = whip(seg(t, a.th + 0.06, T_BAR4 - 0.01));
@@ -507,10 +536,10 @@ function camAt(S, W, t) {
   let [x, y, z] = W.pos(t);
   let [yaw, pitch] = lookAt(W, t);
   // beat kicks in bar 1: the camera leans in on each hit
-  if (t < T_BAR2) z += 0.2 * outExpo(seg(t, B, B + 0.3)) + 0.35 * outExpo(seg(t, T_PER, T_PER + 0.3)) + 0.25 * outExpo(seg(t, T_DOT, T_DOT + 0.3));
+  z += 0.2 * outExpo(seg(t, B, B + 0.3)) + 0.35 * outExpo(seg(t, T_PER, T_PER + 0.3)) + 0.25 * outExpo(seg(t, T_DOT, T_DOT + 0.3));
   let roll = 0.018 * Math.sin(t * 1.9)
-    + 0.06 * Math.sin((t - T_BAR2) * 4.2) * seg(t, T_BAR2, 2.2) * (1 - seg(t, 2.8, 3.3))
-    - 0.05 * inOutCubic(seg(t, 3.1, 3.6)) * (1 - seg(t, 5.2, 5.6));
+    + 0.06 * Math.sin((t - T_BAR2) * 4.2) * seg(t, T_BAR2, 2.2) * (1 - seg(t, 2.9, 3.4))
+    - 0.05 * inOutCubic(seg(t, 3.3, 3.7)) * (1 - seg(t, 5.2, 5.6));
   // corridor: bank into each whip
   if (t > 3.5 && t < T_BAR4) {
     for (let i = 1; i < W.depts.length; i++) {
@@ -542,8 +571,8 @@ const slam = u => 300 * Math.exp(-38 * u) - 3.2 * Math.sin(Math.PI * Math.min(u 
 
 function build(ctx, W, K, t, Q) {
   // ONE: slams toward the lens out of the depth, overshoots, settles; later its letters part
-  if (t >= T_ONE && t < 3.5) {
-    const u = t - T_ONE, part = 1.9 * outCubic(seg(t, 2.5, 3.0)), one = W.one;
+  if (t >= T_ONE && t < 3.7) {
+    const u = t - T_ONE, part = 2.2 * outCubic(seg(t, 2.55, 3.2)), one = W.one;
     const ghosts = u < 0.14 ? 3 : 0;
     for (let k = ghosts; k >= 0; k--) {
       const uu = u - k * 0.012;
@@ -621,10 +650,9 @@ const scene = {
   sfx: [
     { at: 0.12, type: 'impact' },
     { at: T_PER, type: 'impact' },
-    { at: T_DOT, type: 'tick' },
     { at: T_FLAT, type: 'sub' },
     { at: T_THREAD, type: 'whoosh' },
-    { at: HITS[3], type: 'whoosh' },
+    { at: 4.4, type: 'whoosh' },
     { at: T_BAR4, type: 'impact' },
     { at: T_ORANGE, type: 'tick' },
     { at: 7.45, type: 'riser' }
@@ -638,9 +666,9 @@ const scene = {
     const K = makeCam(S, camAt(S, W, t));
 
     // the floor of type (under everything)
-    if (t > 2.45 && t < 5.9) {
-      const a = seg(t, 2.45, 2.75);
-      for (const row of W.floorRows) drawRow(ctx, K, row, a);
+    if (t > 2.8 && t < 5.9) {
+      const front = W.floorZ[0] + 165 * (t - 2.8);
+      for (const row of W.floorRows) drawRow(ctx, K, row, 1, front);
     }
     const Q = [];
     build(ctx, W, K, t, Q);

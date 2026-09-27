@@ -7,7 +7,8 @@
    stacks the letters into tall vertical masks). Inside a bar a cut lands on
    every beat: CUT cuts between the films, EDIT re-edits a four-clip timeline
    (one clip a letter, laid out over a runtime-true strip with a playhead),
-   GRADE regrades one product spot. On the bar line the camera dives through
+   GRADE regrades one product spot through the reel's own colour blocks (the
+   chips under it are the grades' stills). On the bar line the camera dives through
    a letter — the stem of the T, the I, the full stop — bursts out into the
    film behind it, and the next sheet is cut in on the downbeat. The last
    spread paints the O of ONE teal on its second beat, and the camera flies
@@ -20,8 +21,8 @@
    1.41–1.78  dive into the stem of the T; through the sheet at 1.78
    1.875      EDIT. — four clips, one a letter; re-edits on 2.34 / 2.81 / 3.28
    3.28–3.65  dive into the I
-   3.75       GRADE. — L'Occitane: natural; ink 4.22; signal 4.69; teal 5.16
-   5.16–5.53  dive into the full stop
+   3.75       GRADE. — L'Occitane in klein; signal 4.22; pink 4.69; teal 5.16
+   5.16–5.53  dive into the full stop, out into the teal-graded label
    5.625      STORY, VISUALS, EDIT, VO AND MUSIC: / ONE / PERSON. — the films
               through ONE PERSON.
    6.09       the O of ONE is painted teal
@@ -186,6 +187,7 @@ let GEO = null;
 function geo(ctx, S) {
   const key = S.W + 'x' + S.H + (document.fonts ? document.fonts.status : '');
   if (GEO && GEO.key === key) return GEO;
+  INKM.clear();
   const P = S.portrait;
   // the design frame (at a distance of 110) is 177.8 × 100 sheet units, or 100 × 216.7 on a phone;
   // a frame that cannot hold it gets a shorter lens, never a different layout
@@ -276,7 +278,9 @@ function spreadsP(ctx) {
 function camAt(bar, t, sp) {
   const last = bar === 3;
   const tA = last ? T_FLY : T_DIVE, dH = last ? D_FLY : D1;
-  const h = clamp(t / tA);
+  // the hold pushes in by steps, a surge on every beat's cut
+  const nb = Math.round(tA / BEAT), kb = Math.min(nb, Math.floor(t / BEAT + 1e-9));
+  const h = kb >= nb ? 1 : (kb + outQuart(clamp((t - kb * BEAT) / 0.3))) / nb;
   let d = lerp(D0, dH, h);
   if (bar === 0) d += (D_FAR - D0) * (1 - outQuart(seg(t, IN, BEAT + 0.03)));
   else d += (D_ARR - D0) * (1 - outQuart(clamp(t / T_ARR)));

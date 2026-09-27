@@ -232,7 +232,7 @@ function geo(S, ctx) {
     const LL = layout(ctx, 'LIVE', { size: 100, weight: 800, tracking: 0.14 });
     const uw = UL.width / 72 * us, lw = LL.width / 72 * us, dot = us * 0.8;
     const pillW = dot + us * 0.9 + lw + us * 1.4 + uw + us * 2.4;
-    g.pill = { y: g.pack.y + ph / 2, h: us * 2.5, w: pillW, size: us, dot, lw, uw, n: UL.chars.length };
+    g.pill = { y: g.pack.y + ph / 2, h: us * 2.5, w: pillW, size: us, dot, lw, uw, UL };
     // the fan: three a side, behind the pack
     const spread = P ? 1 : Math.min(1, hx / 89);
     const fw = P ? pw * 0.62 : 27;
@@ -518,7 +518,7 @@ function prototyped(L, S, g, lt) {
 }
 
 // ── bar 4: SHIPPED ────────────────────────────────────────────────────────
-function shipped(L, S, g, lt, dive) {
+function shipped(L, S, g, lt) {
   const P = g.P, pk = g.pack;
   // the fan: the screens burst out from behind the pack like pulled cards
   g.fan.forEach((f, j) => {
@@ -534,26 +534,41 @@ function shipped(L, S, g, lt, dive) {
   const pq = seg(lt, T.oPass - 0.05, T.oPass + 0.5);
   if (pq > 0) {
     const e = outBack(pq, 1.3), fl = Math.sin((lt - T.oPass) * 2.4) * 0.5 * seg(lt, T.oPass + 0.4, T.oPass + 0.9);
-    addPanel(L, S, 'pack', P, { x: pk.x, y: pk.y + (1 - e) * 30 + fl, z: Z4 + (1 - outCubic(pq)) * 20, w: pk.w, alpha: seg(pq, 0, 0.2) });
+    const py = pk.y + (1 - e) * 30 + fl;
+    addPanel(L, S, 'pack', P, { x: pk.x, y: py, z: Z4 + (1 - outCubic(pq)) * 20, w: pk.w, alpha: seg(pq, 0, 0.2) });
+    // once it has landed, a paper glint crosses it
+    const gl = seg(lt, T.fan - 0.02, T.fan + 0.34, inOutCubic);
+    if (gl > 0 && gl < 1) L.custom(Z4 - 0.04, (ctx, p, f) => {
+      const k = p.k, w = pk.w * k, h = pk.h * k;
+      ctx.globalAlpha *= (1 - f) * 0.34;
+      rrect(ctx, -w / 2, -h / 2, w, h, w * 0.06); ctx.clip();
+      const x = lerp(-w * 1.1, w * 1.1, gl), b = w * 0.22;
+      ctx.fillStyle = PAPER;
+      ctx.beginPath(); ctx.moveTo(x - b, h / 2); ctx.lineTo(x, h / 2); ctx.lineTo(x + h * 0.45, -h / 2); ctx.lineTo(x + h * 0.45 - b, -h / 2); ctx.closePath(); ctx.fill();
+    }, { x: pk.x, y: py });
     // its address, on a paper pill across its foot: LIVE, and where
     const pl = g.pill, pa = outCubic(seg(lt, T.fan + 0.05, T.fan + 0.3));
     if (pa > 0) {
-      const y = pl.y + fl, us = pl.size, s = us / 72;
+      const y = pl.y + fl, us = pl.size;
+      const tr = seg(lt, T.fan + 0.14, T.fan + 0.44);
+      const x0 = -pl.w / 2 + us * 1.2 + pl.dot + us * 0.9, xu = x0 + pl.lw + us * 1.4;
+      // the pill's right end follows the last typed character
+      const n = pl.UL.chars.length, m = tr >= 1 ? n : Math.min(n, Math.floor(tr / 0.96 * (n - 1)) + (tr > 0 ? 1 : 0));
+      const wNow = (m >= n ? pl.w : xu + (pl.UL.xs[m] / 72) * us + us * 1.3 + pl.w / 2);
       L.custom(Z4 - 0.05, (ctx, p, f) => {
-        const k = p.k, w = pl.w * lerp(0.4, 1, pa) * k, h = pl.h * k;
+        // anchored at its left end, it grows as the address types
+        const k = p.k, left = -pl.w / 2 * k, w = wNow * k, h = pl.h * k * lerp(0.4, 1, pa);
         ctx.globalAlpha *= (1 - f) * Math.min(1, pa * 2);
-        ctx.fillStyle = PAPER; rrect(ctx, -w / 2, -h / 2, w, h, h / 2); ctx.fill();
+        ctx.fillStyle = PAPER; rrect(ctx, left, -h / 2, w, h, h / 2); ctx.fill();
         ctx.strokeStyle = INK; ctx.lineWidth = Math.max(1, 0.22 * k); ctx.stroke();
         // the live dot, beating
         const ph = ((lt - 3 * BAR) % B + B) % B, beat = ph < 0.3 ? Math.pow(1 - ph / 0.3, 2) : 0;
         ctx.fillStyle = INK;
-        ctx.beginPath(); ctx.arc((-w / k / 2 + us * 1.2 + pl.dot / 2) * k, 0, pl.dot / 2 * (1 + 0.25 * beat) * k, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(left + (us * 1.2 + pl.dot / 2) * k, 0, pl.dot / 2 * (1 + 0.25 * beat) * k, 0, TAU); ctx.fill();
       }, { x: 0, y });
-      const x0 = -pl.w / 2 + us * 1.2 + pl.dot + us * 0.9;
-      const tr = seg(lt, T.fan + 0.14, T.fan + 0.44);
       L.text('LIVE', { x: x0, y, z: Z4 - 0.06, size: us, weight: 800, tracking: 0.14, color: INK, align: 'left', baseline: 'middle', alpha: Math.min(1, pa * 2) });
       L.text(URL, {
-        x: x0 + pl.lw + us * 1.4, y: y + 0.08 * us, z: Z4 - 0.06, size: us, weight: 600, tracking: 0.1, color: INK,
+        x: xu, y: y + 0.08 * us, z: Z4 - 0.06, size: us, weight: 600, tracking: 0.1, color: INK,
         align: 'left', baseline: 'middle', reveal: tr, window: 0.04, ease: step, rise: 0
       });
     }
@@ -572,7 +587,7 @@ function shipped(L, S, g, lt, dive) {
       const s = w.c * p.k / 72;
       ctx.scale(s, s);
       ctx.font = `900 100px ${FONT.sans}`; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
-      ctx.fillStyle = f > 0 ? BUTTER : BUTTER;
+      ctx.fillStyle = BUTTER;
       if (paint < 1) { ctx.beginPath(); ctx.rect(ix - iw, 36 - 76 * outCubic(paint), iw * 3, 80); ctx.clip(); }
       ctx.fillText('I', ix, 36);
     }, { x: w.x, y: w.y });
@@ -606,7 +621,7 @@ const scene = {
   bg: BLOCK.teal,
   assets: [...KEYS.map(SHOT), PACK],
   models: ['gacha'],
-  still: 6.3,
+  still: 6.35,
   sfx: [
     { at: T.lock, type: 'sub' },          // GACHA locks
     { at: BAR, type: 'impact' },          // through the C: DESIGNED.
