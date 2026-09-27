@@ -3,8 +3,8 @@
    The thread's highlight runs in from the left, leaves the line and draws the
    first star-chart line up to a sheet — and the 23 hand-drawn storyboard
    sheets light one after another as a constellation: small paper plates in
-   depth, joined by hairlines, each with its sheet number and a tiny chart
-   coordinate. The camera drifts up into the chart; NO TOOL. lands on the
+   depth, joined by hairlines, each labelled with its place in the pack as
+   /process numbers it (SB 01 … SB 23). The camera drifts up into the chart; NO TOOL. lands on the
    downbeat; sheet 03 (Aurea) swings out of the stars to the front, sharp
    enough to read, and a graphite pencil marks it up — its lens and move
    ringed, an arrow to the cut it hands into. Then the camera surges through
@@ -20,7 +20,7 @@ import {
   inQuad, inCubic, outBack, smoothstep, text, layout, TAU
 } from '../../kit.js';
 import { camera, list } from '../../space.js';
-import { seam, space, wire, metal, chip, numeral, UI, MONO } from '../kit3.js';
+import { seam, space, wire, metal, chip, numeral, readPx, UI, MONO } from '../kit3.js';
 import { BEAT, BAR } from '../palette.js';
 
 // ── the sheets: /process's storyboard pack, in its order (SB 01 … SB 23) ─────
@@ -71,15 +71,10 @@ const IGN = new Array(NODES.length).fill(Infinity);
     }
   }
 }
-// a chart coordinate for each sheet, from where it sits (right ascension / declination)
-const COORD = NODES.map(([sx, sy, z, end]) => {
-  if (end) z += 27;
-  const ra = ((Math.atan2((sx - 0.5) * 1.6, 1) / TAU + 0.5) * 24 + z * 0.37) % 24;
-  const dec = -(sy - 0.5) * 76 + (z % 7) * 1.7;
-  const h = Math.floor(ra), m = Math.floor((ra - h) * 60);
-  const d = Math.round(dec);
-  return `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}m ${d >= 0 ? '+' : '−'}${String(Math.abs(d)).padStart(2, '0')}°`;
-});
+/* each sheet's label is its index in the pack, in /process's own order
+   (process.dc.html: "storyboard 1" … "storyboard 23", captioned
+   "Storyboard pack — ×23 sheets") — no invented chart coordinates */
+const SB = HASH.map((_, i) => String(i + 1).padStart(2, '0'));
 
 // ── time ─────────────────────────────────────────────────────────────────────
 const T = {
@@ -267,7 +262,7 @@ function plate3d(ctx, src, cx, cy, w, h, yaw, o = {}) {
 /** tracked monospace caps, one glyph at a time (canvas has no tracking for mono) */
 function tracked(ctx, str, x, y, size, o = {}) {
   ctx.save();
-  ctx.font = `${o.weight || 500} ${Math.round(size)}px ${MONO}`;
+  ctx.font = `${o.weight || 500} ${Math.ceil(size - 1e-3)}px ${MONO}`;   // rounded up: a floored size stays ≥ its floor
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
   ctx.globalAlpha *= o.alpha ?? 1;
   ctx.fillStyle = o.color || UI.muted;
@@ -280,9 +275,9 @@ function tracked(ctx, str, x, y, size, o = {}) {
   return adv * str.length;
 }
 
-/* the chart's graticule: faint arcs of declination and hour lines converging
-   on a pole below the frame, fixed to the sky (it moves with the stars, not
-   with the camera), with tiny tick labels on the frame's left and top edges. */
+/* the chart's graticule: faint dotted arcs and meridians converging on a pole
+   below the frame, fixed to the sky (it moves with the stars, not with the
+   camera). Unlabelled: they are chart lines, not a claim about the sky. */
 function graticule(ctx, S, ox, oy, zoom, a) {
   if (a <= 0.01) return;
   const { W, H, u } = S;
@@ -292,15 +287,10 @@ function graticule(ctx, S, ox, oy, zoom, a) {
   ctx.globalAlpha = a;
   ctx.strokeStyle = 'rgba(190,204,232,.5)'; ctx.lineWidth = Math.max(1, 0.08 * u);
   ctx.setLineDash([0.35 * u, 1.1 * u]);
-  const fs = Math.round((S.portrait ? 1.15 : 0.95) * u);
-  ctx.font = `500 ${fs}px ${MONO}`; ctx.fillStyle = 'rgba(166,164,155,.9)'; ctx.textBaseline = 'alphabetic';
   const span = Math.asin(Math.min(1, (W * 0.75) / (R0 + 2 * step)));
   for (let k = -2; k <= 2; k++) {
     const r = R0 - k * step;
     ctx.beginPath(); ctx.arc(px, py, r, -Math.PI / 2 - span, -Math.PI / 2 + span); ctx.stroke();
-    // where it meets the left edge
-    const dx = 0.035 * W - px, yy = py - Math.sqrt(Math.max(0, r * r - dx * dx));
-    if (yy > 0.1 * H && yy < 0.9 * H) ctx.fillText(`+${String(20 - k * 10).padStart(2, '0')}°`, 0.035 * W + 0.5 * u, yy - 0.5 * u);
   }
   const hours = S.portrait ? [-1, 0, 1] : [-2, -1, 0, 1, 2];
   const dth = (S.portrait ? 0.34 : 0.3) * W / (R0 + 2 * step);
@@ -310,9 +300,23 @@ function graticule(ctx, S, ox, oy, zoom, a) {
     ctx.beginPath();
     ctx.moveTo(px + Math.cos(th) * r0, py + Math.sin(th) * r0); ctx.lineTo(px + Math.cos(th) * r1, py + Math.sin(th) * r1);
     ctx.stroke();
-    // where it meets the top edge
-    const ty = 0.1 * H, k2 = (ty - py) / Math.sin(th), tx = px + Math.cos(th) * k2;
-    if (tx > 0.08 * W && tx < 0.92 * W) ctx.fillText(`${String(4 + h).padStart(2, '0')}h`, tx + 0.5 * u, ty);
+  }
+  ctx.restore();
+}
+
+/* upright frames: the chart fades into deep space at the frame's top and
+   bottom edges, so full-bleed paper never reads as a crop on a tall screen
+   (a soft band: opaque over the outer ~3 %, gone by 11 %) */
+function edgeFade(ctx, S, a) {
+  if (a <= 0) return;
+  const { W, H } = S, b = 0.11 * H;
+  ctx.save();
+  ctx.globalAlpha = a;
+  for (const [y0, y1] of [[0, b], [H, H - b]]) {
+    const g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, 'rgba(5,6,10,1)'); g.addColorStop(0.3, 'rgba(5,6,10,.95)');
+    g.addColorStop(0.58, 'rgba(5,6,10,.55)'); g.addColorStop(0.82, 'rgba(5,6,10,.16)'); g.addColorStop(1, 'rgba(5,6,10,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, Math.min(y0, y1), W, b);
   }
   ctx.restore();
 }
@@ -346,11 +350,87 @@ function ticks(ctx, S, x0, y0, x1, y1, len, a) {
 function heroRect(S) {
   const { W, H, u } = S;
   if (!S.portrait) {
-    const w = Math.min(0.585 * W, 1.36 * H);
-    return { cx: W * 0.935 - w / 2, cy: H * 0.465, w, h: w * 0.565 };
+    /* on a short frame (a phone held sideways) the sheet is held to ≤ 0.7 H
+       and dropped so its index, set above the top-left tick, stays in the
+       text-safe box (cap top ≥ 8 % down, with the held push-in) */
+    const w = Math.min(0.585 * W, 1.24 * H), h = w * 0.565;
+    return { cx: W * 0.935 - w / 2, cy: Math.max(H * 0.465, H * 0.15 + h / 2), w, h };
   }
-  const w = 0.9 * W;
+  /* upright: 0.85 W, so with the held push-in (w × 1.035, drifting 0.006 W
+     left) its left edge — and the index set on it — stays ≥ 5.4 % in */
+  const w = 0.85 * W;
   return { cx: W / 2, cy: H * 0.4 - 2 * u, w, h: w * 0.565 };
+}
+
+/* the stage block (bottom left): label, title, chip and the outlined numeral */
+function stageLay(ctx, S) {
+  const { W, H, u } = S;
+  const x0 = S.portrait ? 0.08 * W : 0.075 * W;
+  const labSize = readPx(S, S.portrait ? 1.9 : 1.6), cs = Math.ceil(readPx(S, S.portrait ? 1.7 : 1.35));   // kit text rounds: go up
+  // the title keeps its lead over the floored label and chip on a short frame
+  const titleSize = Math.max((S.portrait ? 9.2 : 7.4) * u, 3.1 * labSize);
+  // title baseline: the chip under it ends by 0.85 H, however tall the floored chip is
+  const yT = Math.min(S.portrait ? H * 0.77 : H * 0.8, 0.85 * H - titleSize * 0.42 - 2.6 * cs);
+  const numSize = (S.portrait ? 20 : 24) * u;
+  const tW = layout(ctx, 'Storyboard', { size: titleSize, weight: 800, tracking: -0.03 }).width;
+  const nW = layout(ctx, '03', { size: numSize, weight: 900 }).width;
+  const numX = S.portrait ? W * 0.93 : x0 + tW + 2.4 * u + nW;
+  return { x0, labSize, cs, titleSize, yT, numSize, tW, nW, numX };
+}
+
+/* the corner index (bottom left, from the hit): upright it lines up with the
+   line under the hero, clear of it; its second line ends by 0.85 H */
+function cornerLay(S) {
+  const { W, H, u } = S;
+  const Rh = heroRect(S);
+  const hs = readPx(S, S.portrait ? 1.35 : 1.4), hx = S.portrait ? Rh.cx - Rh.w / 2 : 0.075 * W;
+  const floorY = 0.85 * H - 2.5 * hs;
+  const hy = Math.min(floorY, S.portrait ? clamp(Rh.cy + Rh.h / 2 + 11.5 * u + 2 * 1.22 * 5.2 * u + 9 * u, 0.8 * H, 0.84 * H) : 0.8 * H);
+  return { hx, hy, hs };
+}
+
+/* the line beside (landscape) or under (upright) the hero */
+function capLay(S) {
+  const { W, u } = S;
+  const R = heroRect(S);
+  let size, x, y;
+  if (!S.portrait) {
+    size = Math.min(3.8 * u, (R.cx - R.w / 2 - 0.1 * W) / 10.5);
+    x = 0.075 * W; y = R.cy - R.h / 2 + size * 3.2;
+  } else {
+    size = 5.2 * u; x = R.cx - R.w / 2; y = R.cy + R.h / 2 + 11.5 * u;
+  }
+  return { size, x, y, lh: size * 1.22 };
+}
+const CAP = ['Composition, pacing', 'and shot language', 'get decided here.'];
+
+/* NO TOOL.: one line on a wide frame, two upright */
+function noLay(ctx, S) {
+  const { W, H } = S;
+  if (!S.portrait) {
+    const ref = layout(ctx, 'NO TOOL.', { size: 100, weight: 900, tracking: -0.035 });
+    const size = Math.min(0.66 * W / (ref.width / 100), 0.36 * H);
+    const w = ref.width / 100 * size;
+    return { size, box: [W / 2 - w / 2, H / 2 + size * (0.36 - 0.74), W / 2 + w / 2, H / 2 + size * 0.36] };
+  }
+  const ref = layout(ctx, 'TOOL.', { size: 100, weight: 900, tracking: -0.035 });
+  const size = Math.min(0.84 * W / (ref.width / 100), 0.2 * H);
+  const w = ref.width / 100 * size;
+  return { size, box: [W / 2 - w / 2, H / 2 - size * (0.12 + 0.74), W / 2 + w / 2, H / 2 + size * 0.84] };
+}
+
+/* the gap between two boxes [x0, y0, x1, y1] (negative when they overlap) */
+function gap(a, b) { return Math.max(b[0] - a[2], a[0] - b[2], b[1] - a[3], a[1] - b[3]); }
+/* the screen box of a local rect under translate(x, y) · rotate(th) · [cx 0; sy 1] */
+function boxOf(x, y, th, x0, y0, x1, y1, cx = 1, sy = 0) {
+  const c = Math.cos(th), s = Math.sin(th);
+  let X0 = Infinity, Y0 = Infinity, X1 = -Infinity, Y1 = -Infinity;
+  for (const [px, py] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]]) {
+    const qx = cx * px, qy = sy * px + py;
+    const X = x + qx * c - qy * s, Y = y + qx * s + qy * c;
+    if (X < X0) X0 = X; if (X > X1) X1 = X; if (Y < Y0) Y0 = Y; if (Y > Y1) Y1 = Y;
+  }
+  return [X0, Y0, X1, Y1];
 }
 
 // ── the chapter ──────────────────────────────────────────────────────────────
@@ -484,27 +564,96 @@ export default {
       }
     }
 
+    // ── what the HUD holds up this frame (the chart's labels keep clear of it) ─
+    const stageIn = seg(lt, T.stage, T.stage + 0.5, outCubic);
+    const stageA = stageIn * (1 - seg(lt, T.stageOut, T.hit, inQuad));
+    const numA = stageA * seg(lt, T.stage + 0.15, T.stage + 0.8, outCubic);
+    const hudA = seg(lt, T.hit, T.hit + 0.4) * (1 - seg(lt, 5.9, 6.3));
+    const noIn = seg(lt, T.hit - 0.02, T.hit + 0.02);
+    const noA = lt < T.noOut + 0.3 ? noIn * (1 - seg(lt, T.noOut, T.noOut + 0.3)) : 0;
+    const cap0 = S.portrait ? T.capP : T.cap;
+    const capA = seg(lt, cap0, cap0 + 0.4) * (1 - seg(lt, T.capOut, T.capOut + 0.22, inQuad));
+    const SL = stageA > 0 ? stageLay(ctx, S) : null;
+    const CL = hudA > 0 ? cornerLay(S) : null;
+    const KL = capA > 0 ? capLay(S) : null;
+    const NL = noIn > 0 && lt < T.noOut + 0.3 ? noLay(ctx, S) : null;
+    const blk = [];                                    // [x0, y0, x1, y1, weight]
+    if (SL) {
+      blk.push([SL.x0 - 0.5 * u, SL.yT - SL.titleSize * 1.3 - SL.labSize, SL.x0 + Math.max(SL.tW, 11.6 * SL.labSize), SL.yT + SL.titleSize * 0.42 + 2.6 * SL.cs, stageA]);
+      blk.push([SL.numX - SL.nW, SL.yT - 0.76 * SL.numSize, SL.numX, SL.yT + 0.02 * SL.numSize, numA]);
+    }
+    if (CL) blk.push([CL.hx, CL.hy - CL.hs, CL.hx + 19.6 * CL.hs, CL.hy + 2.7 * CL.hs, hudA]);
+    if (NL) {                                          // as drawn: scaled about the centre, 1.1 → 1 on the hit
+      // with a margin: the hit owns the middle of the frame, and its glyphs rise from below the sill
+      const k = lerp(1.1, 1, outExpo(seg(lt, T.hit, T.hit + 0.5))), m = 0.15 * NL.size;
+      const [x0, y0, x1, y1] = [NL.box[0] - m, NL.box[1] - m, NL.box[2] + m, NL.box[3] + m];
+      blk.push([W / 2 + (x0 - W / 2) * k, H / 2 + (y0 - H / 2) * k, W / 2 + (x1 - W / 2) * k, H / 2 + (y1 - H / 2) * k, noA]);
+    }
+    if (KL) {
+      const cw = Math.max(...CAP.map(s => layout(ctx, s, { size: KL.size, weight: 600, tracking: -0.012 }).width));
+      blk.push([KL.x, KL.y - 0.8 * KL.size, KL.x + cw, KL.y + 2 * KL.lh + 0.6 * KL.size, capA]);
+    }
+
     // ── the sheets: paper plates, depth-sorted ──────────────────────────────
     const D = list();
     const glow = glowSprite();
-    const labelSize = (S.portrait ? 1.25 : 1.0) * u;
+    // sheet labels are read: never under 10 CSS px, and only inside the text-safe box
+    const labelSize = Math.ceil(readPx(S, S.portrait ? 1.25 : 1.3));   // up, never down past the floor
+    ctx.save();
+    ctx.font = `600 ${labelSize}px ${MONO}`;
+    const lblW = ctx.measureText('SB 00').width + labelSize * 0.35;   // two-weight run, measured once
+    ctx.restore();
+    // one index at a time: the chart's labels go while SB 03 is held up front
+    const labHero = 1 - seg(lt, T.heroIn, T.heroIn + 0.35) * (1 - seg(lt, T.heroOut, T.heroOut + 0.5));
+    const safeIn = b => clamp((b[0] - 0.05 * W) / (0.03 * W)) * clamp((0.95 * W - b[2]) / (0.03 * W))
+      * clamp((b[1] - 0.08 * H) / (0.03 * H)) * clamp((0.86 * H - b[3]) / (0.03 * H));
+    /* every lit sheet this frame: its look, its box on screen and its label's.
+       Then the labels are placed nearest first: one that runs into a nearer
+       label, a nearer sheet (which would cover it) or the HUD fades — softly,
+       over a little gap, so nothing pops — and a sheet only carries one once it
+       is clearly wider than its label. Deterministic: a function of this frame. */
+    const st = new Array(NODES.length).fill(null);
     for (let i = 0; i < NODES.length; i++) {
-      if (lt < IGN[i]) continue;
-      if (heroOn && i === HERO) continue;
-      const w = P[i];
+      if (lt < IGN[i] || (heroOn && i === HERO)) continue;
+      const p = proj[i];
+      if (!p || p.d < 0.6) continue;
       const ig = seg(lt, IGN[i], IGN[i] + 0.42);
+      const sc = lerp(0.3, 1, outBack(ig, 1.3));
+      const pw = SW * p.k * sc, ph = SH * p.k * sc * (1 - fold * 0.985);
+      if (pw > 4 * W) continue;
+      const fog = clamp((p.d - 14) / 55) * 0.7;
+      // a sheet rushing past the lens thins out before it can fill the frame
+      const a = clamp(ig * 3) * fadeOut * smoothstep(0.75, 2.4, p.d);
+      if (a <= 0) continue;
+      const yaw = (rng(i, 7) - 0.5) * 0.7 * (1 - fold), rz = (rng(i, 8) - 0.5) * 0.12 * (1 - fold);
+      const box = boxOf(p.x, p.y, C.roll + rz, -pw / 2, -ph / 2, pw / 2, ph / 2, Math.cos(yaw), Math.sin(yaw) * 0.22);
+      const lx = -pw / 2, ly = ph / 2 + labelSize * 1.45;
+      const lbox = boxOf(p.x, p.y, C.roll, lx, ly - labelSize * 0.8, lx + lblW, ly + labelSize * 0.1);
+      const la = a * labHero * clamp((pw - 1.4 * lblW) / (0.6 * lblW)) * (1 - fold) * clamp((ig - 0.3) * 2) * (1 - fog) * safeIn(lbox);
+      st[i] = { ig, pw, ph, fog, a, yaw, rz, box, lbox, lx, ly, la };
+    }
+    const order = st.map((s, i) => i).filter(i => st[i]).sort((i, j) => P[i][2] - P[j][2]);
+    const pad = 0.6 * labelSize;
+    const clear = (b, o, w) => 1 - clamp(w) * (1 - clamp(gap(b, o) / pad));
+    for (let n = 0; n < order.length; n++) {
+      const s = st[order[n]];
+      if (s.la <= 0.02) { s.la = 0; continue; }
+      let m = 1;
+      for (let k = 0; k < n && m > 0; k++) {
+        const o = st[order[k]];
+        m *= clear(s.lbox, o.box, o.a);                  // a nearer sheet would cover it
+        if (o.la > 0) m *= clear(s.lbox, o.lbox, o.la * 1.5);   // a nearer label has the place
+      }
+      for (const b of blk) if (m > 0 && b[4] > 0) m *= clear(s.lbox, b, 3 * b[4]);   // HUD type wins while it is more than faint
+      s.la *= m;
+    }
+    for (let i = 0; i < NODES.length; i++) {
+      const s = st[i];
+      if (!s) continue;
+      const w = P[i];
       const img = S.img(SHEETS[i]);
-      const yaw = (rng(i, 7) - 0.5) * 0.7, rz = (rng(i, 8) - 0.5) * 0.12;
-      D.custom(w[2], (c, p) => {
-        const d = p.d;
-        if (d < 0.6) return;
-        const sc = lerp(0.3, 1, outBack(ig, 1.3));
-        const pw = SW * p.k * sc, ph = SH * p.k * sc * (1 - fold * 0.985);
-        if (pw > 4 * W) return;
-        const fog = clamp((d - 14) / 55) * 0.7;
-        // a sheet rushing past the lens thins out before it can fill the frame
-        const a = clamp(ig * 3) * fadeOut * smoothstep(0.75, 2.4, d);
-        if (a <= 0) return;
+      const { ig, pw, ph, fog, a, yaw, rz, lx, ly, la } = s;
+      D.custom(w[2], c => {
         /* glow: every sheet is a warm star — a tight bloom, so neighbours
            lighting together stay points of light, never a haze between them */
         const gr = Math.max(pw * 0.7, 2.5 * u) * (1 + 0.5 * (1 - ig));
@@ -523,8 +672,8 @@ export default {
         }
         c.save();
         c.globalAlpha = a;
-        c.rotate(rz * (1 - fold));
-        c.transform(Math.cos(yaw * (1 - fold)), Math.sin(yaw * (1 - fold)) * 0.22, 0, 1, 0, 0);
+        c.rotate(rz);
+        c.transform(Math.cos(yaw), Math.sin(yaw) * 0.22, 0, 1, 0, 0);
         if (pw < 2.5 || ph < 0.8) {
           c.fillStyle = '#f3efe6'; c.fillRect(-Math.max(1, pw) / 2, -Math.max(0.6, ph) / 2, Math.max(1, pw), Math.max(0.6, ph));
         } else {
@@ -535,24 +684,25 @@ export default {
           if (fog > 0) { c.globalAlpha = a * fog; c.fillStyle = UI.space; c.fillRect(-pw / 2 - 1, -ph / 2 - 1, pw + 2, ph + 2); }
         }
         c.restore();
-        // the chart label: sheet number and coordinate
-        const la = a * clamp((pw - 34) / 40) * (1 - fold) * clamp((ig - 0.3) * 2) * (1 - fog);
+        // the chart label: the sheet's index in the pack (placed above)
         if (la > 0.02) {
           c.save();
           c.globalAlpha = la;
-          c.font = `600 ${Math.round(labelSize)}px ${MONO}`;
-          c.fillStyle = UI.ink; c.textBaseline = 'alphabetic';
-          const lx = -pw / 2, ly = ph / 2 + labelSize * 1.55;
-          const num = String(i + 1).padStart(2, '0');
-          c.fillText(num, lx, ly);
-          c.font = `400 ${Math.round(labelSize)}px ${MONO}`;
-          c.fillStyle = UI.faint;
-          c.fillText(COORD[i], lx + labelSize * 2.2, ly);
+          c.textBaseline = 'alphabetic';
+          c.font = `400 ${labelSize}px ${MONO}`;
+          c.fillStyle = UI.muted;
+          c.fillText('SB', lx, ly);
+          const nx = lx + c.measureText('SB ').width + labelSize * 0.2;
+          c.font = `600 ${labelSize}px ${MONO}`;
+          c.fillStyle = UI.ink;
+          c.fillText(SB[i], nx, ly);
           c.restore();
         }
       }, { x: w[0], y: w[1] });
     }
     D.draw(ctx, S, cam);
+    // upright: the chart melts into space at the top and bottom edges (none at the seams)
+    if (S.portrait) edgeFade(ctx, S, seg(lt, 0.5, 1.3, inOutQuad) * (1 - seg(lt, 6.0, 6.9, inOutQuad)));
 
     /* the close: with the chart lying in the thread, one highlight runs off
        along it to the right — on to the next station — mirroring the one
@@ -572,15 +722,10 @@ export default {
     }
 
     // ── HUD: the stage ──────────────────────────────────────────────────────
-    const stageIn = seg(lt, T.stage, T.stage + 0.5, outCubic);
-    const stageA = stageIn * (1 - seg(lt, T.stageOut, T.hit, inQuad));
-    if (stageA > 0) {
-      const x0 = S.portrait ? 0.08 * W : 0.075 * W;
-      const titleSize = (S.portrait ? 9.2 : 7.4) * u;
-      const yT = S.portrait ? H * 0.77 : H * 0.8;          // title baseline
+    if (SL) {
+      const { x0, labSize, cs, titleSize, yT, numSize, numX } = SL;
       scrim(ctx, x0 + 22 * u, yT - 6 * u, S.portrait ? 0.7 * W : 0.42 * W, S.portrait ? 0.16 * H : 0.3 * H, stageA);
-      const lab = 'STAGE 03 OF 06';
-      tracked(ctx, lab, x0, yT - titleSize * 1.3, (S.portrait ? 1.9 : 1.6) * u, {
+      tracked(ctx, 'STAGE 03 OF 06', x0, yT - titleSize * 1.3, labSize, {
         alpha: stageA, color: '#c9c7bf', reveal: seg(lt, T.stage, T.stage + 0.35), caret: true, weight: 600
       });
       const tr = seg(lt, T.stage + 0.1, T.stage + 0.7);
@@ -589,15 +734,9 @@ export default {
         size: titleSize, weight: 800, tracking: -0.03, color: UI.ink, alpha: stageIn, reveal: tr, mask: true, window: 0.5,
         glyph: i => ({ dy: inCubic(seg(lt, T.stageOut - 0.02 + i * 0.009, T.stageOut + 0.1 + i * 0.009)) * titleSize * 1.05 })
       });
-      const numSize = (S.portrait ? 20 : 24) * u;
-      const L = layout(ctx, 'Storyboard', { size: titleSize, weight: 800, tracking: -0.03 });
-      const nW = layout(ctx, '03', { size: numSize, weight: 900 }).width;
-      numeral(ctx, S, '03', S.portrait ? W * 0.93 : x0 + L.width + 2.4 * u + nW, yT, numSize, {
-        alpha: stageA * seg(lt, T.stage + 0.15, T.stage + 0.8, outCubic), metal: true, phase: 0.3 + lt * 0.12
-      });
+      numeral(ctx, S, '03', numX, yT, numSize, { alpha: numA, metal: true, phase: 0.3 + lt * 0.12 });
       const ca = seg(lt, T.chip, T.chip + 0.14) * (1 - seg(lt, T.stageOut, T.hit, inQuad));
       if (ca > 0) {
-        const cs = (S.portrait ? 1.7 : 1.35) * u;
         const pop = outBack(seg(lt, T.chip, T.chip + 0.3), 2);
         ctx.save();
         const cx = x0, cy = yT + titleSize * 0.42;
@@ -612,8 +751,7 @@ export default {
     if (dimA > 0) { ctx.save(); ctx.globalAlpha = dimA; ctx.fillStyle = UI.space; ctx.fillRect(0, 0, W, H); ctx.restore(); }
 
     // ── NO TOOL. ────────────────────────────────────────────────────────────
-    const noIn = seg(lt, T.hit - 0.02, T.hit + 0.02);
-    if (noIn > 0 && lt < T.noOut + 0.3) {
+    if (NL) {
       // the chart dims behind the hit (handing over to the hero's dim as the words go)
       const dim = 0.5 * noIn * (1 - seg(lt, T.noOut, T.noOut + 0.3));
       ctx.save(); ctx.globalAlpha = dim; ctx.fillStyle = UI.space; ctx.fillRect(0, 0, W, H); ctx.restore();
@@ -622,20 +760,15 @@ export default {
       ctx.translate(W / 2, H / 2); ctx.scale(k, k); ctx.translate(-W / 2, -H / 2);
       /* out: the glyphs sink below their sill one by one from the right, as
          the sheet swings in from that side and pushes them down */
-      const x0 = T.noOut;
+      const x0 = T.noOut, sizeNo = NL.size;
       const sink = (n, off) => (i, p) => {
         const j = off + (n - 1 - i);
         const q = inCubic(seg(lt, x0 + j * 0.014, x0 + j * 0.014 + 0.13));
         return { dy: q * sizeNo * 1.35 };           // well past the mask's sill, which sits below the baseline
       };
-      let sizeNo;
       if (!S.portrait) {
-        const ref = layout(ctx, 'NO TOOL.', { size: 100, weight: 900, tracking: -0.035 });
-        sizeNo = Math.min(0.66 * W / (ref.width / 100), 0.36 * H);
         text(ctx, S, 'NO TOOL.', W / 2, H / 2 + sizeNo * 0.36, { size: sizeNo, weight: 900, tracking: -0.035, align: 'center', color: UI.ink, reveal: seg(lt, T.hit, T.hit + 0.12), mask: true, window: 0.6, glyph: sink(8, 0) });
       } else {
-        const ref = layout(ctx, 'TOOL.', { size: 100, weight: 900, tracking: -0.035 });
-        sizeNo = Math.min(0.84 * W / (ref.width / 100), 0.2 * H);
         text(ctx, S, 'NO', W / 2, H / 2 - sizeNo * 0.12, { size: sizeNo, weight: 900, tracking: -0.035, align: 'center', color: UI.ink, reveal: seg(lt, T.hit, T.hit + 0.12), mask: true, window: 0.6, glyph: sink(2, 2) });
         text(ctx, S, 'TOOL.', W / 2, H / 2 + sizeNo * 0.84, { size: sizeNo, weight: 900, tracking: -0.035, align: 'center', color: UI.ink, reveal: seg(lt, T.hit + 0.03, T.hit + 0.15), mask: true, window: 0.6, glyph: sink(5, 0) });
       }
@@ -697,28 +830,18 @@ export default {
         if (la > 0) {
           const g = 1.4 * u;
           ticks(ctx, S, corners.tl[0] - g, corners.tl[1] - g, corners.br[0] + g, corners.br[1] + g, 1.6 * u, la);
-          const ms = (S.portrait ? 1.35 : 1.1) * u;
-          tracked(ctx, 'SB 03 / 23', corners.tl[0], corners.tl[1] - g - 1.2 * ms, ms, { alpha: la, color: UI.ink, weight: 600, reveal: seg(lt, T.heroLand, T.heroLand + 0.3) });
-          tracked(ctx, COORD[HERO], corners.tr[0], corners.tr[1] - g - 1.2 * ms, ms, { alpha: la * 0.8, color: UI.faint, align: 'right', tracking: 0.12 });
+          // its index in the pack, just above the top-left tick (the sheet itself carries the rest),
+          // never left of the text-safe box
+          const ms = readPx(S, S.portrait ? 1.35 : 1.4);
+          tracked(ctx, `SB ${SB[HERO]} / ${SB.length}`, Math.max(corners.tl[0], 0.05 * W + 0.5 * u), corners.tl[1] - g - 0.75 * ms, ms, { alpha: la, color: UI.ink, weight: 600, reveal: seg(lt, T.heroLand, T.heroLand + 0.3) });
         }
       }
     }
 
     // ── the line ────────────────────────────────────────────────────────────
-    const cap0 = S.portrait ? T.capP : T.cap;
-    const capIn = seg(lt, cap0, cap0 + 0.4);
-    const capA = capIn * (1 - seg(lt, T.capOut, T.capOut + 0.22, inQuad));
-    if (capA > 0) {
+    if (KL) {
       const R = heroRect(S);
-      const lines = ['Composition, pacing', 'and shot language', 'get decided here.'];
-      let size, x, y;
-      if (!S.portrait) {
-        size = Math.min(3.8 * u, (R.cx - R.w / 2 - 0.1 * W) / 10.5);
-        x = 0.075 * W; y = R.cy - R.h / 2 + size * 3.2;
-      } else {
-        size = 5.2 * u; x = R.cx - R.w / 2; y = R.cy + R.h / 2 + 11.5 * u;
-      }
-      const lh = size * 1.22;
+      const { size, x, y, lh } = KL;
       if (!S.portrait) scrim(ctx, x + 12 * size * 0.5, y + lh, 0.26 * W, 0.24 * H, capA);
       else {
         // upright, the line sits in the chart under the sheet: a pool of dark
@@ -728,14 +851,14 @@ export default {
         scrim(ctx, x + 0.42 * W, y + lh - 0.25 * size, 0.66 * W, 0.12 * H, capA);
         ctx.restore();
       }
-      lines.forEach((s, i) => {
+      CAP.forEach((s, i) => {
         text(ctx, S, s, x, y + i * lh, {
           size, weight: 600, tracking: -0.012, color: i === 2 ? UI.ink : '#d9d7cf', alpha: capA,
           reveal: seg(lt, cap0 + i * 0.06, cap0 + 0.32 + i * 0.06), mask: true, window: 0.55
         });
       });
       // a graphite rule under it, drawn on
-      const rw = layout(ctx, lines[2], { size, weight: 600, tracking: -0.012 }).width;
+      const rw = layout(ctx, CAP[2], { size, weight: 600, tracking: -0.012 }).width;
       const rp = seg(lt, cap0 + 0.5, cap0 + 0.95, inOutQuad);
       if (rp > 0) {
         ctx.save(); ctx.globalAlpha = capA * 0.9;
@@ -752,18 +875,14 @@ export default {
     }
 
     // the corner index, once the stage has been called
-    const hudA = seg(lt, T.hit, T.hit + 0.4) * (1 - seg(lt, 5.9, 6.3));
-    if (hudA > 0) {
-      const hs = (S.portrait ? 1.35 : 1.1) * u, hx = S.portrait ? 0.05 * W : 0.075 * W;
-      // upright: keep clear of the line under the hero (it ends ~ R.h/2 + 11.5u + 3 lines of 5.2u below the hero's centre)
-      const Rh = heroRect(S);
-      const hy = S.portrait ? clamp(Rh.cy + Rh.h / 2 + 11.5 * u + 2 * 1.22 * 5.2 * u + 9 * u, 0.8 * H, 0.84 * H) : 0.8 * H;
+    if (CL) {
+      const { hx, hy, hs } = CL;
       tracked(ctx, 'STAGE 03 OF 06', hx, hy, hs, { alpha: hudA, color: UI.muted, weight: 600 });
       ctx.save(); ctx.globalAlpha = hudA;
       ctx.fillStyle = metal(ctx, hx, 0, hx + 18 * hs, 0, 0.2 + lt * 0.1, 12 * hs);
-      ctx.fillRect(hx, hy + hs * 0.9, 17.5 * hs * seg(lt, T.hit, T.hit + 0.5, outCubic), Math.max(1, 0.1 * u));
+      ctx.fillRect(hx, hy + hs * 0.8, 15.5 * hs * seg(lt, T.hit, T.hit + 0.5, outCubic), Math.max(1, 0.1 * u));
       ctx.restore();
-      tracked(ctx, 'STORYBOARD PACK — ×23 SHEETS', hx, hy + hs * 2.6, hs * 0.9, { alpha: hudA * 0.8, color: UI.faint, reveal: seg(lt, T.hit + 0.1, T.hit + 0.6), tracking: 0.16 });
+      tracked(ctx, 'STORYBOARD PACK — ×23 SHEETS', hx, hy + hs * 2.5, hs, { alpha: hudA * 0.85, color: '#8a887f', reveal: seg(lt, T.hit + 0.1, T.hit + 0.6), tracking: 0.1 });
     }
 
     // ── the lens ────────────────────────────────────────────────────────────

@@ -19,13 +19,19 @@
    bar 3  hold; the waypoints fold back into the wire far → near, the counter
           rolls back to nothing, and the plan lies down flat on the seam.
 
+   Type meant to be read (the index, the chip, the readout, the HUD labels,
+   the near waypoints) is never set under 10 CSS px (readPx): where the frame
+   is small the station's stack makes room for it, and the readout shows
+   fewer fields rather than smaller ones. Upright, the plan fades into space
+   over the frame's last few percent, so the frame's edge stays the seam's.
+
    A frame is a pure function of S.lt; the only caches are the node and
-   glow sprites and the layout for a frame size. */
+   glow sprites, the edge band and the layout for a frame size. */
 import {
   clamp, lerp, seg, outCubic, outQuart, inOutCubic, inCubic, inQuad, outBack, bezier, rrect, text
 } from '../../kit.js';
 import { camera } from '../../space.js';
-import { seam, space, metal, chip, numeral, stamp, UI, MONO } from '../kit3.js';
+import { seam, space, metal, chip, numeral, stamp, readPx, UI, MONO } from '../kit3.js';
 import { BEAT } from '../palette.js';
 
 const B = BEAT;
@@ -65,16 +71,25 @@ const SETUPS = [
 ].map(([a, b], i) => ({ lab: 'S' + (i + 1), tc: `${a}–${b}`, a: A1 + secs(a) * KA }));
 
 const DOC = [
-  { k: 'title', s: 'LAND OF HOPE — Shot by Shot', t: [1.36, 1.68] },
-  { k: 'sub', s: 'FULLY-LINKED STORYBOARD, ~2:10 FLAGSHIP MASTER', t: [1.68, 1.9] },
-  { k: 'rule', t: [1.9, 2.04] },
-  { k: 'act', s: 'ACT I — AUREA · GOLDEN HOME (0:00–0:13)', t: [2.04, 2.38] },
-  { k: 'h', s: 'S1 — AUREA AT PEACE (0:00–0:05, ≈5s, 1 shot)', t: [2.38, 2.72] },
-  { k: 't', tag: 'VIS', s: 'Wide cinematic dawn establishing shot of a peaceful golden utopian homeworld waking under a soft golden-amber sky — vast crystalline-and-warm-stone tiered architecture, slender golden spires, hanging garden balconies, narrow waterfall channels, two pale distant moons. First warm sun crests horizon casting long warm-gold light shafts.', t: [2.72, 3.26] },
-  { k: 't', tag: 'CAM', s: 'Slow push-in.', t: [3.26, 3.36] },
-  { k: 't', tag: 'LGT', s: 'Warm directional sunrise key from horizon, soft drifting golden pollen, gentle volumetric haze.', t: [3.36, 3.54] },
-  { k: 't', tag: 'AUD', s: 'Soft wind + distant chime; a single warm string note rises.', t: [3.54, 3.68] },
-  { k: 'lk', s: '→ LINK Slow dissolve → S2.', t: [3.68, 3.82] }
+  { id: 'title', k: 'title', s: 'LAND OF HOPE — Shot by Shot', t: [1.36, 1.68] },
+  { id: 'sub', k: 'sub', s: 'FULLY-LINKED STORYBOARD, ~2:10 FLAGSHIP MASTER', t: [1.68, 1.9] },
+  { id: 'rule', k: 'rule', t: [1.9, 2.04] },
+  { id: 'act', k: 'act', s: 'ACT I — AUREA · GOLDEN HOME (0:00–0:13)', t: [2.04, 2.38] },
+  { id: 'h', k: 'h', s: 'S1 — AUREA AT PEACE (0:00–0:05, ≈5s, 1 shot)', t: [2.38, 2.72] },
+  { id: 'VIS', k: 't', tag: 'VIS', s: 'Wide cinematic dawn establishing shot of a peaceful golden utopian homeworld waking under a soft golden-amber sky — vast crystalline-and-warm-stone tiered architecture, slender golden spires, hanging garden balconies, narrow waterfall channels, two pale distant moons. First warm sun crests horizon casting long warm-gold light shafts.', t: [2.72, 3.26] },
+  { id: 'CAM', k: 't', tag: 'CAM', s: 'Slow push-in.', t: [3.26, 3.36] },
+  { id: 'LGT', k: 't', tag: 'LGT', s: 'Warm directional sunrise key from horizon, soft drifting golden pollen, gentle volumetric haze.', t: [3.36, 3.54] },
+  { id: 'AUD', k: 't', tag: 'AUD', s: 'Soft wind + distant chime; a single warm string note rises.', t: [3.54, 3.68] },
+  { id: 'lk', k: 'lk', s: '→ LINK Slow dissolve → S2.', t: [3.68, 3.82] }
+];
+/* where the pane cannot hold the whole entry at a readable size it shows less of it, in this
+   order: the subtitle and its rule, then LGT and AUD, then VIS cut to its first lines (closed
+   with an ellipsis), then the act line; the head, the setup, CAM and the link always stay */
+const LEAN = ['sub', 'rule'], BARE = ['sub', 'rule', 'LGT', 'AUD'];
+const PLANS = [
+  { drop: [] }, { drop: LEAN }, { drop: BARE },
+  { drop: BARE, vis: 6 }, { drop: BARE, vis: 5 }, { drop: BARE, vis: 4 }, { drop: BARE, vis: 3 },
+  { drop: BARE, vis: 2 }, { drop: [...BARE, 'act'], vis: 2 }
 ];
 const LINE = 'The film exists on paper first.';
 
@@ -115,7 +130,7 @@ function proj(V, a, b, y) {
 // ── layout per frame size ─────────────────────────────────────────────────
 let G = null;
 function geo(S, ctx) {
-  const key = S.W + 'x' + S.H;
+  const key = S.W + 'x' + S.H + '@' + S.dpr;
   if (G && G.key === key) return G;
   const { W, H, u } = S, P = S.portrait;
   const tu = P ? Math.min(u * 1.75, H * 0.0095) : u;      // type unit: phones get larger type than 1/100 of their width
@@ -127,93 +142,131 @@ function geo(S, ctx) {
   g.th1 = Math.atan((g.vpx - 0.5) * wf);
   g.B0 = 60; g.b1 = P ? 4.5 : 9;                         // the camera's offset from the plan, at rest and in flight
   g.w0 = Math.max(1.5, 0.32 * u);                        // the seam wire's width
+  // type meant to be read: k type units, never under 10 CSS px
+  const rp = k => readPx(S, k * tu / u);
+  const idxS = readPx(S, 1.45), chipS = readPx(S, 1.4);   // the stage index and the chip, on the other stations' scale
+  const ms = rp(P ? 1.12 : 1.4);                          // the readout
+  g.hudS = rp(1.02);                                      // MISSION CLOCK, SETUPS
+  g.clockS = rp(1.32); g.slashS = rp(1.35);
+  g.clockOff = Math.max(1.8 * tu, 1.3 * g.clockS);        // the clock's label, this far above its digits
+  // the line keeps to one line: where the card is narrow it is set smaller
+  const room = P ? 0.83 * W : 0.38 * W;
+  ctx.save(); ctx.font = `700 100px 'Archivo', sans-serif`;
+  const at100 = (ctx.measureText(LINE).width - 0.012 * 100 * (LINE.length - 1)) / 100;   // as kit's layout measures it
+  ctx.restore();
+  // (and never less than twice the chip: where the chip is at its floor, the line keeps its lead over it)
+  const lineS = Math.min(Math.max((P ? 2.75 : 3.5) * tu, (P ? 1.8 : 2) * chipS), room / at100);
+  /* the station's stack: each piece sits where the frame's proportions put it, or lower where the
+     one above has grown to its readable size (a phone held sideways) */
+  const stack = (x0, f, titleS, gaps) => {
+    g.idx = { x: x0, y: f[0] * H, size: idxS };
+    g.title = { x: x0 - 0.05 * tu, y: Math.max(f[1] * H, g.idx.y + 0.3 * idxS + 0.74 * titleS + gaps[0] * tu), size: titleS };
+    g.chip = { x: x0, y: Math.max(f[2] * H, g.title.y + 0.24 * titleS + gaps[1] * tu), size: chipS };
+    g.line = { x: x0, y: Math.max(f[3] * H, g.chip.y + 2.6 * chipS + gaps[2] * tu + 0.74 * lineS), size: lineS };
+    return Math.max(f[4] * H, g.line.y + 0.26 * lineS + gaps[3] * tu);
+  };
   if (!P) {
     const x0 = 0.064 * W;
     g.x0 = x0;
     g.card = { x: -0.04 * W, y: 0.13 * H, w: 0.475 * W, h: 1.0 * H, r: 2.6 * u };
-    g.idx = { x: x0, y: 0.208 * H, size: 1.18 * tu };
     g.num = { x: 0.435 * W - 2.6 * u, y: 0.3 * H, size: 14 * tu };
-    g.title = { x: x0 - 0.05 * tu, y: 0.312 * H, size: 6.8 * tu };
-    g.chip = { x: x0, y: 0.343 * H, size: 1.12 * tu };
-    g.line = { x: x0, y: 0.458 * H, size: 3.5 * tu };
-    g.pane = { x: x0 - 1.7 * tu, y: 0.495 * H, w: 0.405 * W - (x0 - 1.7 * tu), h: 0.37 * H };
+    const py = stack(x0, [0.208, 0.312, 0.343, 0.458, 0.495], 6.8 * tu, [1.5, 0.9, 2.4, 2]);
+    g.pane = { x: x0 - 1.7 * tu, y: py, w: 0.405 * W - (x0 - 1.7 * tu), h: 0 };
     g.clock = { x: 0.936 * W, y: 0.14 * H };
     g.count = { x: 0.936 * W, y: 0.845 * H };
   } else {
     const x0 = 0.08 * W;
     g.x0 = x0;
-    g.card = { x: -0.05 * W, y: 0.122 * H, w: 1.0 * W, h: 0.466 * H, r: 2.6 * tu };
-    g.idx = { x: x0, y: 0.163 * H, size: 1.12 * tu };
-    g.num = { x: 0.9 * W, y: 0.212 * H, size: 9.6 * tu };
-    g.title = { x: x0 - 0.05 * tu, y: 0.236 * H, size: 5.5 * tu };
-    g.chip = { x: x0, y: 0.254 * H, size: 1.0 * tu };
-    g.line = { x: x0, y: 0.323 * H, size: 2.75 * tu };
-    g.pane = { x: x0 - 1.4 * tu, y: 0.352 * H, w: 0.9 * W - (x0 - 1.4 * tu), h: 0.21 * H };
-    g.clock = { x: 0.92 * W, y: 0.098 * H };
+    // the clock's label keeps inside the text-safe band (its cap at ≥ 8 % of the height), the card clear below it
+    g.clock = { x: 0.92 * W, y: Math.max(0.098 * H, 0.084 * H + g.clockOff + 0.76 * g.hudS) };
+    g.card = { x: -0.05 * W, y: Math.max(0.122 * H, g.clock.y + 0.9 * g.clockS), w: 1.0 * W, h: 0.466 * H, r: 2.6 * tu };
+    // where the clock pushed the card down (a short frame), its numeral comes with it
+    g.num = { x: 0.9 * W, y: g.card.y + 0.09 * H, size: 9.6 * tu };
+    const py = stack(x0, [0.163, 0.236, 0.254, 0.323, 0.352], 5.5 * tu, [1.2, 0.8, 2.2, 1.8]);
+    g.pane = { x: x0 - 1.4 * tu, y: py, w: 0.9 * W - (x0 - 1.4 * tu), h: 0 };
     g.count = { x: 0.92 * W, y: 0.85 * H };
+    // the plan fades into space over the frame's foot (alpha 1 at fade[0], 0 from fade[1])
+    g.fade = [0.895 * H, 0.972 * H];
   }
-  // the line keeps to one line: where the card is narrow it is set smaller
-  const room = P ? 0.83 * W : 0.36 * W;
-  ctx.save(); ctx.font = `700 100px 'Archivo', sans-serif`;
-  const at100 = (ctx.measureText(LINE).width - 0.012 * 100 * (LINE.length - 1)) / 100;   // as kit's layout measures it
-  ctx.restore();
-  g.line.size = Math.min(g.line.size, room / at100);
-  // the readout, wrapped to the pane
-  const pad = 1.55 * tu;
-  let lay = wrap(ctx, g, (P ? 1.12 : 1.22) * tu, pad);
+  // the readout, wrapped to the pane: the whole entry if it fits, else the leanest plan that does
+  const pad = Math.max(1.55 * tu, 1.1 * ms);
+  const vpMax = 0.72, clear = 0.045 * H, below = 3.2 * tu;
+  /* landscape: the last row's baseline stays in the text-safe band; upright: the card closes round
+     the pane and the plan vanishes just below it, so the pane stops where the flight begins */
+  const lim = P ? vpMax * H - clear - below - g.pane.y : 0.855 * H - g.pane.y + 0.6 * ms + pad;
+  let lay;
+  for (const plan of PLANS) { lay = wrap(ctx, g, S, ms, pad, plan); if (lay.need <= lim) break; }
+  g.pane.h = Math.min(lay.need, lim);
   if (P) {
-    /* upright, the pane is cut to its text so the hold shows the whole entry, the card closes round it
-       and the plan vanishes just below the card; where the frame is short the rows are set a touch
-       tighter (the type size rounds to the same px) so all of it still fits above the flight */
-    const vpMax = 0.72, clear = 0.045 * H, below = 3.2 * tu;
-    const avail = vpMax * H - clear - below - g.pane.y;
-    for (let k = 0; k < 6 && lay.need > avail; k++) lay = wrap(ctx, g, lay.ms * 0.97, pad);
-    g.pane.h = Math.min(lay.need, avail);
     g.card.h = g.pane.y + g.pane.h + below - g.card.y;
     g.vpy = clamp((g.card.y + g.card.h + clear) / H, 0.628, vpMax);
   }
-  const { ms, cw, rows, lh } = lay;
+  const { cw, rows, lh, small } = lay;
   const inner = g.pane.h - pad;
   for (const r of rows) r.scroll = Math.max(0, r.y + ms * 0.45 - inner);
-  Object.assign(g, { ms, pad, cw, rows, lh });
+  Object.assign(g, { ms, small, pad, cw, rows, lh });
   G = g;
   return g;
 }
 
-/** the readout's rows at monospace size ms, wrapped to the pane's width; need is the pane height that holds them all */
-function wrap(ctx, g, ms, pad) {
+/** the readout's rows at monospace size ms, wrapped to the pane's width, for one plan (which fields
+    it keeps, how many lines of VIS); the kept fields share the typing time the full entry had;
+    need is the pane height that holds them all */
+function wrap(ctx, g, S, ms, pad, plan) {
   ctx.save();
   ctx.font = `400 ${Math.round(ms)}px ${MONO}`;
   const cw = ctx.measureText('MMMMMMMMMM').width / 10;
   ctx.restore();
-  const cols = Math.max(20, Math.floor((g.pane.w - 2 * pad) / cw));
-  const lh = ms * 1.62, rows = [];
-  let y = pad + ms * 1.05;
+  const tw = g.pane.w - 2 * pad, cols = Math.max(20, Math.floor(tw / cw));
+  const small = Math.max(ms * 0.86, 10 * S.dpr);          // the subtitle and the field tags: smaller, never under 10 CSS px
+  const lh = ms * 1.55, rows = [];
+  // the kept fields, each broken into lines
+  const kept = [];
   for (const para of DOC) {
-    const [t0, t1] = para.t;
-    if (para.k === 'rule') { y += lh * 0.1; rows.push({ k: 'rule', y: y - ms * 0.35, t0, t1, n: 1 }); y += lh * 0.55; continue; }
-    if (para.k === 'act') y += lh * 0.2;
+    if (plan.drop.includes(para.id)) continue;
+    const dur = para.t[1] - para.t[0];
+    if (para.k === 'rule') { kept.push({ para, lines: null, dur }); continue; }
     const ind = para.tag ? 5 : 0;
+    const fit = para.k === 'sub' ? Math.max(20, Math.floor(tw / (cw * small / ms + 0.1 * small))) : cols;
     const words = para.s.split(' '), lines = [];
     let cur = '';
     for (const w of words) {
       const next = cur ? cur + ' ' + w : w;
-      if (next.length + ind > cols && cur) { lines.push(cur); cur = w; } else cur = next;
+      if (next.length + ind > fit && cur) { lines.push(cur); cur = w; } else cur = next;
     }
     if (cur) lines.push(cur);
+    let share = 1;
+    if (para.id === 'VIS' && plan.vis && lines.length > plan.vis) {
+      const all = lines.reduce((n, l) => n + l.length, 0);
+      lines.length = plan.vis;
+      let last = lines[plan.vis - 1];
+      while (last.length + 1 + ind > fit && last.includes(' ')) last = last.slice(0, last.lastIndexOf(' '));
+      lines[plan.vis - 1] = last.replace(/[\s,;:—–-]+$/, '') + '…';
+      share = lines.reduce((n, l) => n + l.length, 0) / all;
+    }
+    kept.push({ para, lines, ind, dur: dur * share });
+  }
+  const T0 = DOC[0].t[0], T1 = DOC[DOC.length - 1].t[1];
+  const tk = (T1 - T0) / kept.reduce((n, p) => n + p.dur, 0);
+  let y = pad + ms * 1.05, at = T0;
+  for (const { para, lines, ind, dur } of kept) {
+    const t0 = at, t1 = at + dur * tk;
+    at = t1;
+    if (para.k === 'rule') { y += lh * 0.1; rows.push({ k: 'rule', y: y - ms * 0.35, t0, t1, n: 1 }); y += lh * 0.55; continue; }
+    if (para.k === 'act') y += lh * 0.2;
     const total = lines.reduce((n, l) => n + l.length, 0);
     let acc = 0;
     lines.forEach((l, i) => {
       const a = t0 + (t1 - t0) * acc / total; acc += l.length;
       const b = t0 + (t1 - t0) * acc / total;
       const big = para.k === 'title';
-      rows.push({ k: para.k, s: l, tag: i === 0 ? para.tag : null, ind, y, t0: a, t1: b, n: l.length, size: big ? ms * 1.16 : para.k === 'sub' ? ms * 0.86 : ms });
+      rows.push({ k: para.k, s: l, tag: i === 0 ? para.tag : null, ind, y, t0: a, t1: b, n: l.length, size: big ? ms * 1.16 : para.k === 'sub' ? small : ms });
       y += big ? lh * 1.12 : lh;
     });
     if (para.k === 'title') y -= lh * 0.1;
     if (para.k === 'h') y += lh * 0.12;
   }
-  return { ms, cw, lh, rows, need: rows[rows.length - 1].y + ms * 0.6 + pad };
+  return { ms, cw, lh, small, rows, need: rows[rows.length - 1].y + ms * 0.6 + pad };
 }
 
 // ── the node sprite: a chrome rim round a dark well, a lit core ─────────────
@@ -250,6 +303,26 @@ function glow() {
   x.fillStyle = gr; x.fillRect(0, 0, n, n);
   GLOW = c;
   return c;
+}
+
+/** upright, the frame's foot: the plan is drawn again into this strip and faded out down it, so where the
+    thread comes toward the camera it dissolves into space before the frame's edge (one strip, for the frame size) */
+let BAND = null;
+function band(S, g) {
+  if (!g.fade) return null;
+  if (BAND && BAND.key === g.key) return BAND;
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas'), y0 = Math.floor(g.fade[0]);
+  c.width = S.W; c.height = Math.max(1, S.H - y0);
+  const x = c.getContext('2d'), k = (g.fade[1] - y0) / c.height;
+  const gr = x.createLinearGradient(0, 0, 0, c.height);
+  for (let i = 0; i <= 8; i++) {               // smoothstep, 1 → 0
+    const f = i / 8, a = 1 - f * f * (3 - 2 * f);
+    gr.addColorStop(clamp(f * k), `rgba(0,0,0,${a.toFixed(4)})`);
+  }
+  gr.addColorStop(1, 'rgba(0,0,0,0)');
+  BAND = { key: g.key, c, x, y0, mask: gr };
+  return BAND;
 }
 
 // ── drawing helpers ───────────────────────────────────────────────────────
@@ -363,11 +436,9 @@ function ribbon(ctx, S, g, V, phase, pulse, spark) {
 }
 
 // ── the waypoints ─────────────────────────────────────────────────────────
-function waypoints(ctx, S, g, V) {
-  const t = V.t, spr = sprite(), u = S.u, tu = g.tu;
-  // labels step back with the rest of the station when the line lands
-  const hush = 1 - 0.5 * seg(t, T.line, T.line + 0.43, inOutCubic);
-  // first every setup that is on: where it is, and where its label would sit
+/** every setup that is on: where it is, where its label sits and how much of it shows */
+function waypoints(S, g, V) {
+  const t = V.t, u = S.u, tu = g.tu, dpr = S.dpr;
   const N = [];
   for (let i = 0; i < 23; i++) {
     const W = SETUPS[i], age = t - PLOT(i);
@@ -379,30 +450,44 @@ function waypoints(ctx, S, g, V) {
     if (p.x < -12 * u || p.x > S.W + 12 * u || p.y > S.H + 8 * u) continue;
     const kk = p.k / u;                                      // 1 at the reference depth
     const r = clamp(kk, 0.26, 2.6) * u, sc = clamp(kk, 0.3, 1.3);
-    // labels fly to the left of their stems: the plan leans right, so up-left of a node is clear of the ones beyond it
-    const sz = (g.P ? 1.36 : 1.62) * tu * sc, stem = 4.6 * sc * tu * (g.P ? 0.84 : 1) * outCubic(seg(age, 0.04, 0.3));
-    const top = p.y - r * 0.9 - stem;
+    /* labels fly to the left of their stems: the plan leans right, so up-left of a node is clear of the ones beyond it.
+       They grow with nearness; the near ones read (the setup ≥ 13, its timecode ≥ 10 CSS px), the far ones are
+       telemetry (never under 7) */
+    const rd = clamp((sc - 0.6) / 0.4);
+    const sz = Math.max((g.P ? 1.36 : 1.62) * tu * sc, lerp(7, 13, rd) * dpr), ts = Math.max(0.7 * sz, lerp(7, 10, rd) * dpr);
+    const stem = 4.6 * sc * tu * (g.P ? 0.84 : 1) * outCubic(seg(age, 0.04, 0.3));
+    const top = p.y - r * 0.9 - stem, lb = top + sz * 0.62, tb = lb + 0.3 * sz + ts, bot = tb + 0.37 * ts;
     const la = clamp((sc - 0.5) / 0.16) * outCubic(seg(age, 0.06, 0.34)) * (1 - seg(t, T.outA + (22 - i) * 0.012, T.outA + 0.3 + (22 - i) * 0.012));
-    const edge = clamp((0.875 * S.H - (top + sz * 1.9)) / (0.05 * S.H));     // annotations let go before the bottom band
-    N.push({ i, W, age, ret, p, r, sz, stem, top, la: la * edge, box: [p.x - sz * 4.6, top - sz * 0.15, p.x, top + sz * 1.9] });
+    const edge = clamp((0.875 * S.H - bot) / (0.05 * S.H));     // annotations let go before the bottom band
+    const wide = Math.max(sz * 4.6, ts * 5.6 + sz * 0.72);
+    N.push({ i, W, age, ret, p, r, sz, ts, lb, tb, stem, top, la: la * edge, box: [p.x - wide, top - sz * 0.15, p.x, bot] });
   }
   /* a label only shows where it has room: setups tick on at the far end on top of each other, so
      each label gives way to the nearer labels below it and comes in as the flight opens the spacing */
   /* (it gives way to a nearer label's own presence, not to what is left of it after that one gave way:
-     two labels that overlap never both show, even faintly — the farther one waits a step longer) */
+     two labels that overlap never both show, even faintly — the farther one waits a step longer; and it
+     waits until the nearer one has all but gone, so a hand-off dips through nothing rather than crossing) */
   const near = [];
   for (const n of N) {
     if (n.la <= 0.01) continue;
     const own = n.la, [x0, y0, x1, y1] = n.box;
     for (const q of near) {
       const gap = Math.max(q.box[1] - y1, y0 - q.box[3], q.box[0] - x1, x0 - q.box[2]);
-      n.la *= 1 - q.own * (1 - clamp(gap / (0.5 * n.sz)));
+      n.la *= 1 - clamp(q.own / 0.4) * (1 - clamp(gap / (0.5 * n.sz)));
     }
     near.push({ own, box: n.box });
   }
-  // then draw them far → near
+  return N;
+}
+
+/** draw the waypoints far → near; from y0 down only (the frame's foot, drawn again to fade it) */
+function drawWaypoints(ctx, S, g, V, N, y0 = -Infinity) {
+  const t = V.t, spr = sprite(), u = S.u;
+  // labels step back with the rest of the station when the line lands
+  const hush = 1 - 0.5 * seg(t, T.line, T.line + 0.43, inOutCubic);
   for (let j = N.length - 1; j >= 0; j--) {
-    const { i, W, age, ret, p, r, sz, top } = N[j];
+    const { i, W, age, ret, p, r, sz, ts, lb, tb, top } = N[j];
+    if (p.y + 10.5 * Math.max(r, 0.55 * u) < y0) continue;
     const fog = 1 - 0.78 * clamp((p.d - 300) / 700);
     const pop = outBack(clamp(age / 0.32), 2.2) * ret;
     ctx.save();
@@ -422,10 +507,11 @@ function waypoints(ctx, S, g, V) {
       ctx.globalAlpha = fog * la;
       ctx.strokeStyle = 'rgba(245,244,240,.34)'; ctx.lineWidth = Math.max(1, 0.08 * u);
       ctx.beginPath(); ctx.moveTo(p.x, p.y - r * 0.9); ctx.lineTo(p.x, top); ctx.lineTo(p.x - sz * 0.5, top); ctx.stroke();
-      text(ctx, S, W.lab, tx, top + sz * 0.62, { size: sz, weight: 700, tracking: 0.02, color: UI.ink, align: 'right' });
-      ctx.font = `400 ${Math.round(sz * 0.7)}px ${MONO}`;
-      ctx.textAlign = 'right'; ctx.fillStyle = UI.muted;
-      ctx.fillText(W.tc, tx, top + sz * 1.64);
+      ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+      ctx.font = `700 ${sz.toFixed(1)}px 'Archivo', sans-serif`; ctx.fillStyle = UI.ink;
+      ctx.fillText(W.lab, tx, lb);
+      ctx.font = `400 ${ts.toFixed(1)}px ${MONO}`; ctx.fillStyle = UI.muted;
+      ctx.fillText(W.tc, tx, tb);
       ctx.globalAlpha = fog;
     }
     // the node
@@ -455,11 +541,11 @@ function corners(ctx, S, a) {
 
 function clock(ctx, S, g, a) {
   if (a <= 0) return;
-  const { x, y } = g.clock, tu = g.tu;
-  trackedMono(ctx, 'MISSION CLOCK', x, y - 1.8 * tu, 1.02 * tu, 0.22, { align: 'right', color: UI.faint, alpha: a, weight: 600 });
+  const { x, y } = g.clock;
+  trackedMono(ctx, 'MISSION CLOCK', x, y - g.clockOff, g.hudS, 0.22, { align: 'right', color: UI.faint, alpha: a, weight: 600 });
   ctx.save();
   ctx.globalAlpha *= a;
-  ctx.font = `500 ${Math.round(1.32 * tu)}px ${MONO}`;
+  ctx.font = `500 ${Math.round(g.clockS)}px ${MONO}`;
   ctx.textAlign = 'right'; ctx.fillStyle = UI.ink;
   ctx.fillText(stamp(S.t), x, y);
   ctx.restore();
@@ -471,7 +557,7 @@ function counter(ctx, S, g, val, a, lock = 0) {
   const tu = g.tu, { x, y } = g.count, size = (g.P ? 4.2 : 5.2) * tu;
   ctx.save();
   ctx.globalAlpha *= a;
-  const slash = '/ 23', ss = 1.35 * tu;
+  const slash = '/ 23', ss = g.slashS;
   ctx.font = `600 ${Math.round(ss)}px 'Archivo', sans-serif`;
   const sw = ctx.measureText(slash).width;
   ctx.textAlign = 'right'; ctx.fillStyle = lock > 0.01 ? `rgba(245,244,240,${lerp(0.42, 1, lock).toFixed(3)})` : UI.faint; ctx.fillText(slash, x, y);
@@ -479,7 +565,7 @@ function counter(ctx, S, g, val, a, lock = 0) {
   let cell = 0;
   for (let d = 0; d < 10; d++) cell = Math.max(cell, ctx.measureText(String(d)).width);
   const right = x - sw - 0.7 * tu, left = right - 2 * cell, capH = size * 0.74;
-  trackedMono(ctx, 'SETUPS', left + 0.1 * tu, y - capH - 1.1 * tu, 1.02 * tu, 0.24, { color: UI.faint, weight: 600 });
+  trackedMono(ctx, 'SETUPS', left + 0.1 * tu, y - capH - Math.max(1.1 * tu, 0.45 * g.hudS), g.hudS, 0.24, { color: UI.faint, weight: 600 });
   // the lock: a bloom of light behind the full count
   const gl = lock > 0.01 && glow();
   if (gl) {
@@ -624,11 +710,11 @@ function readout(ctx, S, g, t) {
         const tx = px + rw.ind * g.cw;
         if (rw.tag) {
           // the field tag, boxed as on /process
-          const bw = g.cw * 3 + 0.9 * g.ms, bh = g.ms * 1.3;
+          const bw = g.cw * 3 * g.small / g.ms + 0.9 * g.ms, bh = g.ms * 1.3;
           ctx.save();
           ctx.fillStyle = 'rgba(245,244,240,.09)'; rrect(ctx, px - 0.3 * g.ms, ry - g.ms * 0.98, bw, bh, 0.3 * g.ms); ctx.fill();
           ctx.strokeStyle = 'rgba(245,244,240,.2)'; ctx.lineWidth = Math.max(1, 0.06 * S.u); ctx.stroke();
-          ctx.font = `700 ${Math.round(g.ms * 0.86)}px ${MONO}`; ctx.fillStyle = UI.ink;
+          ctx.font = `700 ${Math.round(g.small)}px ${MONO}`; ctx.fillStyle = UI.ink;
           ctx.fillText(rw.tag, px + 0.15 * g.ms, ry - g.ms * 0.06);
           ctx.restore();
         }
@@ -670,7 +756,7 @@ export default {
     sprite(); glow();
     // (only once the type is in: the layout measures it)
     const fontsIn = typeof document !== 'undefined' && document.fonts && document.fonts.check("700 40px 'Archivo'");
-    if (fontsIn && S.W) geo(S, document.createElement('canvas').getContext('2d'));
+    if (fontsIn && S.W) band(S, geo(S, document.createElement('canvas').getContext('2d')));
   },
   draw(ctx, S) {
     const t = S.lt;
@@ -695,8 +781,27 @@ export default {
       const dz = 1 / lerp(1 / (SETUPS[22].a - V.ac), 1 / 16, Math.pow(lk, 1.45));      // (the wire leaves the frame at about 30)
       spark = { a: V.ac + dz, len: 3 + 0.06 * dz, tail: 6 + 0.4 * dz, amp: clamp(lk / 0.05) * (1 - seg(lk, 0.88, 1)) };
     }
-    ribbon(ctx, S, g, V, phase, pulse, spark);
-    waypoints(ctx, S, g, V);
+    const N = waypoints(S, g, V), foot = band(S, g);
+    if (foot) {
+      // upright: the plan down to the frame's foot as it is, the foot itself faded into space
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, S.W, foot.y0); ctx.clip();
+      ribbon(ctx, S, g, V, phase, pulse, spark);
+      drawWaypoints(ctx, S, g, V, N);
+      ctx.restore();
+      const b = foot.x;
+      b.setTransform(1, 0, 0, 1, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over';
+      b.clearRect(0, 0, foot.c.width, foot.c.height);
+      b.setTransform(1, 0, 0, 1, 0, -foot.y0);
+      ribbon(b, S, g, V, phase, pulse, spark);
+      drawWaypoints(b, S, g, V, N, foot.y0);
+      b.setTransform(1, 0, 0, 1, 0, 0);
+      b.globalCompositeOperation = 'destination-in'; b.fillStyle = foot.mask; b.fillRect(0, 0, foot.c.width, foot.c.height);
+      b.globalCompositeOperation = 'source-over';
+      ctx.drawImage(foot.c, 0, foot.y0);
+    } else {
+      ribbon(ctx, S, g, V, phase, pulse, spark);
+      drawWaypoints(ctx, S, g, V, N);
+    }
 
     // the HUD
     const hud = seg(t, T.hud, T.hud + 0.6, outCubic) * (1 - seg(t, T.retA + 0.55, T.retA + 1.0));

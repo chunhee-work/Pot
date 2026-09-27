@@ -6,16 +6,18 @@
    the thread while the camera drifts past it; the thread stays put in front
    of it — it is our line — and a thin chrome orbit draws itself over the
    planet's face with a bead running at its head. A reticle locks onto the
-   lit hemisphere and the HUD tags it AUREA.
+   lit hemisphere and the HUD tags it AUREA, with its own index on /process
+   (env-aurea 25 of the 29 AUREA plates) counting up to it.
    On the third beat the stars stretch into trails, the planet sinks to a
    glowing horizon and the plates come out of the thread's vanishing point:
    glass-and-metal viewport windows strung on the same line, near ones in
    front of it, far ones behind, trucking past one hero at a time. The
-   stream brakes onto the plaza on bar 3's downbeat and holds, and the same
-   place comes back twice more behind the glass — dusk, day, snow — each
-   return wiped in by a chrome scan bar. Then the camera pulls straight back
-   down the line: the windows fall into the vanishing point, the planet sets
-   below the frame, and the thread lies still.
+   stream brakes onto a village square on bar 3's downbeat and holds, and the
+   same square comes back twice more behind the glass — night, day, night:
+   the same doors, lanterns, stair and fountain (env-aurea 9, 27 and 11),
+   each return wiped in by a chrome scan bar. Then the camera pulls straight
+   back down the line: the windows fall into the vanishing point, the planet
+   sets below the frame, and the thread lies still.
 
    The thread is always at eye level (camera y = 0), so it projects onto the
    frame's middle at every depth — the world slides along it and it never
@@ -29,8 +31,8 @@
                 rises out of its sill (settled ~0.79), HIGGSFIELD chip 0.62–0.9
      0.50–1.75  the orbit draws itself across the planet's face, bead leading
      1.25       beat 2: the reticle locks on; the leader and rule draw
-                (1.25–1.49), AUREA types 1.30–1.53, the coordinates roll and
-                lock by ~1.65
+                (1.25–1.49), AUREA types 1.30–1.53, the plate index counts
+                01 → 25 and locks by ~1.65
      1.875      beat 3: title and chip retract; the orbit fades — the tag is
                 the one headline left
      1.90–2.62  the jump: star trails, the planet drops to a horizon whose
@@ -47,36 +49,38 @@
      2.50–5.00  the truck, a window a beat: AUREA 12 (3.125), OG10 03 (3.75),
                 AUREA 22 (4.375), the finder snapping shut on each; the label
                 flips on each half-beat
-     5.00       bar 3: brakes onto the plaza, AUREA 15 (dusk) — runs 2.5 % of a
-                spacing past it (5.1) and settles back by ~5.33; slow push in
+     5.00       bar 3: brakes onto the village square, AUREA 09 (night) — runs
+                2.5 % of a spacing past it (5.1) and settles back by ~5.33;
+                slow push in
      4.98–6.92  THE SAME PLACE, EVERY TIME (readable ~5.25–6.66)
-     5.625      beat: scan wipe to AUREA 18 (day)
-     6.25       beat: scan wipe to AUREA 20 (snow)
+     5.625      beat: scan wipe to AUREA 27 (the same square by day)
+     6.25       beat: scan wipe to AUREA 11 (by night again, a step back)
      6.62–7.02  the HUD leaves; the eyebrow untypes
      6.78       the gather: a short push in (0.3 units) that peaks on the beat
      6.875      beat: pull back from that apex — the windows fall into the
                 vanishing point, the planet sets (6.72–7.32), the stars settle;
                 nothing moves after 7.32
      7.40–7.50  the seam */
-import { clamp, lerp, seg, smoothstep, outExpo, outCubic, inCubic, inOutCubic, inOutQuad, bezier, rrect, text, layout, rng, TAU, cover } from '../../kit.js';
+import { clamp, lerp, seg, invlerp, smoothstep, outExpo, outCubic, inCubic, inOutCubic, inOutQuad, bezier, rrect, rng, TAU, cover, FONT } from '../../kit.js';
 import { camera } from '../../space.js';
-import { seam, space, wireAcross, metal, glass, chip, numeral, mono, stamp, UI, MONO } from '../kit3.js';
+import { seam, space, wireAcross, metal, glass, chip, numeral, mono, stamp, readPx, UI, MONO } from '../kit3.js';
 import { BEAT } from '../palette.js';
 
 // ── the plates (numbered as on /process: env-aurea 1–29, env-og10 1–8) ────
 const DIR = 'assets/process/';
-const PLANET = DIR + 'img-86e21caec4.webp';                       // env-aurea 25
+const PLANET = DIR + 'img-86e21caec4.webp', PLANET_N = 25;       // env-aurea 25 of 29
 const HEROES = [
   { src: DIR + 'img-79e906f563.webp', set: 'AUREA', n: 6, of: 29, fx: 0.5, fy: 0.6 },
   { src: DIR + 'img-b139e0b5bf.webp', set: 'AUREA', n: 12, of: 29, fx: 0.42, fy: 0.5 },
   { src: DIR + 'img-c8153d6292.webp', set: 'OG10', n: 3, of: 8, fx: 0.5, fy: 0.45 },
   { src: DIR + 'img-9c233bfc2d.webp', set: 'AUREA', n: 22, of: 29, fx: 0.38, fy: 0.5 }
 ];
-// the same place, three returns: the plaza with the paw seal — dusk, day, snow
+// the same place, three returns: one village square — the arched door and its lantern, the stair, the
+// thatched round house, the fountain (env-aurea 9 and 11 by night, 27 by day); none is a hero above
 const SAME = [
-  { src: DIR + 'img-24d535d893.webp', n: 15, fx: 0.5, fy: 0.62 },
-  { src: DIR + 'img-8f542747ea.webp', n: 18, fx: 0.5, fy: 0.62 },
-  { src: DIR + 'img-81cd216913.webp', n: 20, fx: 0.5, fy: 0.62 }
+  { src: DIR + 'img-c5957cfb2f.webp', n: 9, fx: 0.5, fy: 0.6 },
+  { src: DIR + 'img-bb48983153.webp', n: 27, fx: 0.5, fy: 0.6 },
+  { src: DIR + 'img-91604b2f8c.webp', n: 11, fx: 0.5, fy: 0.6 }
 ];
 const FAR = [DIR + 'img-bd4381467e.webp', DIR + 'img-2baad14b96.webp', DIR + 'img-98ab2beeec.webp'];
 
@@ -84,7 +88,7 @@ const FAR = [DIR + 'img-bd4381467e.webp', DIR + 'img-2baad14b96.webp', DIR + 'im
 const T_IN = 0.1, T_OUT = 7.4;                  // the seam holds outside these
 const LOCK = 2 * BEAT, RETRACT = 3 * BEAT;      // 1.25, 1.875
 const JUMP0 = 1.95, ARRIVE = 4 * BEAT;          // the jump; bar 2's downbeat
-const LAND = 8 * BEAT;                          // bar 3: the plaza
+const LAND = 8 * BEAT;                          // bar 3: the village square
 const WIPES = [9 * BEAT, 10 * BEAT];            // 5.625, 6.25
 const AWAY = 11 * BEAT, GONE = 7.32;            // 6.875 → the windows are gone
 const GATHER = 0.3;                             // the push in (world units) that anticipates the pull back
@@ -164,9 +168,9 @@ function planetSprite(S) {
 // ── geometry for a frame size ─────────────────────────────────────────────
 let GEO = null;
 function geo(S) {
-  if (GEO && GEO.W === S.W && GEO.H === S.H) return GEO;
+  if (GEO && GEO.W === S.W && GEO.H === S.H && GEO.dpr === S.dpr) return GEO;
   const { W, H, u } = S, port = H > W;
-  const G = { W, H, port };
+  const G = { W, H, dpr: S.dpr, port };
   // the planet: radius, and where its crest sits as it rises, holds, sinks and sets
   if (port) {
     G.R = Math.min(0.86 * W, 0.44 * H);
@@ -199,32 +203,95 @@ function geo(S) {
         src: li ? HEROES[(j * 3 + 1) % 4].src : FAR[j % 3], fx: 0.5, fy: 0.5 });
     }
   });
-  // type
+  // type — the headlines ride u; anything meant to be read (the stage index, the chip, the tag and its
+  // readout, the plate labels) never drops under 10 CSS px (readPx), which on a phone, upright or held
+  // sideways, is what u alone would give it; the running clock is decoration and floors at 7
   G.x0 = (port ? 0.075 : 0.06) * W;
-  G.num = (port ? 17 : 14.5) * u;
-  G.eb = (port ? 2.5 : 1.55) * u;                   // eyebrow
-  G.title = (port ? 6.4 : 5.4) * u;
-  G.copy = (port ? 5.6 : 4.3) * u;
+  G.eb = readPx(S, port ? 2.5 : 1.55);              // eyebrow: the stage index
+  // on a short landscape frame (a phone held sideways) the floor lifts the index and the chip well past u, so
+  // the lockup's headline scale comes up with them (up to 1.3×), keeping numeral › title › chip › index
+  G.lk = port ? 1 : clamp(G.eb / (1.55 * u), 1, 1.3);
+  G.lu = u * G.lk;                                  // the lockup's own unit, for its sizes and gaps
+  G.num = (port ? 17 : 14.5) * G.lu;
+  G.title = (port ? 6.4 : 5.4) * G.lu;
+  G.copy = (port ? 5.6 : 4.3) * G.lu;
   G.copyLines = port
     ? [['LOCATIONS BUILT', 'AS SET PLATES'], ['THE SAME PLACE,', 'EVERY TIME']]
     : [['LOCATIONS BUILT AS SET PLATES'], ['THE SAME PLACE, EVERY TIME']];
   G.top = (port ? 0.085 : 0.1) * H;
-  G.chip = (port ? 1.9 : 1.35) * u;
-  G.mono = (port ? 2.35 : 1.4) * u;
-  G.tag = (port ? 3.6 : 2.6) * u;
+  G.chip = readPx(S, port ? 1.9 : 1.35);
+  G.mono = readPx(S, port ? 2.35 : 1.4);            // the tag's readout and the plate labels
+  G.clock = Math.max((port ? 2.35 : 1.4) * u, 7 * S.dpr);
+  // the tag is the one headline left once the title retracts, so it stays a clear step above its own floored
+  // readout (≥ 1.5× in landscape, 1.4× upright) — on a phone held sideways that lifts it past what u gives it;
+  // tagK is that lift, and the tag's gap to its rule grows with it
+  G.tag = port ? Math.max(readPx(S, 3.6), 1.4 * G.mono) : Math.max(2.6 * G.lu, 1.5 * G.mono);
+  G.tagK = G.tag / ((port ? 3.6 : 2.6) * u);
   GEO = G;
   return G;
 }
 
 // ── pieces ────────────────────────────────────────────────────────────────
+/* Type set a word at a time. kit's layout() puts each glyph at the width of the string before it, so a
+   kern lands one glyph late — BUILT's L–T kern shoves the T into the word space and the headline reads
+   BUILTAS. Here each glyph sits where the browser itself would set it (the width through it, less its own
+   advance), and the words are laid a fixed word space apart, so every gap in a line is the same. */
+const LINES = new Map();
+function setLine(ctx, str, o) {
+  const font = `${o.weight ?? 700} ${Math.round(o.size)}px ${FONT.sans}`, tr = (o.tracking ?? 0) * o.size;
+  const key = font + '|' + tr + '|' + str;
+  let L = LINES.get(key);
+  if (L) return L;
+  ctx.save(); ctx.font = font;
+  const space = ctx.measureText(' ').width + 2 * tr;      // the space, and the tracking either side of it
+  const glyphs = [];
+  let x = 0, k = 0;
+  str.split(' ').forEach((word, wi) => {
+    if (wi) { x += space; k++; }
+    const cs = [...word];
+    let pre = '';
+    cs.forEach((c, i) => {
+      pre += c;
+      glyphs.push({ c, k: k++, x: x + ctx.measureText(pre).width - ctx.measureText(c).width + i * tr });
+    });
+    x += ctx.measureText(word).width + Math.max(0, cs.length - 1) * tr;
+  });
+  const m = ctx.measureText('Hg');
+  ctx.restore();
+  L = { glyphs, n: k, width: x, font, ascent: m.actualBoundingBoxAscent || o.size * 0.75, descent: m.actualBoundingBoxDescent || o.size * 0.25 };
+  if (LINES.size > 48) LINES.clear();
+  LINES.set(key, L);
+  return L;
+}
+
+/** draw a set line, a glyph at a time (the kit's reveal: each glyph takes `window` of it, left to right,
+ *  rising `rise`); o.fade also fades each glyph in with its own progress */
+function line(ctx, str, x, y, o) {
+  const L = setLine(ctx, str, o), n = L.n;
+  const reveal = o.reveal ?? 1, win = o.window ?? 0.35, ease = o.ease || outExpo, rise = o.rise ?? o.size * 0.6;
+  ctx.save();
+  ctx.font = L.font; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  ctx.fillStyle = o.color || UI.ink;
+  const a0 = ctx.globalAlpha * (o.alpha ?? 1);
+  for (const g of L.glyphs) {
+    const st = n > 1 ? (g.k / (n - 1)) * (1 - win) : 0;
+    const p = reveal >= 1 ? 1 : ease(invlerp(st, st + win, reveal));
+    if (p <= 0) continue;
+    ctx.globalAlpha = a0 * (o.fade ? p : 1);
+    ctx.fillText(g.c, x + g.x, y + (1 - p) * rise);
+  }
+  ctx.restore();
+  return L;
+}
+
 /** a line of type that rises out of its own sill and leaves up through its lid */
 function sill(ctx, S, str, x, y, o, pin, pout) {
   if (pin <= 0 || pout >= 1) return;
-  const L = layout(ctx, str, o);
+  const L = setLine(ctx, str, o);
   const top = y - L.ascent * 1.2, h = (L.ascent + L.descent) * 1.35;
   ctx.save();
   ctx.beginPath(); ctx.rect(x - o.size, top, L.width + o.size * 2, h); ctx.clip();
-  text(ctx, S, str, x, y - pout * h, { ...o, reveal: pin, rise: h, window: 0.45, ease: outExpo, glyph: () => ({ alpha: 1 }) });
+  line(ctx, str, x, y - pout * h, { ...o, reveal: pin, rise: h, window: 0.45, ease: outExpo });
   ctx.restore();
 }
 
@@ -376,17 +443,17 @@ function reticle(ctx, S, x, y, s, a) {
   ctx.restore();
 }
 
-/** digits that roll before they lock (deterministic — keyed to time buckets) */
-function rolling(str, p, seed) {
-  if (p >= 1) return str;
-  const bucket = Math.floor(p * 24);
-  let out = '';
-  for (let i = 0; i < str.length; i++) {
-    const c = str[i];
-    const locked = p > 0.35 + 0.6 * (i / str.length);
-    out += /[0-9]/.test(c) && !locked ? String(Math.floor(rng(bucket * 31 + i, seed) * 10)) : c;
-  }
-  return out;
+/** a plate index that counts up to its own number as it arrives (01, 02, … n, locked by p 0.8) — every
+ *  value it shows on the way is a real plate index in the set, never a made-up one */
+const plateRoll = (n, p) => String(p >= 1 ? n : Math.round(1 + (n - 1) * outCubic(clamp(p / 0.8)))).padStart(2, '0');
+
+/** a typewriter reveal (0..1 over all the characters of `lines`) that never stops inside a number: a
+ *  half-typed '/ 29' would read as '/ 2', so each run of digits comes on whole */
+function whole(lines, reveal) {
+  const flat = [].concat(lines).join(''), len = flat.length;
+  let n = Math.floor(clamp(reveal) * len);
+  while (n > 0 && n < len && /\d/.test(flat[n - 1]) && /\d/.test(flat[n])) n--;
+  return reveal >= 1 ? 1 : (n + 0.5) / len;
 }
 
 // ── the chapter ───────────────────────────────────────────────────────────
@@ -498,7 +565,7 @@ export default {
     if (!showWindows) {
       wireAcross(ctx, S, H / 2, { phase });
     } else {
-      // camera: in down the line, truck along it a window a beat, brake on the plaza, push, back out
+      // camera: in down the line, truck along it a window a beat, brake on the square, push, back out
       const camX = G.DX * truck(t);
       // …the arrival carries ~2.5 % past the hero and settles back (peak ~2.61, still by 2.95); before backing
       // out it gathers — a short push in over the last beat's tail — and the pull starts from that apex
@@ -506,10 +573,10 @@ export default {
         + (port ? 0.4 : 0.9) * inOutSine(seg(t, LAND, AWAY)) + GATHER * bump(t, 6.78, AWAY, AWAY + 0.2) - 70 * away;
       const cam = camera(S, { x: camX, y: 0, z: camZ, zoom: G.zoom });
       const items = [];
-      // the plates, with the plaza last
-      const plaza = SAME.map(s => ({ img: S.img(s.src), fx: s.fx, fy: s.fy }));
+      // the plates, with the square last
+      const square = SAME.map(s => ({ img: S.img(s.src), fx: s.fx, fy: s.fy }));
       HEROES.forEach((h, i) => items.push({ x: i * G.DX, y: 0, z: G.ZH, hero: i, plates: [{ img: S.img(h.src), fx: h.fx, fy: h.fy }] }));
-      items.push({ x: 4 * G.DX, y: 0, z: G.ZH, hero: 4, plates: plaza });
+      items.push({ x: 4 * G.DX, y: 0, z: G.ZH, hero: 4, plates: square });
       for (const f of G.far) items.push({ x: f.x, y: f.y, z: f.z, plates: [{ img: S.img(f.src), fx: f.fx, fy: f.fy }] });
       items.push({ thread: true, z: G.ZT });
       items.sort((p, q) => q.z - p.z);
@@ -550,13 +617,13 @@ export default {
   }
 };
 
-/** the truck along the line, in hero spacings: a window a beat, braking onto the plaza */
-const LAND_V = 0.39;                             // speed through the plaza's mark (hero spacings per beat)
+/** the truck along the line, in hero spacings: a window a beat, braking onto the square */
+const LAND_V = 0.39;                             // speed through the square's mark (hero spacings per beat)
 const LAND_W = 8, LAND_D = 8;                    // its settle: a damped sine, ω and decay (1/s)
 function truck(t) {
   if (t <= ARRIVE) return 0;
   if (t >= LAND) {
-    // follow-through: it runs ~2.5 % of a spacing past the plaza (peak ~5.1) and settles back by ~5.33
+    // follow-through: it runs ~2.5 % of a spacing past the square (peak ~5.1) and settles back by ~5.33
     const s = t - LAND;
     return 4 + LAND_V / (BEAT * LAND_W) * Math.exp(-LAND_D * s) * Math.sin(LAND_W * s);
   }
@@ -607,14 +674,15 @@ function finder(ctx, S, G, t, camZ) {
   ctx.stroke();
   ctx.restore();
   // the label under the frame — fixed; the plates change behind it
-  const F = framed(t), lab = heroLabel(F.k, F.r || 0);
+  const F = framed(t);
   const la = a * seg(t, 2.5, 2.8);
   if (la <= 0) return;
-  const pin = clamp(F.since / 0.22);
+  const pin = clamp(F.since / 0.22), lab = heroLabel(F.k, F.r || 0, pin);
   // the label rides the brackets' margin but not their snap, so the type itself never jitters
   const lhw = G.hw * s / 2 + m, lhh = G.hh * s / 2 + m;
-  const lx = cx - lhw, ly = cy + lhh + 2.8 * u;
-  tracked(ctx, S, rolling(lab.left, pin, F.k * 7 + (F.r || 0)), lx, ly, G.mono, { color: UI.ink, alpha: la * 0.85, track: 0.16, reveal: 0.35 + 0.65 * pin });
+  // (held inside the text-safe band when the push in bar 3 carries the brackets nearly to a phone's edges)
+  const lx = Math.max(cx - lhw, 0.052 * W), ly = cy + lhh + Math.max(2.8 * u, 1.25 * G.mono);
+  tracked(ctx, S, lab.left, lx, ly, G.mono, { color: UI.ink, alpha: la * 0.85, track: 0.16, reveal: whole(lab.left, 0.35 + 0.65 * pin) });
   if (F.k === 4) {
     // three returns to one place, one lit
     const bw = 2.4 * u, gap = 0.7 * u, bx = cx + lhw - 3 * bw - 2 * gap, by = ly - 0.5 * G.mono;
@@ -625,16 +693,15 @@ function finder(ctx, S, G, t, camZ) {
     }
     ctx.restore();
   } else {
-    tracked(ctx, S, lab.right, cx + lhw, ly, G.mono, { color: UI.muted, alpha: la * 0.8 * pin, track: 0.16, align: 'right' });
+    tracked(ctx, S, lab.right, Math.min(cx + lhw, 0.948 * W), ly, G.mono, { color: UI.muted, alpha: la * 0.8 * pin, track: 0.16, align: 'right' });
   }
 }
 
-function heroLabel(i, r) {
-  if (i < 4) {
-    const h = HEROES[i];
-    return { left: `${h.set} — PLATE ${String(h.n).padStart(2, '0')} / ${String(h.of).padStart(2, '0')}`, right: h.set === 'OG10' ? 'SHOPS & STREETS' : 'THE PLANET' };
-  }
-  return { left: `AUREA — PLATE ${SAME[r].n} / 29` };
+/** the label under the framed window: its set and /process plate number (counting up to it as it lands) */
+function heroLabel(i, r, p) {
+  const h = i < 4 ? HEROES[i] : { set: 'AUREA', n: SAME[r].n, of: 29 };
+  const left = `${h.set} — PLATE ${plateRoll(h.n, p)} / ${String(h.of).padStart(2, '0')}`;
+  return i < 4 ? { left, right: h.set === 'OG10' ? 'SHOPS & STREETS' : 'THE PLANET' } : { left };
 }
 
 function hud(ctx, S, G, t, P) {
@@ -648,25 +715,25 @@ function hud(ctx, S, G, t, P) {
   ctx.font = `900 ${Math.round(G.num)}px 'Archivo', sans-serif`;
   const numW = ctx.measureText('05').width;
   ctx.restore();
-  const numBase = top + 0.74 * G.num;
-  if (numA > 0) numeral(ctx, S, '05', x0, numBase + (1 - numIn) * 1.2 * u, G.num, { align: 'left', alpha: numA, metal: true, phase: P.phase * 0.5 });
-  const sx = x0 + numW + (port ? 2.6 : 2.2) * u;
+  const numBase = top + 0.74 * G.num, lu = G.lu;
+  if (numA > 0) numeral(ctx, S, '05', x0, numBase + (1 - numIn) * 1.2 * lu, G.num, { align: 'left', alpha: numA, metal: true, phase: P.phase * 0.5 });
+  const sx = x0 + numW + (port ? 2.6 : 2.2) * lu;
   // eyebrow: types on, stays for the whole station, untypes on the way out
   const ebIn = seg(t, 0.36, 0.76), ebOut = seg(t, 6.6, 6.9);
   const ebY = top + G.eb * 1.02;
-  if (ebIn > 0 && ebOut < 1) tracked(ctx, S, 'STAGE 05 OF 06', sx, ebY, G.eb, { reveal: ebIn * (1 - ebOut), cursor: ebIn < 1 || ebOut > 0, color: UI.muted });
+  if (ebIn > 0 && ebOut < 1) tracked(ctx, S, 'STAGE 05 OF 06', sx, ebY, G.eb, { reveal: whole('STAGE 05 OF 06', ebIn * (1 - ebOut)), cursor: ebIn < 1 || ebOut > 0, color: UI.muted });
   // the slot under it: Environment + chip, then the two lines of copy
-  const slotY = ebY + 1.3 * u + (port ? 0.76 : 0.74) * G.title;
+  const slotY = ebY + 1.3 * lu + (port ? 0.76 : 0.74) * G.title;
   const tIn = seg(t, 0.34, 0.92), tOut = seg(t, RETRACT, RETRACT + 0.35, inOutCubic);   // settled ~0.79: over a second whole
   // silver, top to bottom, as /process sets its stage titles
   const silver = ctx.createLinearGradient(0, slotY - 0.75 * G.title, 0, slotY);
   silver.addColorStop(0, '#f5f4f0'); silver.addColorStop(1, '#b9b7af');
   sill(ctx, S, 'Environment', sx, slotY, { size: G.title, weight: 800, tracking: -0.01, color: silver }, tIn, tOut);
   const chipA = seg(t, 0.62, 0.9, outCubic) * (1 - seg(t, RETRACT, RETRACT + 0.25));
-  if (chipA > 0) chip(ctx, S, 'Higgsfield', sx, slotY + 1.5 * u + (1 - chipA) * 0.8 * u, { size: G.chip, alpha: chipA });
+  if (chipA > 0) chip(ctx, S, 'Higgsfield', sx, slotY + 1.5 * lu + (1 - chipA) * 0.8 * lu, { size: G.chip, alpha: chipA });
   // copy — each line held well past the 1.2 s it needs
   const lh = G.copy * 1.2;
-  const copyY = ebY + 1.4 * u + 0.74 * G.copy;
+  const copyY = ebY + 1.4 * lu + 0.74 * G.copy;
   const c1In = seg(t, 2.55, 3.1), c1Out = seg(t, 4.72, 5.0, inOutCubic);
   const c2In = seg(t, 4.98, 5.5), c2Out = seg(t, 6.66, 6.92, inOutCubic);
   G.copyLines[0].forEach((s, i) => sill(ctx, S, s, sx, copyY + i * lh, { size: G.copy, weight: 800, tracking: 0.02, color: UI.ink }, clamp(c1In * 1.25 - i * 0.25), c1Out));
@@ -683,9 +750,18 @@ function hud(ctx, S, G, t, P) {
     const ax = P.pcx + (port ? 0.08 : 0.22) * P.R, ay = P.pcy - (port ? 0.9 : 0.9) * P.R;
     const s = (port ? 2.4 : 1.8) * u * (1 + 2.2 * (1 - lockP) + 0.5 * retOut);
     reticle(ctx, S, ax, ay, s, Math.min(1, lockP * 1.6) * (1 - retOut));
-    // leader and rule
+    // the readout: its own /process index, counting up to it, and the set it belongs to (the gallery's caption,
+    // 'AUREA — the planet · ×29 plates')
+    const read = [`ENV-AUREA ${plateRoll(PLANET_N, seg(t, LOCK + 0.1, LOCK + 0.42))} / 29`, 'THE PLANET · ×29 PLATES'];   // locked by ~1.62
+    // leader and rule; in landscape the tag hangs off the rule's right end, drawn in far enough that its widest
+    // line ends inside the frame's text-safe edge whatever size the type floor gives it
     const ruleY = port ? 0.285 * H : 0.2 * H;
-    const ex = port ? 0.5 * W : 0.79 * W, rx1 = port ? x0 : 0.95 * W;
+    ctx.save(); ctx.font = `400 ${Math.round(G.mono)}px ${MONO}`;
+    const tw = Math.max(ctx.measureText(read[1]).width, ctx.measureText(`ENV-AUREA ${PLANET_N} / 29`).width,
+      setLine(ctx, 'AUREA', { size: G.tag, weight: 800, tracking: 0.24 }).width);
+    ctx.restore();
+    const lx = port ? x0 : Math.min(0.79 * W + 1.2 * u, 0.935 * W - tw);
+    const ex = port ? 0.5 * W : lx - 1.2 * u, rx1 = port ? x0 : 0.95 * W;
     const lead = seg(t, LOCK, LOCK + 0.24, outCubic) * (1 - leadBack);
     if (lead > 0) {
       ctx.save();
@@ -701,16 +777,14 @@ function hud(ctx, S, G, t, P) {
       ctx.stroke();
       ctx.restore();
     }
-    const lx = port ? x0 : ex + 1.2 * u;
     if (tagIn > 0 && tagOut < 1) {
       // untyping runs the reveal backwards: the last glyph goes first
-      text(ctx, S, 'AUREA', lx, ruleY - 1.1 * u, { size: G.tag, weight: 800, tracking: 0.24, color: UI.ink, reveal: tagIn * (1 - tagOut), window: 0.5 });
-      const coords = rolling('05h 42m 18.6s  -02° 25′ 07″', seg(t, LOCK + 0.1, LOCK + 0.42), 3);   // locked by ~1.65
-      mono(ctx, S, [coords, 'THE PLANET · ×29 PLATES'], lx, ruleY + 2.3 * u, { size: G.mono, color: UI.muted, reveal: seg(t, LOCK + 0.08, LOCK + 0.3) * (1 - tagOut) });
+      line(ctx, 'AUREA', lx, ruleY - 1.1 * u * Math.max(1, G.tagK), { size: G.tag, weight: 800, tracking: 0.24, color: UI.ink, reveal: tagIn * (1 - tagOut), window: 0.5, fade: true });
+      mono(ctx, S, read, lx, ruleY + Math.max(2.3 * u, 1.25 * G.mono), { size: G.mono, color: UI.muted, reveal: whole(read, seg(t, LOCK + 0.08, LOCK + 0.3) * (1 - tagOut)) });
     }
   }
 
   // ── the mission clock ──────────────────────────────────────────────────
   const ca = seg(t, 0.4, 0.9) * (1 - hudOut);
-  if (ca > 0) tracked(ctx, S, stamp(S.t), x0, 0.855 * H, G.mono, { color: UI.muted, alpha: ca * 0.8, track: 0.12, weight: 500, keyline: Math.max(2, 0.48 * u) });
+  if (ca > 0) tracked(ctx, S, stamp(S.t), x0, 0.855 * H, G.clock, { color: UI.muted, alpha: ca * 0.8, track: 0.12, weight: 500, keyline: Math.max(2, 0.48 * u) });
 }

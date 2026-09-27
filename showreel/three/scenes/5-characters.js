@@ -18,7 +18,7 @@
    through space.js's camera and drawn back to front with its list. */
 import { clamp, lerp, seg, TAU, rrect, text, layout, cover, outExpo, outCubic, outBack, inCubic, inOutCubic, inOutQuad } from '../../kit.js';
 import { camera, list } from '../../space.js';
-import { seam, space, metal, chip, numeral, mono, stamp, UI, MONO } from '../kit3.js';
+import { seam, space, metal, chip, numeral, mono, stamp, readPx, UI, MONO } from '../kit3.js';
 import { BEAT } from '../palette.js';
 
 const T_IN = 0.1, T_OUT = 7.4;                 // the seam holds before and after these
@@ -54,6 +54,9 @@ const SIX = {
   e627966d3b: [[0, 0, 0.25, 0.493], [0.25, 0, 0.25, 0.493], [0.5, 0, 0.25, 0.493], [0.75, 0, 0.25, 0.493], [0.25, 0.493, 0.44, 0.507], [0.69, 0.493, 0.31, 0.507]]
 };
 const ASPECT = 0.558;                            // the sheets are 1000 × 558
+/** readPx, rounded up to a whole device px: fonts are set at whole px, and where the backing
+    is capped (S.dpr fractional) rounding to nearest could land a hair under 10 CSS px */
+const rpx = (S, k, min) => Math.ceil(readPx(S, k, min) - 1e-6);
 
 // world: the ring's centre sits Z0 ahead of the resting camera
 const R = 10, Z0 = 20, CAM_IN = 13;             // CAM_IN is inside the ring: the seam's view
@@ -117,36 +120,50 @@ function heroStage(t) {
 }
 
 // ── layout ────────────────────────────────────────────────────────────────
+/* Type meant to be read never drops under 10 CSS px (readPx): on a phone, or a phone
+   held sideways, k·u alone lands at 4–7 px. So the landscape column is built top down
+   from the sizes it actually gets (a sideways phone's is ~1.8× a laptop's, relative to
+   the frame) and centred on the hero, rather than pinned at fixed fractions of H. */
 function frame(S) {
   const { W, H, u } = S;
   if (!S.portrait) {
     const hw = Math.min(0.45 * W, 0.5 * H / ASPECT);
     const hero = { cx: 0.64 * W, cy: 0.47 * H, w: hw, h: hw * ASPECT };
     const ts = Math.min(7.6 * u, 0.056 * W);
-    const x = 0.075 * W, stageY = 0.27 * H;
-    const t1 = stageY + 3.4 * u + ts * 0.74, t2 = t1 + ts * 0.98;
+    const x = 0.075 * W;
+    const labSize = rpx(S, 1.5), ms = rpx(S, 1.65), chipSize = rpx(S, 1.2);
+    // the sentence is the chapter's thesis: on a sideways phone it would land at 12 px, where
+    // Archivo's word spaces close up ("everyshot"), so it holds 15
+    const ss = Math.max(Math.min(3.1 * u, 0.024 * W), rpx(S, 0, 15));
+    // the column's baselines, from its top: index / name, the title, the chip, the rule and
+    // the readout, the sentence
+    const stage = labSize * 0.74, name = stage + labSize * 1.8;
+    const t1 = name + 2.8 * u + ts * 0.74, t2 = t1 + ts * 0.98;
     const chipY = t2 + 2.2 * u;
-    const ms = 1.65 * u, tel1 = chipY + 7.8 * u;
-    const ss = Math.min(3.1 * u, 0.024 * W);
+    const tel1 = chipY + chipSize * 2.6 + 2 * u + ms * 1.9, tel2 = tel1 + ms * 1.6;
+    const sentY = tel2 + 2.8 * u + ss, end = sentY + ss * 1.52;
+    const top = clamp(hero.cy - end / 2, 0.12 * H, Math.max(0.12 * H, 0.8 * H - end));
     // the wreath behind the hero: its front dock tucked half behind the hero's lower edge
     // (never tangent to it, never cut by the frame), as steep as the frame's top allows
     const fit = fitWreath(S, 1.1, hero.cy + hero.h / 2, 0.06 * H, 0.9 * H, 0.62);
     return {
-      land: true, x, stageY, ts, t1, t2, chipY, ms, tel1, tel2: tel1 + ms * 1.6,
-      sentY: tel1 + ms * 1.6 + 3.2 * u + ss, sentSize: ss,
-      hero, numSize: 10 * u, labSize: 1.7 * u, chipSize: 1.2 * u,
+      land: true, x, stageY: top + stage, nameY: top + name, ts, t1: top + t1, t2: top + t2, chipY: top + chipY,
+      ms, tel1: top + tel1, tel2: top + tel2, sentY: top + sentY, sentSize: ss,
+      clockSize: rpx(S, 1.5), clockY: 0.84 * H,
+      hero, numSize: 9 * u, labSize, chipSize,
       zoom: 1.25, heroZoom: 1.1, alpha: 0.24, heroAlpha: fit.al, heroBack: 0, bTilt: -0.56, bTiltHero: 0.06 - fit.al,
       ringY: 0.47 * H, heroRingY: fit.cy
     };
   }
-  // portrait: label and title anchored at the top, the readouts at the bottom,
+  // portrait: index, name and title anchored at the top, the readouts at the bottom,
   // the hero and its orbit in the space between
   const x = 0.07 * W;
   const ts = Math.min(11 * u, 0.068 * H);
-  const stageY = 0.1 * H + 1.2 * u;
-  const t1 = stageY + 3.6 * u + ts * 0.74, t2 = t1 + ts * 0.97;
-  const chipY = t2 + 2.2 * u, topEnd = chipY + 5.2 * u;
-  const ss = 4.6 * u, ms = 2.5 * u;
+  const labSize = rpx(S, 2.3), chipSize = rpx(S, 2);
+  const stageY = 0.1 * H + 1.2 * u, nameY = stageY + labSize * 1.75;
+  const t1 = nameY + 3.2 * u + ts * 0.74, t2 = t1 + ts * 0.97;
+  const chipY = t2 + 2.2 * u, topEnd = chipY + chipSize * 2.6;
+  const ss = Math.max(4.6 * u, rpx(S, 0)), ms = rpx(S, 2.5);
   const sent2 = 0.84 * H, sentY = sent2 - ss * 1.22;
   const tel2 = sentY - ss - 2 * u, tel1 = tel2 - ms * 1.6;
   const bottomTop = tel1 - ms * 1.9 - 1.5 * u;            // clear of the chrome rule (drawn at tel1 - 1.9 ms)
@@ -161,8 +178,9 @@ function frame(S) {
   const zoom = Math.min(1.05, (bot0 - top0) / (l1 - h1));
   const ringY = clamp(hero.cy, top0 - h1 * zoom, bot0 - l1 * zoom);
   return {
-    land: false, x, stageY, ts, t1, t2, chipY, ms, tel1, tel2, sentY, sentSize: ss,
-    hero, numSize: 16 * u, labSize: 2.3 * u, chipSize: 2 * u,
+    land: false, x, stageY, nameY, ts, t1, t2, chipY, ms, tel1, tel2, sentY, sentSize: ss,
+    clockSize: rpx(S, 2.1), clockY: stageY,
+    hero, numSize: 16 * u, labSize, chipSize,
     zoom, heroZoom: zH, alpha: ALPHA, heroAlpha: fit.al, heroBack: 0, bTilt: -1.1, bTiltHero: -fit.al,
     ringY, heroRingY: fit.cy
   };
@@ -385,7 +403,7 @@ function drawHero(ctx, S, img, x, y, w, h, o) {
   ctx.stroke();
   // the six positions: a dark index tag on each panel, one per sixteenth
   if (o.six && o.tags > 0 && o.tagAlpha > 0) {
-    const ts = Math.max(9, 1.05 * S.u * Math.min(1.25, w / (40 * S.u)));
+    const ts = rpx(S, 1.05 * Math.min(1.25, w / (40 * S.u)));
     ctx.font = `600 ${Math.round(ts)}px ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace`;
     ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
     o.six.forEach((b, i) => {
@@ -555,19 +573,57 @@ export default {
 };
 
 // ── the words ─────────────────────────────────────────────────────────────
+const IDX = 'STAGE 04 OF 06', NAME = 'CHARACTER';
+/* the reel's stage index: monospace set glyph by glyph on a fixed advance, tracked wide
+   (as /process sets "STAGE 04 OF 06"), typed on with a block caret while it moves */
+const TRACK = 0.28;
+function spacedAdv(ctx, size) {
+  ctx.save(); ctx.font = `600 ${Math.round(size)}px ${MONO}`;
+  const a = ctx.measureText('M').width + TRACK * size;
+  ctx.restore();
+  return a;
+}
+function spacedW(ctx, str, size) { return spacedAdv(ctx, size) * str.length - TRACK * size; }
+function spaced(ctx, str, x, y, size, o = {}) {
+  const r = clamp(o.reveal ?? 1), n = Math.floor(r * str.length + 1e-6);
+  if (r <= 0) return;
+  const adv = spacedAdv(ctx, size);
+  ctx.save();
+  ctx.font = `600 ${Math.round(size)}px ${MONO}`;
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  ctx.fillStyle = o.color || UI.muted;
+  let cx = x;
+  for (let i = 0; i < n; i++) { if (str[i] !== ' ') ctx.fillText(str[i], cx, y); cx += adv; }
+  if (r < 1) { ctx.fillStyle = UI.ink; ctx.fillRect(cx, y - size * 0.8, size * 0.55, size * 0.95); }
+  ctx.restore();
+}
+
 function drawCopy(ctx, S, F, t, phase) {
   const { u } = S;
   const sink = seg(t, RELEASE + 0.15, 6.62);               // the sentence sinks behind its sill once the title has split,
                                                            // gone before the returning orbit sweeps the text column
   const TT = { size: F.ts, weight: 800, tracking: -0.01 };
   const titleW = layout(ctx, 'IDENTITY', TT).width;
-  // station label and numeral, written on as the orbit opens: the /process card's top row
-  const lab = seg(t, 0.62, 1.2) * (1 - seg(t, 6.5, 6.85));
-  if (lab > 0) {
-    text(ctx, S, 'STAGE 04 OF 06', F.x, F.stageY, { size: F.labSize, weight: 700, tracking: 0.24, color: UI.muted, reveal: lab, window: 0.25, rise: 0.5 * u });
-    const na = seg(t, 0.8, 1.6, outCubic) * (1 - seg(t, 6.45, 6.9));
-    const nx = F.land ? F.x + titleW : 0.93 * S.W, ny = F.land ? F.stageY + 0.3 * u : F.t2;
-    numeral(ctx, S, '04', nx, ny, F.numSize, { align: 'right', metal: true, phase: phase * 0.5, alpha: na });
+  // the station lockup, typed on as the orbit opens (the /process card's top row): the index
+  // in the reel's spaced mono, the stage's name under it in ink, the outlined numeral beside
+  // them. The name stays a mono label so IDENTITY HOLDS. is the only headline. Out, the name
+  // un-types first, then the index.
+  const idxR = seg(t, 0.62, 1.02) * (1 - seg(t, 6.52, 6.84));
+  const nameR = seg(t, 0.9, 1.22) * (1 - seg(t, 6.4, 6.64));
+  spaced(ctx, IDX, F.x, F.stageY, F.labSize, { reveal: idxR, color: UI.muted });
+  spaced(ctx, NAME, F.x, F.nameY, F.labSize, { reveal: nameR, color: UI.ink });
+  const na = seg(t, 0.8, 1.6, outCubic) * (1 - seg(t, 6.45, 6.9));
+  if (na > 0) {
+    // landscape: right of the index block (never over it), flush with the title's right edge
+    // when there is room; portrait: beside the title, at the frame's right margin
+    let nx = 0.93 * S.W, ny = F.t2;
+    if (F.land) {
+      ctx.save(); ctx.font = `900 ${Math.round(F.numSize)}px 'Archivo', sans-serif`;
+      const nw = ctx.measureText('04').width;
+      ctx.restore();
+      nx = F.x + Math.max(titleW, spacedW(ctx, IDX, F.labSize) + Math.max(2.4 * u, 1.6 * F.labSize) + nw); ny = F.nameY;
+    }
+    numeral(ctx, S, '04', nx, ny + (1 - na) * 0.8 * u, F.numSize, { align: 'right', metal: true, phase: phase * 0.5, alpha: na });
   }
   // IDENTITY HOLDS. — the hit on bar 2: its cold and warm echoes lock into one on the beat
   if (t > HERO_A_AT - 0.34) {
@@ -607,13 +663,13 @@ function drawCopy(ctx, S, F, t, phase) {
     ctx.fillRect(F.x, ry, rw, Math.max(1, 0.1 * u));
     ctx.restore();
   }
-  // the mission clock
+  // the mission clock (running telemetry, in the faint ink: quiet by colour, not by size)
   const ck = seg(t, 0.9, 1.4) * (1 - seg(t, 6.5, 6.85));
   if (ck > 0) {
-    ctx.save(); ctx.font = `400 ${Math.round(F.ms)}px ${MONO}`;
+    ctx.save(); ctx.font = `400 ${Math.round(F.clockSize)}px ${MONO}`;
     const str = stamp(S.t), cw = ctx.measureText(str).width;
     ctx.restore();
-    mono(ctx, S, str, F.land ? F.x : 0.93 * S.W - cw, F.land ? 0.86 * S.H : F.stageY, { size: F.ms, color: UI.faint, alpha: ck });
+    mono(ctx, S, str, F.land ? F.x : 0.93 * S.W - cw, F.clockY, { size: F.clockSize, color: UI.faint, alpha: ck });
   }
   // which world the docked sheet is from
   for (const h of HEROES) {

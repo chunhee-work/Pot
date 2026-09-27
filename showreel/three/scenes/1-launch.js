@@ -33,7 +33,8 @@
                 KUALA LUMPUR and NEXT · STAGE 01 OF 06 type on (done by 3.38)
      3.13–3.44  MISSION · 6 STAGES · 1 OPERATOR types on (mono)
      3.44–3.96  LAND OF HOPE — HOW IT'S MADE types on alone, each glyph arriving hot
-     4.06–4.56  CHUN HEE tracks in between two chrome rules — the card is complete
+     4.06–4.38  CHUN HEE tracks in between two chrome rules, settling on beat 7 —
+                the card is complete
      3.96–5.60  held and read (still at 4.95); the stars drift toward us
      5.00–6.25  bar 3: warp spools up — the stars streak, the lens shivers
      5.60–6.35  the HUD streaks away: the title rushes past along its own
@@ -47,9 +48,13 @@
 
    Portrait: the pill runs at the site's phone size and scrolls its links under
    a fade (as the site's nav does below 620px), bringing Process to the centre;
-   the title stacks LAND OF HOPE over — HOW IT'S MADE. */
+   the title stacks LAND OF HOPE over — HOW IT'S MADE, and each corner label
+   stacks its key over its value (HEADING types out right to left above PROCESS).
+   Every word meant to be read is set at 10 CSS px or more at any size (readPx):
+   where that floor lifts the HUD's labels, the card's small type and its gaps
+   grow with them, and the labels hold a margin inside the text-safe area. */
 import { clamp, lerp, seg, bezier, navE, siteE, outCubic, outQuad, inQuad, inCubic, inOutQuad, inOutCubic, outExpo, smoothstep, rng, text, layout, FONT } from '../../kit.js';
-import { seam, space, wire, metal, pill, NAV, mono, stamp, UI, MONO } from '../kit3.js';
+import { seam, space, wire, metal, pill, NAV, mono, stamp, readPx, UI, MONO } from '../kit3.js';
 import { BEAT, BAR } from '../palette.js';
 
 const B = BEAT, Q = BEAT / 4;                 // a beat, a sixteenth
@@ -69,7 +74,7 @@ const T_FLY = 2.72;                           // Process lifts off the opening p
 const T_LOCK = 5 * B;                         // …and lands as the heading as the frame locks, beat 6 (3.125)
 const T_EYEBROW = [T_LOCK, 5.5 * B];          // the HUD boots on the lock…
 const T_TYPE = 5.5 * B, CPS = 52;             // …then the title types alone, 3.44–3.96
-const T_NAME = 6.5 * B;                       // 4.06
+const T_NAME = 6.5 * B, T_NAMED = 7 * B;      // 4.06, settled on beat 7 (4.375): the card is whole
 const T_WARP = 2 * BAR, T_JUMP = 10 * B;      // 5.0 spool-up, 6.25 the jump
 const T_AWAY = [5.6, 6.35];                  // the HUD streaks away
 const T_BACK = [6.45, 7.25];                  // the thread re-forms
@@ -108,13 +113,17 @@ function widthOf(ctx, str, o) {
 
 // ── geometry, per frame size ───────────────────────────────────────────────
 const GEO = new Map();
+// keyed by everything the geometry reads: the frame and its pixel ratio (the type
+// floor is 10 CSS px, so the same backing size at another dpr sets other sizes)
+const sizeKey = S => S.W + 'x' + S.H + '@' + S.dpr;
 function geo(ctx, S) {
-  const key = S.W + 'x' + S.H;
+  const key = sizeKey(S);
   let G = GEO.get(key);
   if (G) return G;
   const { W, H, u } = S, tall = H > W;
-  // the pill: the site's nav (12.5px links in a 60px pill) at the reel's scale
-  const size = tall ? 2.75 * u : 2.05 * u;
+  // the pill: the site's nav (12.5px links in a 60px pill) at the reel's scale —
+  // never under the 10 CSS px the reel reads at (a phone held sideways would set it at 8)
+  const size = readPx(S, tall ? 2.75 : 2.05);
   const widths = NAV.map(s => widthOf(ctx, s, { size, weight: 600, tracking: 0.02 }));
   const gap = size * 1.9;
   const strip = widths.reduce((a, b) => a + b, 0) + gap * (NAV.length - 1);
@@ -131,11 +140,16 @@ function geo(ctx, S) {
   // the viewport the pill opens into
   const vx0 = W * (tall ? 0.05 : 0.042), vy0 = H * (tall ? 0.1 : 0.085);
   const vw = W - 2 * vx0, vh = H * (tall ? 0.765 : 0.79), vr = (tall ? 3.2 : 2.6) * u;
-  // type
-  const lab = (tall ? 2.05 : 1.5) * u;                     // HUD micro-labels
-  const monoS = (tall ? 2.3 : 1.7) * u;
-  const nameS = (tall ? 2.3 : 1.8) * u;
-  let tA = tall ? 8.4 * u : 5.2 * u, tB = tall ? 4.1 * u : tA;
+  // type. The HUD's micro-labels are the smallest copy meant to be read, so they
+  // take the floor (10 CSS px); where the floor lifts them (a phone, a phone held
+  // sideways) the rest of the small type and the gaps that set it grow with them
+  // by the same factor `g`, so the card keeps its proportions instead of flattening
+  // into one size. The title only needs to stay a clear step above them.
+  const labK = tall ? 2.05 : 1.5;
+  const lab = readPx(S, labK), g = lab / (labK * u);          // g = 1 wherever k·u already reads
+  const monoS = (tall ? 2.3 : 1.7) * u * g;                   // the mission line
+  const nameS = (tall ? 2.3 : 1.8) * u * g;                   // the operator
+  let tA = tall ? 8.4 * u : Math.max(5.2 * u, 2.6 * lab), tB = tall ? 4.1 * u : tA;
   const fA = s => ({ font: 'serif', size: s, tracking: 0.05 });
   const fB = s => ({ size: s, weight: 300, tracking: tall ? 0.1 : 0.06 });
   let wA = widthOf(ctx, TITLE_A, fA(tA)), wB = widthOf(ctx, TITLE_B, fB(tB));
@@ -150,8 +164,12 @@ function geo(ctx, S) {
   const space_ = tall ? 0 : tA * 0.34;
   G = {
     tall, size, widths, gap, strip, rel, pad, pw, ph, rim, scroll, strip0, strip1, stripEnd,
-    vx0, vy0, vw, vh, vr, lab, monoS, nameS, tA, tB, wA, wB, space: space_,
+    vx0, vy0, vw, vh, vr, lab, g, monoS, nameS, tA, tB, wA, wB, space: space_,
     fA: fA(tA), fB: fB(tB),
+    // on an upright frame two corner labels side by side would all but meet, so
+    // each stacks its key over its value
+    stack: tall,
+    eyeGap: (tall ? 4.2 : 3.6) * u * g, nameGap: (tall ? 6.2 : 5) * u * g,
     wire: Math.max(1.5, 0.32 * u)
   };
   if (!fontsIn()) return G;                   // measured in a fallback face: use it, never keep it
@@ -438,28 +456,41 @@ function tape(ctx, S, cx, y, t, alpha) {
 }
 
 /** a HUD micro-label: a faint key, a brighter value — typed on left to right
-    (`reveal`), or key and value separately (`o.key`, `o.val`; `o.order` for the key) */
+    (`reveal`), or key and value separately (`o.key`, `o.val`; `o.order` for the key).
+    (x, y) is the value's baseline; on an upright frame (G.stack) the key sits a
+    line above it instead of before it, each line aligned on its own. */
 const labelFont = G => ({ size: G.lab, weight: 700, tracking: 0.2 });
+const labelLead = G => G.lab * 1.55;          // key line to value line, stacked
 function label(ctx, S, G, [key, val], x, y, reveal, o = {}) {
   const f = labelFont(G);
-  const k = key + ' · ', n = k.length + val.length, r = reveal * n;
+  const k = G.stack ? key : key + ' · ', n = k.length + val.length, r = reveal * n;
   const rk = o.key ?? clamp(r / k.length), rv = o.val ?? clamp((r - k.length) / val.length);
   if (rk <= 0 && rv <= 0) return;
-  const wk = layout(ctx, k, f).width + G.lab * 0.2, wv = layout(ctx, val, f).width;
-  const x0 = o.align === 'right' ? x - wk - wv : x;
+  const wk = layout(ctx, k, f).width + (G.stack ? 0 : G.lab * 0.2), wv = layout(ctx, val, f).width;
+  const right = o.align === 'right';
+  let kx, ky = y, vx;
+  if (G.stack) { kx = right ? x - wk : x; ky = y - labelLead(G); vx = right ? x - wv : x; }
+  else { kx = right ? x - wk - wv : x; vx = kx + wk; }
   const base = { ...f, window: 0.2, rise: 0, ease: outQuad, alpha: o.alpha ?? 1 };
-  if (rk > 0) text(ctx, S, k, x0, y, { ...base, color: '#85837b', reveal: rk, order: o.order });
-  if (rv > 0) text(ctx, S, val, x0 + wk, y, { ...base, color: '#cfcdc6', reveal: rv });
+  if (rk > 0) text(ctx, S, k, kx, ky, { ...base, color: '#85837b', reveal: rk, order: o.order });
+  if (rv > 0) text(ctx, S, val, vx, y, { ...base, color: '#cfcdc6', reveal: rv });
   // a value that arrives hot cools to its colour (the site's .35s colour ease)
-  if (o.hot > 0.004) text(ctx, S, val, x0 + wk, y, { ...base, color: UI.ink, alpha: (o.alpha ?? 1) * o.hot });
+  if (o.hot > 0.004) text(ctx, S, val, vx, y, { ...base, color: UI.ink, alpha: (o.alpha ?? 1) * o.hot });
 }
 
-/** where the HUD sits in the finished viewport */
+/* Where the HUD sits in the finished viewport: tucked into its corners, but
+   never outside the frame's text-safe area (x 5–95 %, y 8–86 %) — held a margin
+   inside it (x ≥ 6.8 %, cap line ≥ 10.5 %, baseline ≤ 84 %), whatever the size.
+   `line` is the top edge's baseline (the clock, and the key of a stacked label);
+   `top` and `bot` are the values' baselines. */
 function hudGeo(S, G) {
-  const u = S.u, x0 = S.W / 2 - G.vw / 2, y0 = G.vy0, inX = (G.tall ? 3.2 : 3.4) * u;
+  const { W, H, u } = S, x0 = W / 2 - G.vw / 2, y0 = G.vy0;
+  const xl = Math.max(x0 + (G.tall ? 3.2 : 3.4) * u, 0.068 * W), cap = 0.72 * G.lab;
+  const line = Math.max(y0 + 3.4 * u + cap, 0.105 * H + cap);
+  const lead = G.stack ? labelLead(G) : 0;
   return {
-    x0, y0, w: G.vw, h: G.vh, xl: x0 + inX, xr: x0 + G.vw - inX,
-    top: y0 + (G.tall ? 5.2 : 4.5) * u, bot: y0 + G.vh - (G.tall ? 3.8 : 3.2) * u
+    x0, y0, w: G.vw, h: G.vh, xl, xr: W - xl, line,
+    top: line + lead, bot: Math.min(y0 + G.vh - (G.tall ? 3.8 : 3.2) * u, 0.84 * H)
   };
 }
 
@@ -477,7 +508,7 @@ function monoWidth(ctx, str, size) {
 function hud(ctx, S, G, t, k) {
   const u = S.u, a = 1 - k;
   if (a <= 0) return;
-  const { x0, y0, w, h, xl, xr, top, bot } = hudGeo(S, G), cx = x0 + w / 2;
+  const { x0, y0, w, h, xl, xr, line, top, bot } = hudGeo(S, G), cx = x0 + w / 2;
   ticks(ctx, S, x0, y0, w, h, seg(t, T_LOCK - 0.12, T_LOCK, outCubic), a, pulse(t, T_LOCK, 0.02, T_LOCK + 0.45));
   if (!G.tall) tape(ctx, S, cx, y0 + 2.1 * u, t, seg(t, T_LOCK - 0.04, T_LOCK + 0.2) * a);
   const clock = stamp(S.t);
@@ -495,15 +526,15 @@ function hud(ctx, S, G, t, k) {
     for (const [s, x, y, o, dx, dy] of items) {
       label(ctx, S, G, s, x + dx * fling, y + dy * fling * 0.55, o.reveal ?? 1, { ...o, alpha: a * ga });
     }
-    // the mission clock, top right
+    // the mission clock, top right, on the top edge's line
     const ca = seg(t, T_LOCK, T_LOCK + 0.06) * a * ga;
     if (ca > 0) {
-      const cx2 = xr - cw + fling, cy2 = top - fling * 0.55;
+      const cx2 = xr - cw + fling, cy2 = line - fling * 0.55;
       mono(ctx, S, clock, cx2, cy2, { size: G.lab * 1.08, color: UI.ink, alpha: ca });
       // a small live dot, pulsing on the beat
       const beat = 1 - ((S.t / B) % 1);
       ctx.save(); ctx.globalAlpha *= ca * (0.35 + 0.65 * beat * beat);
-      ctx.fillStyle = UI.ember; ctx.beginPath(); ctx.arc(cx2 - 1.2 * u, cy2 - G.lab * 0.36, 0.32 * u, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = UI.ember; ctx.beginPath(); ctx.arc(cx2 - 1.2 * u * G.g, cy2 - G.lab * 0.36, 0.32 * u * G.g, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
   }
@@ -546,8 +577,12 @@ function flyer(ctx, S, G, t) {
   const qx = lerp(P0.x, P1.x, 0.12), qy = P1.y;                // drop, then dock along the baseline
   const x = ie * ie * P0.x + 2 * ie * e * qx + e * e * P1.x;
   const y = ie * ie * P0.y + 2 * ie * e * qy + e * e * P1.y;
-  const hs = lerp(G.size * SC0, G.lab, e);                      // its size, in frame px
-  const s0 = hs / G.size, s1 = hs / G.lab;
+  // its size in frame px, from the link's (as the pill set it) to the label's; the
+  // scales are taken against the whole-pixel sizes the fonts are actually set at,
+  // so it never dips under either end
+  const f0 = Math.round(G.size), f1 = Math.round(G.lab);
+  const hs = lerp(f0 * SC0, f1, e);
+  const s0 = hs / f0, s1 = hs / f1;
   ctx.save();
   ctx.translate(x, y);
   ctx.fillStyle = UI.ink; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
@@ -642,19 +677,19 @@ function titleBlock(ctx, S, G, cx, cy, t, alpha) {
   }
   typeRuns(ctx, S, runs, t, T_TYPE, CPS);
   // the eyebrow, typed in mono above
-  const top = runs[0].y - capA - (G.tall ? 4.2 : 3.6) * u;
+  const top = runs[0].y - capA - G.eyeGap;
   const mw = monoWidth(ctx, EYEBROW, G.monoS);
   const er = seg(t, T_EYEBROW[0], T_EYEBROW[1]);
   mono(ctx, S, EYEBROW, cx - mw / 2, top, { size: G.monoS, color: '#bdbbb3', alpha, reveal: er, cursor: er < 1 });
   // the operator, between two rules
   const last = runs[runs.length - 1];
-  const ny = last.y + (G.tall ? 6.2 : 5) * u;
-  const np = seg(t, T_NAME, T_NAME + 0.5, siteE);
+  const ny = last.y + G.nameGap;
+  const np = seg(t, T_NAME, T_NAMED, siteE);
   if (np > 0) {
     const trk = lerp(0.6, 0.32, np);
     const nw = layout(ctx, NAME, { size: G.nameS, weight: 700, tracking: trk }).width;
     text(ctx, S, NAME, cx, ny, { size: G.nameS, weight: 700, tracking: trk, color: UI.ink, align: 'center', alpha: alpha * seg(t, T_NAME, T_NAME + 0.25) });
-    const gapx = nw / 2 + 2 * u, rl = (G.tall ? 7 : 5) * u * np;
+    const gapx = nw / 2 + 2 * u * G.g, rl = (G.tall ? 7 : 5) * u * np;
     ctx.save();
     ctx.globalAlpha *= alpha * 0.9;
     const yl = ny - G.nameS * 0.36;
@@ -701,12 +736,12 @@ function stars(ctx, S, t) {
    copies without setting the type nine times a frame. */
 const CARD = new Map();
 function titleCard(S, G) {
-  const key = S.W + 'x' + S.H;
+  const key = sizeKey(S);
   let C = CARD.get(key);
   if (C) return C;
   const keep = fontsIn();                     // set in a fallback face, it is drawn for this frame only
   const u = S.u, even = x => 2 * Math.ceil(x / 2);
-  const w = even(Math.min(S.W, G.vw * 0.96)), h = even(G.tall ? 44 * u : 26 * u);
+  const w = even(Math.min(S.W, G.vw * 0.96)), h = even((G.tall ? 44 : 26) * u * G.g);
   const tcy = G.vy0 + G.vh / 2;
   C = document.createElement('canvas');
   C.width = w; C.height = h;

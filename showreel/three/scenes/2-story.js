@@ -4,16 +4,17 @@
    The chrome thread lies in the camera's own plane, so from the seam it reads
    as a flat line; everything here opens out of it and closes back into it.
      0.00–0.10  the seam
-     0.10–2.45  arrival: the camera brakes in from far out (the stars zoom and
-                barely streak, a slight bank); the stage card and, half a beat
-                later, the glass pane unfold out of the thread, their chrome
-                edges splitting away from it
+     0.10–2.45  arrival: the camera brakes in from out along the thread (the
+                stars zoom and barely streak, a slight bank); from 0.14 the stage
+                card's chrome edges catch the light on the thread (they read by
+                0.2) and it, then half a beat later the glass pane, unfold out
+                of the thread, the edges splitting away from it
      1.10–2.30  the card lands on the beats: STAGE 01 OF 06, the outlined 01,
                 Story, the CLAUDE chip, the copy
      1.56–3.55  the story bible streams into the pane like telemetry — its
                 header, then its contents, one row a 32nd
      3.75       the first row, 0 · LOGLINE, is selected; the rest fall away and
-                the HUD goes (3.86–4.00)
+                the HUD goes (3.86–4.00); on a phone the pane scrolls to it
      3.90–5.00  the camera pushes into the pane and brakes on the logline as
                 its last word lands on bar 3; the card steps back
      5.00–6.45  the logline, large and still
@@ -23,24 +24,32 @@
                 as a glint by 7.34
      7.38–7.50  the seam
    The thread's highlights run the whole chapter and come to rest on a whole
-   number of cycles, so the last frame is exactly the rest frame. */
+   number of cycles, so the last frame is exactly the rest frame.
+
+   Type meant to be read is never under 10 CSS px at rest, at any frame size:
+   the station is laid out in world units, so each read size is kit3's readPx()
+   taken at the station's own scale. A frame too short for the whole bible at
+   that size gives up whole lines of it (see FIT) rather than shrinking it. */
 import { FONT, clamp, lerp, seg, linear, outCubic, outExpo, inOutQuad, inOutCubic, bezier } from '../../kit.js';
 import { camera } from '../../space.js';
-import { seam, space, wire, wireAcross, metal, card, glass, chip, numeral, mono, stamp, UI, MONO } from '../kit3.js';
+import { seam, space, wire, wireAcross, metal, card, glass, chip, numeral, mono, stamp, readPx, UI, MONO } from '../kit3.js';
 import { BEAT } from '../palette.js';
 
 const B = BEAT;
 const D = 100;            // at this distance (and σ = 1) one world unit is one S.u
-const FAR = 1.8;          // the arrival starts this many times further out
+const FAR = 1.3;          // the arrival starts this many times further out (close enough to read from lt 0.2)
+const FAR_OUT = 1.8;      // the exit pulls back this far, so the whole station is seen closing
 const Z_CODE = 340;       // the code panel's plane, far behind the station
+const STILL = 3.85;       // the hero frame (and the pose the far code plate is placed for)
+const DRIFT = 1.05;       // how much the slow drift in (1.6–4.4) has grown the station by the still
 
 // ── the clock, local seconds ──────────────────────────────────────────────
 const T = {
   wake: 0.1, settle: 2.45,
-  card: [0.3, 1.3], pane: [0.3 + B / 2, 1.3 + B / 2],
+  card: [0.14, 1.3], pane: [0.14 + B / 2, 1.3 + B / 2],
   idx: 0.94, num: 0.9, title: 1.25, chip: 1.56, copy: 1.875,
   doc: 1.56, sub: 1.72, meta: 1.875, toc: 3.125, sel: 3.75, drop: 3.86,
-  sheen: 5.25, push: [3.9, 5.0], log: [4.2, 4.64], logLen: 0.4,
+  sheen: 5.25, push: [3.9, 5.0], log: [4.2, 4.64], logLen: 0.4, scroll: [3.88, 4.3],
   exit: [6.45, 7.2], fold: { card: [6.78, 7.3], pane: [6.7, 7.22] }, glint: 7.34, gone: 7.36
 };
 
@@ -92,6 +101,22 @@ const SIZE = {
 };
 const CPS = 300;          // telemetry, characters a second
 
+// ── type meant to be read ─────────────────────────────────────────────────
+const FLOOR = 10.1;       // CSS px at rest: kit3's readPx() floor of 10, and a hair
+const READ = ['idx', 'chip', 'copy', 'doc', 'sub', 'meta', 'toc'];
+/* What a frame too short for the whole station gives up, richest first: rows
+   of the contents, a little of the logline's size (the push makes it up), then
+   whole lines of the bible's header — Runtime, then Format, then Project. The
+   first that fits at a scale where the type is still near its design size wins;
+   a frame with room to spare (a tablet) keeps everything and simply scales. */
+const FIT = [
+  { toc: 6, log: 1, drop: [] }, { toc: 5, log: 1, drop: [] }, { toc: 4, log: 1, drop: [] },
+  { toc: 4, log: 0.85, drop: [] }, { toc: 4, log: 0.85, drop: [2] }, { toc: 3, log: 0.85, drop: [2] },
+  { toc: 3, log: 0.85, drop: [2, 1] }, { toc: 3, log: 0.7, drop: [2, 1] }, { toc: 2, log: 0.7, drop: [2, 1] },
+  { toc: 2, log: 0.7, drop: [2, 1, 0] }
+];
+const CODE_PX = 7.5;      // CSS px: the far code plate is texture, never under 7 even while it arrives
+
 // ── small helpers ─────────────────────────────────────────────────────────
 const EA = bezier(0.3, 0, 0, 1);        // out of rest, then a long brake
 const EO = bezier(0.42, 0, 0.12, 1);    // a slab unfolding: the edges part, then settle
@@ -100,6 +125,11 @@ const EX = bezier(0.45, 0, 0.2, 1);     // the pull back: out ahead of the fold,
 const bump = (x, a, b) => { const s = Math.sin(Math.PI * seg(x, a, b)); return s * s; };
 const hit = (x, t0, len) => (x >= t0 && x < t0 + len ? Math.pow(1 - (x - t0) / len, 2) : 0);
 const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+/* the fine print (index, chip, copy, the row label) once the station starts to leave: the camera pulls
+   away and it drops under reading size, so it hazes back and the title, numeral and logline carry the shape */
+const finePrint = lt => 1 - 0.5 * sstep(T.exit[0], T.exit[0] + 0.3, lt);
+/* a slab's contents: in on the way up; on the way out they go as it turns edge-on */
+const contents = (lt, open) => (lt > T.exit[0] - 0.1 ? sstep(0.3, 0.8, open) : sstep(0.55, 0.97, open));
 
 let MC = null;            // a context for measuring
 function mctx() {
@@ -118,11 +148,13 @@ function wrapWords(str, maxW, measure) {
   if (line) out.push(line);
   return out;
 }
+let MC_SET = null;        // what the measuring context is set to (setting a font is the slow part)
 function measureWith(px, weight, tracking = 0, mono = false) {
   const c = mctx(), K = !mono && px < BIG ? BIG / px : 1;
+  const font = mono ? monoFont(px, weight) : sansFont(px * K, weight), ls = (tracking * px * K) + 'px', tag = font + '|' + ls;
   return s => {
-    c.font = mono ? monoFont(px, weight) : sansFont(px * K, weight); c.letterSpacing = (tracking * px * K) + 'px';
-    const w = c.measureText(s).width / K; c.letterSpacing = '0px'; return w;
+    if (MC_SET !== tag) { c.font = font; c.letterSpacing = ls; MC_SET = tag; }
+    return c.measureText(s).width / K;
   };
 }
 
@@ -139,118 +171,192 @@ function fontsIn() {
 }
 
 // ── layout, per frame size ────────────────────────────────────────────────
-let G = null;
-function geo(S) {
-  const key = S.W + 'x' + S.H + (fontsIn() ? ':f' : ':n');
-  if (G && G.key === key) return G;
-  const u = S.u, P = S.portrait;
-  const A = Math.max(S.W, S.H) / Math.min(S.W, S.H);
-  const hx = P ? 50 : 50 * A, hy = P ? 50 * A : 50;
-  const Z = P ? SIZE.p : SIZE.l;
-  const g = { key, P, hx, hy, Z };
+/** the card and the pane at scale `sig`, for one entry of FIT; read sizes floored */
+function lay(S, P, Z0, sig, cw, pw, fit) {
+  const u = S.u, Z = { ...Z0 };
+  for (const k of READ) {
+    // readPx at the station's scale, in the slab's px; fonts are set in whole px, so round up where it matters
+    const px = readPx(S, Z0[k] * sig, FLOOR) / sig;
+    Z[k] = (Math.round(px) * sig >= FLOOR * S.dpr ? px : Math.ceil(px)) / u;
+  }
   const pad = Z.pad;
 
   // the card
-  const c = { w: Z.cw };
+  const c = { w: cw };
   c.idxY = pad + Z.idx * 0.8;
   c.titleY = c.idxY + Z.g1 + Z.title * 0.72;
   c.chipY = c.titleY + Z.g2;
-  c.copy = wrapWords(COPY, (Z.cw - 2 * pad) * u, measureWith(Z.copy * u, 400));
+  c.copy = wrapWords(COPY, (cw - 2 * pad) * u, measureWith(Z.copy * u, 400));
   c.copyY = c.chipY + Z.chip * 2.6 + Z.g3 + Z.copy * 0.74;
   c.h = c.copyY + (c.copy.length - 1) * Z.copy * Z.copyLh + Z.copy * 0.3 + pad;
   c.numY = c.titleY + Z.title * 0.02;
 
   // the pane: header, the streamed bible, then its contents (where the logline opens)
-  const p = { w: Z.pw };
-  const tw = (Z.pw - 2 * pad) * u;
+  const p = { w: pw };
+  const tw = (pw - 2 * pad) * u;
   p.docY = pad + Z.doc * 0.74;
   p.subY = p.docY + Z.doc * 0.55 + Z.sub * 1.9;
   const mm = measureWith(Z.meta * u, 400, 0, true);
   p.meta = [];
   let at = 0;
-  for (const line of META) {
+  META.forEach((line, i) => {
+    if (fit.drop.includes(i)) return;
     for (const s of wrapWords(line, tw, mm)) { p.meta.push({ s, t0: at }); at += s.length / CPS + 0.025; }
     at += 0.04;
-  }
+  });
   p.metaLines = p.meta.map(m => m.s);
   p.metaChars = p.metaLines.reduce((n, s) => n + s.length, 0);
   p.metaY = p.subY + Z.sub * 0.5 + Z.meta * 2.1;
   const metaLast = p.metaY + (p.meta.length - 1) * Z.meta * Z.metaLh;
   p.div = metaLast + Z.meta * 0.3 + Z.divGap * 0.45;          // where the thread runs behind the glass
-  p.headY = metaLast + Z.divGap + Z.toc * 0.74;
-  // the contents, shrunk if a row would not fit
-  const tm = measureWith(Z.toc * u, 400, 0, true);
-  p.toc = Math.min(Z.toc, Z.toc * tw / Math.max(...TOC.map(tm)));
-  const tocLast = p.headY + (TOC.length - 1) * p.toc * Z.tocLh;
+  const ts = p.toc = Z.toc;
+  p.headY = metaLast + Z.divGap + ts * 0.74;
+  // the contents, whole rows: a row too long for the pane wraps under its own title
+  const tm = measureWith(ts * u, 400, 0, true);
+  p.rows = [];
+  let y = p.headY;
+  for (const s of TOC.slice(0, fit.toc)) {
+    const k = s.indexOf(' · ') + 3, head = s.slice(0, k), ind = tm(head);
+    const lines = wrapWords(s.slice(k), tw - ind, tm).map((t, j) => ({ s: j ? t : head + t, dx: j ? ind / u : 0, dy: j * ts * Z.tocLh }));
+    p.rows.push({ y, lines });
+    y += lines.length * ts * Z.tocLh;
+  }
+  const tocLast = y - ts * Z.tocLh;
   // the logline, set to fit the pane
   const lines = P ? LOG.p : LOG.l;
   const lm = measureWith(Z.log * u, 800, -0.012);
   const logW0 = Math.max(...lines.map(lm)) / u;
-  p.log = Math.min(Z.log, Z.log * (Z.pw - 2 * pad) / logW0);
+  p.log = Math.min(Z.log * fit.log, Z.log * (pw - 2 * pad) / logW0);
   p.lines = lines;
   p.logW = logW0 * p.log / Z.log;
+  // on a phone the pane scrolls to the selected row, so the logline opens where the bible was
+  p.scroll = P ? Math.max(0, p.headY - (p.metaY - Z.meta * 0.8 + ts * 1.05)) : 0;
+  p.clip = p.subY + Z.sub * 0.6;                              // what scrolls goes under the header, never over it
   p.logY = p.headY + Z.logGap + p.log * 0.74;
   const logLast = p.logY + (lines.length - 1) * p.log * Z.logLh;
-  p.h = Math.max(logLast + p.log * 0.3, tocLast + p.toc * 0.4) + pad;
-  p.logTop = p.headY - p.toc * 0.8;
-  p.logBot = logLast + p.log * 0.22;
+  p.h = Math.max(logLast - p.scroll + p.log * 0.3, tocLast + ts * 0.4) + pad;
+  p.logTop = p.headY - ts * 0.8 - p.scroll;                   // where the logline sits once it has opened
+  p.logBot = logLast + p.log * 0.22 - p.scroll;
+  return { Z, c, p, H: P ? c.h + Z.gap + p.h : Math.max(c.h, p.h) };
+}
 
-  // the station in the world: hinged on the thread (y = 0, z = 0), fitted into
-  // the band between the HUD and the foot of the reading area
-  const top = -hy + 0.16 * hy + Z.hud * 3.7 + 3, bot = 0.76 * hy, band = bot - top;
+let G = null;
+function geo(S) {
+  const key = S.W + 'x' + S.H + '@' + S.dpr + (fontsIn() ? ':f' : ':n');
+  if (G && G.key === key) return G;
+  const u = S.u, P = S.portrait, uc = u / S.dpr;          // uc: CSS px per world unit at scale 1
+  const A = Math.max(S.W, S.H) / Math.min(S.W, S.H);
+  const hx = P ? 50 : 50 * A, hy = P ? 50 * A : 50;
+  const Z0 = P ? SIZE.p : SIZE.l;
+  const g = { key, P, hx, hy };
+
+  // the HUD (screen space), and the band between it and the foot of the reading area; the station
+  // fits it as seen in the still, after the slow drift in has grown it by DRIFT
+  g.hud = readPx(S, Z0.hud, FLOOR);
+  const top = (-hy + 0.16 * hy + g.hud / u * 3.7 + 3) / DRIFT, bot = 0.76 * hy / DRIFT, band = bot - top;
+  // a wide frame gives its spare width to the pane (and a little to the card): fewer wrapped lines
+  let cw = Z0.cw, pw = Z0.pw;
+  if (!P) { const extra = clamp(0.9 * 2 * hx / DRIFT - (cw + Z0.gap + pw), 0, 44); cw += 0.3 * extra; pw += 0.7 * extra; }
+  const sMax = Math.min(1, P ? 0.92 * 100 / cw : 0.9 * 2 * hx / (cw + Z0.gap + pw));
+  // the station may scale down while its floored type stays within a quarter of its design size
+  // (a tablet); past that (a phone either way up) it gives up lines instead
+  const sMin = Math.min(0.97 * sMax, FLOOR / (uc * 1.25 * Z0.meta));
+  // the richest entry of FIT that fits the band at a scale of at least sMin; within it, the largest
+  // scale that fits (the type is floored at each scale tried, so the heights are measured, not guessed)
+  const fits = (s, fit) => { const l = lay(S, P, Z0, s, cw, pw, fit); return l.H * s <= band ? l : null; };
+  let L = null, sig = sMax;
+  for (let i = 0; i < FIT.length && !L; i++) {
+    const last = i === FIT.length - 1;
+    if ((L = fits(sMax, FIT[i]))) { sig = sMax; break; }
+    let lo = last ? 0.15 : sMin, hi = sMax, Lo = fits(lo, FIT[i]);
+    if (!Lo) { if (last) { sig = lo; L = lay(S, P, Z0, lo, cw, pw, FIT[i]); } continue; }
+    for (let it = 0; it < 9; it++) {
+      const m = (lo + hi) / 2, Lm = fits(m, FIT[i]);
+      if (Lm) { lo = m; Lo = Lm; } else hi = m;
+    }
+    sig = lo; L = Lo;
+  }
+  const { Z, c, p, H } = L;
+  g.Z = Z; g.sig = sig; g.card = c; g.pane = p;
+
+  // the station in the world: hinged on the thread (y = 0, z = 0)
   if (!P) {
-    const H = Math.max(c.h, p.h), a = p.div;           // one box for both; the thread splits the pane's bible from its contents
+    const a = p.div;                                   // one box for both; the thread splits the pane's bible from its contents
     c.h = H; p.h = H; c.a = a; p.a = a;
     // the card's copy settles to its foot, below the thread
     c.copyY = H - Z.pad - Z.copy * 0.3 - (c.copy.length - 1) * Z.copy * Z.copyLh;
-    const total = Z.cw + Z.gap + Z.pw;
-    c.x = -total / 2 + Z.cw / 2; p.x = total / 2 - Z.pw / 2;
+    const total = cw + Z.gap + pw;
+    c.x = -total / 2 + cw / 2; p.x = total / 2 - pw / 2;
     c.y = 0; p.y = 0; c.z = 0; p.z = Z.paneZ;
-    g.sig = Math.min(1, 0.9 * 2 * hx / total, band / H);
-    g.rest = { x: 0, y: H / 2 - a, z: -D / g.sig };
   } else {
     // the card stands on the thread, hinged on its bottom edge; the pane hangs from it
     c.a = c.h; p.a = 0;
     c.x = 0; p.x = 0;
     c.y = -Z.gap / 2; p.y = Z.gap / 2; c.z = 0; p.z = Z.paneZ;
-    const span = c.h + Z.gap + p.h;
-    g.sig = Math.min(1, 0.92 * 100 / Z.cw, band / span);
-    const mid = (p.h - c.h) / 2;
-    g.rest = { x: 0, y: mid - (top + bot) / 2 / g.sig, z: -D / g.sig };
   }
-  g.start = { x: 0, y: 0, z: -FAR * D / g.sig };
-  g.card = c; g.pane = p;
+  // where the box's centre sits on screen: the middle of the band, lowered into any slack the
+  // code plate needs above it
+  const mid = P ? (p.h - c.h) / 2 : H / 2 - p.div;          // the box's centre, in the world
+  const slack = Math.max(0, band - H * sig);
+  const code = plate(S, g, ((top + bot) / 2 - H * sig / 2) * DRIFT, slack / 2 * DRIFT);
+  g.rest = { x: 0, y: mid - ((top + bot) / 2 + code.drop / DRIFT) / sig, z: -D / sig };
+  g.start = { x: 0, y: 0, z: -FAR * D / sig };
+  g.out = { x: 0, y: 0, z: -FAR_OUT * D / sig };           // on the thread's axis too: past FAR it is the seam's own line
 
   // the push: onto the logline, centred a touch above the middle
-  const lx = p.x - Z.pw / 2 + pad + p.logW / 2;
+  const lx = p.x - pw / 2 + Z.pad + p.logW / 2;
   const ly = p.y - p.a + (p.logTop + p.logBot) / 2;
-  const sPush = Math.min(P ? 1.3 : 2.35, 0.84 * 2 * hx / p.logW, 0.64 * 2 * hy / (p.logBot - p.logTop));
+  const cap = (P ? 1.3 : 2.35) * Z0.log / p.log;            // a logline set smaller is pushed closer, to the same size
+  const sPush = Math.min(cap, 0.84 * 2 * hx / p.logW, 0.64 * 2 * hy / (p.logBot - p.logTop));
   g.push = { x: lx, y: ly + 0.05 * hy / sPush, z: p.z - D / sPush, s: sPush };
 
-  // the code panel: far behind, placed on screen as it would sit at rest
-  const dist = Z_CODE - g.rest.z;
-  const sc = P ? [-0.26 * hx, 0.8 * hy] : [0.6 * hx, -0.63 * hy];
-  g.code = { x: g.rest.x + sc[0] * dist / D, y: g.rest.y + sc[1] * dist / D, k: dist / D };
+  // the code plate, far behind: placed in its corner as the camera sees it in the still
+  if (code.n) {
+    const cam = pose(STILL, g), d = Z_CODE - cam.z, k = (u * 100) / d;
+    g.code = { ...code, x: cam.x + (code.cx - S.W / 2) / k, y: cam.y + (code.cy - S.H / 2) / k, k: d / D, kStill: k };
+  } else g.code = null;
   G = g;
   return g;
 }
 
-// ── the code panel, rendered once per frame size ──────────────────────────
+/* The far code plate: whole lines of nav-metal.js, as many as fit the corner
+   the HUD leaves on the right above the station — never cropped, never behind
+   the glass. Returns its size in px, where it sits, and how far the station
+   must come down (within `room`, in u) to make space for it. */
+function plate(S, g, stTop, room) {
+  const u = S.u, W = S.W, H = S.H;
+  const fpx = Math.max(CODE_PX * S.dpr, (g.P ? 1.2 : 1.05) * u * Math.min(1, g.sig));
+  const c = mctx();
+  c.font = monoFont(fpx); c.letterSpacing = '0px'; MC_SET = null; const adv = c.measureText('0').width;
+  const lh = fpx * 1.4, padX = fpx * 1.3, padY = fpx * 0.7, gut = adv * 4.2;
+  const hudR = W * 0.05 + measureWith(g.hud, 700, 0.22)('STATION 01 · STORY');
+  const right = W * 0.945, left = Math.max(hudR + 3 * u, g.P ? 0 : W * 0.5);
+  const y0 = H * 0.08, gap = (g.P ? 1.4 : 2.2) * u;      // (in landscape the pane under it stands a little nearer)
+  const topPx = v => H / 2 + v * u;                       // screen-u (from the middle) to px
+  for (let n = CODE.length; n >= 3; n--) {
+    for (const hdr of [true, false]) {
+      const w = Math.ceil(padX * 2 + gut + Math.max(...CODE.slice(0, n).map(s => s.length)) * adv);
+      const h = Math.ceil(padY * 2 + lh * (n + (hdr ? 1.5 : 0)));
+      if (w > right - left) continue;
+      const need = (y0 + h + gap) - topPx(stTop);          // px the station would have to come down
+      if (need > room * u) continue;
+      return { n, hdr, fpx, lh, padX, padY, gut, w, h, cx: right - w / 2, cy: y0 + h / 2, drop: Math.max(0, need) / u };
+    }
+  }
+  return { n: 0, drop: 0 };
+}
+
+// ── the code plate, rendered once per frame size ──────────────────────────
 let CODEC = null;
-function codeArt(S) {
-  const key = S.W + 'x' + S.H;
+function codeArt(S, g) {
+  const o = g.code, key = S.W + 'x' + S.H + ':' + o.n + (o.hdr ? 'h' : '') + ':' + o.fpx;
   if (CODEC && CODEC.key === key) return CODEC;
-  const u = S.u, P = S.portrait;
-  const fpx = Math.max(7, (P ? 1.9 : 1.05) * u), lh = fpx * 1.55;
+  const { fpx, lh, padX, padY, gut, w, h } = o;
   const x = document.createElement('canvas').getContext('2d');
-  x.font = monoFont(fpx);
-  const adv = x.measureText('0').width;
-  const gut = adv * 4.2, padX = fpx * 1.4, padY = fpx * 1.3;
-  const w = Math.ceil(padX * 2 + gut + Math.max(...CODE.map(s => s.length)) * adv);
-  const h = Math.ceil(padY * 2 + lh * (CODE.length + 1.6));
   const cv = x.canvas; cv.width = w; cv.height = h;
   x.font = monoFont(fpx);
   x.textBaseline = 'alphabetic';
+  const adv = x.measureText('0').width;
   // a holographic plate: a cold wash, a hairline, corner ticks, scanlines
   x.fillStyle = 'rgba(174,203,255,.045)'; x.fillRect(0, 0, w, h);
   x.strokeStyle = 'rgba(174,203,255,.26)'; x.lineWidth = 1; x.strokeRect(0.5, 0.5, w - 1, h - 1);
@@ -260,14 +366,17 @@ function codeArt(S) {
     x.fillRect(cx - (dx < 0 ? tw : 0), cy - (dy < 0 ? tick : 0), tw, tick);
     x.fillRect(cx - (dx < 0 ? tick : 0), cy - (dy < 0 ? tw : 0), tick, tw);
   }
-  x.fillStyle = 'rgba(174,203,255,.75)';
-  x.fillText('nav-metal.js', padX, padY + fpx * 0.8);
-  x.fillStyle = 'rgba(174,203,255,.25)'; x.fillRect(padX, padY + fpx * 1.35, w - 2 * padX, 1);
-  CODE.forEach((s, i) => {
-    const y = padY + lh * (i + 1.6) + fpx * 0.8;
+  let y = padY + fpx * 0.8;
+  if (o.hdr) {
+    x.fillStyle = 'rgba(174,203,255,.75)';
+    x.fillText('nav-metal.js', padX, y);
+    x.fillStyle = 'rgba(174,203,255,.25)'; x.fillRect(padX, y + fpx * 0.45, w - 2 * padX, 1);
+    y += lh * 1.5;
+  }
+  CODE.slice(0, o.n).forEach((s, i) => {
     x.fillStyle = 'rgba(174,203,255,.38)';
-    x.textAlign = 'right'; x.fillText(String(CODE_FROM + i), padX + gut - adv * 1.4, y);
-    x.textAlign = 'left'; x.fillStyle = 'rgba(214,228,255,.92)'; x.fillText(s, padX + gut, y);
+    x.textAlign = 'right'; x.fillText(String(CODE_FROM + i), padX + gut - adv * 1.4, y + i * lh);
+    x.textAlign = 'left'; x.fillStyle = 'rgba(214,228,255,.92)'; x.fillText(s, padX + gut, y + i * lh);
   });
   x.fillStyle = 'rgba(0,0,0,.18)';
   for (let yy = 0; yy < h; yy += 3) x.fillRect(0, yy, w, 1);
@@ -277,10 +386,10 @@ function codeArt(S) {
 
 // ── the camera, a pure function of local time ────────────────────────────
 function pose(lt, g) {
-  const A = g.start, R = g.rest, P = g.push;
+  const A = g.start, R = g.rest, P = g.push, O = g.out;
   const a = EA(seg(lt, T.wake, T.settle));
   let x = lerp(A.x, R.x, a), y = lerp(A.y, R.y, a), z = lerp(A.z, R.z, a);
-  z += 0.05 * Math.abs(R.z) * sstep(1.6, 4.4, lt);          // a slow drift in while the bible streams
+  z += (1 - 1 / DRIFT) * Math.abs(R.z) * sstep(1.6, 4.4, lt);   // a slow drift in while the bible streams
   const pp = EP(seg(lt, T.push[0], T.push[1]));
   x = lerp(x, P.x, pp); y = lerp(y, P.y, pp); z = lerp(z, P.z, pp);
   z += 0.03 * (D / P.s) * sstep(4.9, 6.9, lt);              // and a breath closer on the logline
@@ -290,8 +399,8 @@ function pose(lt, g) {
   // eased in z alone, most of the shrink would come in its first few frames
   const pe = EX(seg(lt, T.exit[0], T.exit[1]));
   if (pe > 0) {
-    const d0 = -z, d1 = -A.z, f = pe >= 1 ? 1 : (d0 * Math.pow(d1 / d0, pe) - d0) / (d1 - d0);
-    x = lerp(x, A.x, f); y = lerp(y, A.y, f); z = lerp(z, A.z, f);
+    const d0 = -z, d1 = -O.z, f = pe >= 1 ? 1 : (d0 * Math.pow(d1 / d0, pe) - d0) / (d1 - d0);
+    x = lerp(x, O.x, f); y = lerp(y, O.y, f); z = lerp(z, O.z, f);
   }
   const roll = 0.02 * bump(lt, T.wake, 2.3) - 0.012 * bump(lt, T.exit[0], T.exit[1] + 0.02);
   return { x, y, z, roll };
@@ -467,7 +576,7 @@ function drawCard(ctx, S, g, lt, x0, y0, w, h, open, phase, dim) {
   ctx.beginPath(); ctx.moveTo(x0 + cr, y0 + 0.5); ctx.lineTo(x0 + w - cr, y0 + 0.5); ctx.stroke();
   ctx.restore();
   // dimmed while the logline holds; on a phone the card sits above it in frame, so its copy goes entirely
-  const cf = (lt > T.exit[0] - 0.1 ? sstep(0.12, 0.6, open) : sstep(0.55, 0.97, open)) * (1 - (g.P ? 1 : 0.8) * dim);
+  const cf = contents(lt, open) * (1 - (g.P ? 1 : 0.8) * dim), fine = finePrint(lt);
   if (cf <= 0.01) return;
   ctx.save(); ctx.globalAlpha *= cf;
   // the outlined numeral: its chrome outline draws on, then its fill fades up under it
@@ -479,9 +588,11 @@ function drawCard(ctx, S, g, lt, x0, y0, w, h, open, phase, dim) {
     ctx.restore();
   }
   // STAGE 01 OF 06, typed
+  ctx.save(); ctx.globalAlpha *= fine;
   const ni = Math.floor(seg(lt, T.idx, T.idx + 0.3) * IDX.length);
   const ex = monoT(ctx, IDX, x0 + pad, y0 + c.idxY * u, Z.idx * u, ni, UI.muted);
   if (ni > 0 && ni < IDX.length) caret(ctx, ex, y0 + c.idxY * u, Z.idx * u);
+  ctx.restore();
   // Story, rising from behind its sill in the site's silver
   const tr = seg(lt, T.title, T.title + 0.55);
   if (tr > 0) {
@@ -494,9 +605,9 @@ function drawCard(ctx, S, g, lt, x0, y0, w, h, open, phase, dim) {
     const cs = Z.chip * u, ch = cs * 2.6;
     ctx.save();
     ctx.translate(x0 + pad, y0 + c.chipY * u + ch / 2);
-    const k = lerp(0.85, 1, seg(lt, T.chip, T.chip + 0.5, outExpo));
+    const k = lerp(1.08, 1, seg(lt, T.chip, T.chip + 0.5, outExpo));   // it settles onto the card: never under its size
     ctx.scale(k, k);
-    chip(ctx, S, 'Claude', 0, -ch / 2, { size: cs, alpha: ca });
+    chip(ctx, S, 'Claude', 0, -ch / 2, { size: cs, alpha: ca * fine });
     ctx.restore();
   }
   // the copy, a line at a time
@@ -504,7 +615,7 @@ function drawCard(ctx, S, g, lt, x0, y0, w, h, open, phase, dim) {
   c.copy.forEach((s, i) => {
     const r = seg(lt, T.copy + i * 0.08, T.copy + i * 0.08 + 0.5, outCubic);
     if (r <= 0) return;
-    ctx.save(); ctx.globalAlpha *= r;
+    ctx.save(); ctx.globalAlpha *= r * fine;
     sans(ctx, s, x0 + pad, y0 + (c.copyY + i * Z.copy * Z.copyLh) * u + (1 - r) * cs * 0.6, cs, 400, UI.muted);
     ctx.restore();
   });
@@ -518,7 +629,7 @@ function drawPane(ctx, S, g, lt, x0, y0, w, h, open, hero) {
   ctx.fillStyle = `rgba(11,11,12,${0.8 - 0.14 * hero})`;
   ctx.beginPath(); ctx.roundRect(x0, y0, w, h, r); ctx.fill();
   glass(ctx, S, x0, y0, w, h, { r });
-  const cf = lt > T.exit[0] - 0.1 ? sstep(0.12, 0.6, open) : sstep(0.55, 0.97, open);
+  const cf = contents(lt, open);
   if (cf <= 0.01) return;
   ctx.save(); ctx.globalAlpha *= cf;
   const bible = 1 - hero;
@@ -531,6 +642,12 @@ function drawPane(ctx, S, g, lt, x0, y0, w, h, open, hero) {
     ctx.restore();
   }
   monoT(ctx, SUB, x0 + pad, y0 + p.subY * u, Z.sub * u, Math.floor(seg(lt, T.sub, T.sub + 0.18) * SUB.length), UI.faint, 0.22);
+  ctx.restore();
+
+  // below the header, the page: on a phone it scrolls to the selected row (under the header, never over it)
+  const sy = -p.scroll * u * seg(lt, T.scroll[0], T.scroll[1], inOutCubic);
+  ctx.save();
+  if (p.scroll > 0) { ctx.beginPath(); ctx.rect(x0, y0 + p.clip * u, w, h - p.clip * u); ctx.clip(); }
   // the bible, streamed through kit3's mono(); the last few characters in are still hot
   const ms = Z.meta * u;
   let shown = 0, hot = null;
@@ -539,25 +656,27 @@ function drawPane(ctx, S, g, lt, x0, y0, w, h, open, hero) {
     shown += n;
     if (n > 0 && n < m.s.length) hot = [i, n];
   });
-  if (shown > 0) {
-    mono(ctx, S, p.metaLines, x0 + pad, y0 + p.metaY * u, { size: ms, lh: Z.metaLh, color: UI.muted, reveal: (shown + 0.5) / p.metaChars, cursor: shown < p.metaChars });
+  if (shown > 0 && bible > 0.001) {
+    ctx.save(); ctx.globalAlpha *= bible;
+    mono(ctx, S, p.metaLines, x0 + pad, y0 + p.metaY * u + sy, { size: ms, lh: Z.metaLh, color: UI.muted, reveal: (shown + 0.5) / p.metaChars, cursor: shown < p.metaChars });
     if (hot) {
       const [i, n] = hot, str = p.meta[i].s, k = Math.min(3, n);
       ctx.font = monoFont(ms); ctx.fillStyle = UI.ink;
-      ctx.fillText(str.slice(n - k, n), x0 + pad + ctx.measureText(str.slice(0, n - k)).width, y0 + (p.metaY + i * Z.meta * Z.metaLh) * u);
+      ctx.fillText(str.slice(n - k, n), x0 + pad + ctx.measureText(str.slice(0, n - k)).width, y0 + (p.metaY + i * Z.meta * Z.metaLh) * u + sy);
     }
+    ctx.restore();
   }
-  ctx.restore();
 
   // its contents, a row a 32nd; the first is selected, the rest fall away
   const ts = p.toc * u, sel = seg(lt, T.sel, T.sel + 0.16, outCubic);
   const drop = seg(lt, T.drop, T.drop + 0.34, inOutCubic);
-  TOC.forEach((s, i) => {
+  p.rows.forEach((row, i) => {
     const t0 = T.toc + i * B / 8;
-    const n = Math.floor((lt - t0) * CPS * 1.3);
+    let n = Math.floor((lt - t0) * CPS * 1.3);
     if (n <= 0) return;
-    const y = y0 + (p.headY + i * p.toc * Z.tocLh) * u;
+    const y = y0 + row.y * u + sy;
     if (i === 0) {
+      const s = row.lines[0].s;
       if (sel > 0) {
         // the selection: a hairline bar sweeping in under the row
         const bw = (w - 2 * pad + ts) * sel;
@@ -566,7 +685,9 @@ function drawPane(ctx, S, g, lt, x0, y0, w, h, open, hero) {
         ctx.fillStyle = `rgba(245,244,240,${0.55 * (1 - 0.5 * hero)})`;
         ctx.fillRect(x0 + pad - ts * 0.5, y - ts * 1.05, Math.max(1, 0.18 * u), ts * 1.5);
       }
+      ctx.save(); ctx.globalAlpha *= finePrint(lt);
       const ex = typed(ctx, s, x0 + pad, y, ts, Math.min(n, s.length), sel > 0.5 ? UI.ink : UI.muted, sel > 0.5 ? 600 : 400);
+      ctx.restore();
       // the caret waits on it, blinking on the eighths, until the line comes
       if (lt >= T.sel && lt < T.log[0] + 0.12) caret(ctx, ex + ts * 0.3, y, ts, Math.floor((lt - T.sel) / (B / 2)) % 2 === 0 ? 1 : 0.15);
       return;
@@ -574,7 +695,12 @@ function drawPane(ctx, S, g, lt, x0, y0, w, h, open, hero) {
     const a = (1 - drop) * (1 - 0.35 * sel);
     if (a <= 0.01) return;
     ctx.save(); ctx.globalAlpha *= a;
-    typed(ctx, s, x0 + pad, y + drop * ts * 0.9 * (1 + i * 0.25), ts, Math.min(n, s.length), UI.faint);
+    const fall = drop * ts * 0.9 * (1 + i * 0.25);
+    for (const l of row.lines) {
+      if (n <= 0) break;
+      typed(ctx, l.s, x0 + pad + l.dx * u, y + l.dy * u + fall, ts, Math.min(n, l.s.length), UI.faint);
+      n -= l.s.length + 1;
+    }
     ctx.restore();
   });
 
@@ -584,10 +710,11 @@ function drawPane(ctx, S, g, lt, x0, y0, w, h, open, hero) {
     const t0 = lerp(T.log[0], T.log[1], i / (p.lines.length - 1));   // the last word lands on bar 3
     const rv = seg(lt, t0, t0 + T.logLen);
     if (rv <= 0) return;
-    const y = y0 + (p.logY + i * p.log * Z.logLh) * u;
+    const y = y0 + (p.logY + i * p.log * Z.logLh) * u + sy;
     const sheen = seg(lt, T.sheen + i * 0.09, T.sheen + i * 0.09 + 0.75, inOutQuad);
     riseLine(ctx, s, x0 + pad - ls * 0.03, y, ls, 800, silver('#fbfaf6', '#cfccc3'), rv, { tracking: -0.012, window: 0.62, sheen });
   });
+  ctx.restore();
   ctx.restore();
 }
 
@@ -597,7 +724,7 @@ export default {
   caption: 'Station 01, Story: the stage card and its story bible open out of the thread, and the logline lands.',
   assets: [],
   models: [],
-  still: 3.85,
+  still: STILL,
   sfx: [
     { at: 0.625, type: 'whoosh', gain: 0.5, len: 0.9 },   // the arrival: beat 1, as the chrome edges part
     { at: 1.25, type: 'sub', gain: 0.6 },         // the card locks
@@ -608,7 +735,7 @@ export default {
     { at: 6.875, type: 'whoosh', gain: 0.45, len: 0.9 }  // the station pulls back and folds away: beat 11, spanning 6.43–7.33
   ],
   // (the layout only once the type is in: it measures it; draw() rebuilds it otherwise)
-  prepare(S) { if (fontsIn()) geo(S); codeArt(S); },
+  prepare(S) { if (fontsIn()) { const g = geo(S); if (g.code) codeArt(S, g); } },
   draw(ctx, S) {
     const lt = S.lt;
     if (lt <= T.wake || lt >= T.gone + 0.02) { seam(ctx, S); return; }
@@ -618,7 +745,7 @@ export default {
 
     // stars: zoom with the dolly, streak a little on the arrival, bank with the roll
     const speed = Math.abs(pose(lt + 0.02, g).z - pose(lt - 0.02, g).z) / 0.04 / Math.abs(g.rest.z);
-    const zoom = Math.pow(g.start.z / cp.z, 0.3);
+    const zoom = Math.max(1, Math.pow(g.start.z / cp.z, 0.45));   // past FAR (the exit) the field is the seam's
     ctx.save();
     if (cp.roll) { ctx.translate(W / 2, H / 2); ctx.rotate(cp.roll); ctx.translate(-W / 2, -H / 2); }
     space(ctx, S, {
@@ -634,13 +761,13 @@ export default {
     const hero = sstep(T.push[0], T.push[1] - 0.25, lt);
     // the card steps back while the logline holds, and comes back up as the camera pulls out to watch it fold
     const dimC = hero * (1 - sstep(T.exit[0], T.exit[0] + 0.35, lt));
-    // the code panel, far behind, dim
-    const ca = sstep(0.7, 1.7, lt) * (1 - sstep(6.3, 7.0, lt)) * (1 - 0.55 * hero);
+    // the code plate, far behind in its corner, dim; it drifts up a hair, and goes with the HUD
+    const ca = g.code ? sstep(0.7, 1.7, lt) * (1 - sstep(T.drop, T.push[0] + 0.3, lt)) : 0;
     if (ca > 0) {
-      const art = codeArt(S);
-      const q = cam.project(g.code.x + lt * 4 * g.code.k, g.code.y - lt * 0.8 * g.code.k, Z_CODE);
+      const art = codeArt(S, g);
+      const q = cam.project(g.code.x, g.code.y - (lt - STILL) * 0.25 * g.code.k, Z_CODE);
       if (q) {
-        const k = q.k / (S.u * 100 / (Z_CODE - g.rest.z));   // 1 at rest
+        const k = q.k / g.code.kStill;                       // 1 in the still
         ctx.save(); ctx.globalAlpha = 0.34 * ca;
         ctx.translate(q.x, q.y); if (cp.roll) ctx.rotate(cp.roll); ctx.scale(k, k);
         ctx.drawImage(art.cv, -art.w / 2, -art.h / 2);
@@ -651,7 +778,7 @@ export default {
     // the thread: the camera's plane seen edge on — tilted by the bank, lifted by the camera
     const tp = cam.project(cp.x, 0, 0);
     const k0 = (S.u * 100) / Math.abs(g.start.z);
-    const wf = clamp(Math.pow(tp.k / k0, 0.45), 1, 1.8);
+    const wf = clamp(tp.k / k0, 1, 1.8);
     const base = Math.max(1.5, 0.32 * u);
     if (Math.abs(cp.roll) < 1e-6 && Math.abs(tp.y - H / 2) < 1e-6 && wf === 1 && Math.abs(phase - Math.round(phase)) < 1e-9) {
       wireAcross(ctx, S, H / 2, { phase: 0 });
@@ -681,7 +808,7 @@ export default {
     const ha = sstep(0.95, 1.45, lt) * (1 - sstep(T.drop, T.push[0] + 0.1, lt));
     if (ha > 0) {
       ctx.save(); ctx.globalAlpha = ha;
-      const hs = g.Z.hud * u, hxp = W * 0.05, hyp = H * 0.08 + hs;
+      const hs = g.hud, hxp = W * 0.05, hyp = H * 0.08 + hs;
       sans(ctx, 'STATION 01 · STORY', hxp, hyp, hs, 700, UI.muted, { tracking: 0.22 });
       ctx.font = monoFont(hs * 1.02); ctx.fillStyle = UI.faint; ctx.textAlign = 'left';
       ctx.fillText(stamp(S.t), hxp, hyp + hs * 2.1);
