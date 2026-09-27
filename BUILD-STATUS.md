@@ -1,9 +1,16 @@
-# BUILD-STATUS — `/reel`
+# BUILD-STATUS — `/reel` 和 `/reel2`
 
 ## Now
-- 无。本轮完成（00:27 MYT）
+- R2-T13：`/reel2` 开 PR 合进 staging
 
 ## Done
+- R2-T12 审查与完整测试（20:05 MYT）
+  - 审查 5 项全部修复：等待加载时不再漏出下一章音乐；第 1 章在极宽/极高屏幕上钻进「I」不再露底；没有 Web Audio 时声音按钮不再误显示已开；进度条总时长按实际读出；加了 `/reel2` 分享图 `assets/reel/og2-f0bf0bafd5.jpg`
+  - 性能：章节可在加载时预先生成缓存（`prepare`）；Code 章节不再在切点上一次生成 13 块面板，3D「G」改为固定尺寸渲染
+  - `node tests/run-all.mjs`：`/reel` 51/51、`/reel2` 52/52（输出存档于 `/tmp/claude-0/final3.txt`）
+- R2 八个章节、合成配乐、测试套件（19:02–19:36 MYT）：每章 check-chapter PASS；Toolbox 返修两次（横屏构图、竖屏出界）
+- R2-T1 播放器通用化（18:10 MYT）：两支 reel 共用一个播放器；`/reel` 完整测试 51/51 仍全过
+- R2-T2 2.5D 空间模块、`/reel2` 骨架、8 个占位章节（18:12 MYT）
 - T14 Go-Live 上 staging（00:27 MYT）
   - PR https://github.com/chunhee00/Pot/pull/1 已合并进 `staging`（合并提交 `ad075b7`），CI（Vercel）绿，无 review 评论
   - staging 部署 `dpl_53LuxDeLq2qPA5WoE2UdKiG6RJjN` 状态 READY：https://chunhee-portfolio-3ywzwmc5p-chunhee00s-projects.vercel.app/reel
@@ -33,10 +40,11 @@
 - 无（生产分支等你明确说了才上线）
 
 ## Blockers
-- 远端分支 `claude/vibrant-allen-9mlymk` 待手动删除（见上）
+- 上一轮的远端分支 `claude/vibrant-allen-9mlymk` 待你在 PR #1 页面点「Delete branch」
 
 ## Resume notes
 - 本地预览：`node tests/shoot.mjs <输出目录> <时间,…> [--size 390x844] [--debug]`
 - 单独看某一章：`/reel.html?solo=<章节 id>&debug`
 - 章节接口约定写在 `showreel/kit.js` 文件头和 `showreel/timeline.js`
 - 容器打不开 `*.vercel.app`、unpkg、esm.sh；reel 不依赖任何 CDN
+- 第二支：`node tests/shoot.mjs <目录> <时间> --page reel2`；`node tests/check-chapter.mjs <id> --page reel2`

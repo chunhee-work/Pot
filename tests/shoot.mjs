@@ -13,6 +13,7 @@ const out = args[0], times = (args[1] || '0').split(',');
 const sizeArg = (args[args.indexOf('--size') + 1] || '1280x720');
 const [vw, vh] = (args.includes('--size') ? sizeArg : '1280x720').split('x').map(Number);
 const debug = args.includes('--debug'), chrome = args.includes('--chrome');
+const PAGE = args.includes('--page') ? args[args.indexOf('--page') + 1] : 'reel';
 fs.mkdirSync(out, { recursive: true });
 
 const { server, url } = await serve();
@@ -21,7 +22,7 @@ const page = await b.newPage({ viewport: { width: vw, height: vh }, deviceScaleF
 const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('pageerror', e => errors.push(String(e)));
-await page.goto(`${url}/reel.html?paused${debug ? '&debug' : ''}`);
+await page.goto(`${url}/${PAGE}.html?paused${debug ? '&debug' : ''}`);
 await page.evaluate(() => window.__reel.allReady);
 if (!chrome) await page.addStyleTag({ content: '.chrome,#pulse,#loader{display:none!important}' });
 for (const spec of times) {

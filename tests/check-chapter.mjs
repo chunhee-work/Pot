@@ -6,6 +6,7 @@
 import { serve, browser } from './lib.mjs';
 
 const id = process.argv[2];
+const PAGE = process.argv.includes('--page') ? process.argv[process.argv.indexOf('--page') + 1] : 'reel';
 if (!id) { console.error('usage: node tests/check-chapter.mjs <chapter id>'); process.exit(2); }
 const SIZES = [[1280, 720, 1], [390, 844, 2]];
 
@@ -18,14 +19,15 @@ for (const [w, h, dpr] of SIZES) {
   const errors = [];
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push(String(e)));
-  await page.goto(`${url}/reel.html?paused`);
+  await page.goto(`${url}/${PAGE}.html?paused`);
   await page.evaluate(() => window.__reel.allReady);
   const r = await page.evaluate(id => {
     const R = window.__reel, c = R.chapters.find(c => c.id === id);
     if (!c) return { missing: true };
-    const rest = R.sampleRest();
-    const diff = a => a.reduce((s, v, i) => s + Math.abs(v - rest[i]), 0) / a.length;
-    const ends = { start: diff(R.sample(c.start + 0.001)), end: diff(R.sample(c.end - 0.001)) };
+    const restIn = R.sampleRest(c.start), restOut = R.sampleRest(c.end);
+    const diffTo = (a, rest) => a.reduce((s, v, i) => s + Math.abs(v - rest[i]), 0) / a.length;
+    const diff = a => diffTo(a, restIn);
+    const ends = { start: diffTo(R.sample(c.start + 0.001), restIn), end: diffTo(R.sample(c.end - 0.001), restOut) };
     const fxq = f => Math.max(f.ab, f.flash, f.warp, f.shake / 10, Math.abs(f.exposure - 1));
     const fx = { start: fxq(R.fxAt(c.start + 0.001)), end: fxq(R.fxAt(c.end - 0.001)) };
     const mids = [];

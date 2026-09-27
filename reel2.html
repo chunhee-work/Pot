@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Showreel Two — Chun Hee</title>
+<meta name="description" content="One take through a city of type, in eight colour blocks: the brands, the animation, the voices, the films, the code and the tools of a one-person studio — Chun Hee.">
+<meta name="theme-color" content="#1f2bff">
+<meta property="og:type" content="video.other">
+<meta property="og:title" content="Chun Hee — Showreel Two">
+<meta property="og:description" content="One person. A whole studio. One take through a city of type.">
+<meta property="og:url" content="https://chunhee-portfolio.vercel.app/reel2">
+<meta property="og:image" content="https://chunhee-portfolio.vercel.app/assets/reel/og2-f0bf0bafd5.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="CHUN HEE, with the H in electric blue — AI-Native Web3 Marketer & Content Creator, Kuala Lumpur.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-display:block;
+  src:url("assets/fonts/archivo-latin.woff2") format('woff2')}
+@font-face{font-family:'Cinzel';font-style:normal;font-weight:700;font-display:block;
+  src:url("assets/Cinzel-Bold.ttf") format('truetype')}
+
+:root{
+  --bg:#0a0a09; --ink:#f5f5f0; --dim:#a19f97; --faint:#8b8982;
+  --gold:#ff4d1a; --gold-hi:#ffffff;
+  --line:rgba(245,245,240,.14);
+  --sans:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+  --E:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:focus-visible,[role=slider]:focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px;border-radius:6px}
+
+/* stage */
+#stage{position:fixed;inset:0;background:var(--bg);cursor:pointer}
+#stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#stage canvas[data-hidden]{visibility:hidden}
+body[data-idle] #stage{cursor:none}
+
+/* chrome: the thin top labels and the transport */
+.chrome{position:fixed;left:0;right:0;z-index:5;pointer-events:none;transition:opacity .5s var(--E),transform .5s var(--E)}
+body[data-idle] .chrome{opacity:0}
+body[data-idle] .transport{pointer-events:none}
+body[data-idle] .chrome.bottom{transform:translateY(8px)}
+.chrome.top{top:0;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+  padding:max(16px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left));
+  font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.chrome.top b{color:var(--ink);font-weight:700}
+#chapterLabel{text-align:right;font-variant-numeric:tabular-nums}
+.chrome.bottom{bottom:0;padding:0 max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  background:linear-gradient(to top,rgba(10,10,9,.72),rgba(10,10,9,0));padding-top:48px}
+.transport{pointer-events:auto;display:flex;align-items:center;gap:6px}
+.tbtn{width:44px;height:44px;display:grid;place-items:center;border-radius:999px;color:var(--ink);transition:background .25s var(--E),transform .15s var(--E)}
+.tbtn:hover{background:rgba(245,245,240,.08)}
+.tbtn:active{transform:scale(.94)}
+.tbtn svg{width:20px;height:20px;display:block}
+.time{font-size:12px;font-weight:600;letter-spacing:.06em;font-variant-numeric:tabular-nums;color:var(--dim);min-width:92px;text-align:center}
+.time b{color:var(--ink);font-weight:600}
+
+/* scrubber */
+.scrubwrap{position:relative;flex:1;min-width:0}
+.scrub{position:relative;width:100%;height:44px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.scrub .track{position:relative;width:100%;height:2px;background:var(--line);border-radius:2px}
+.scrub .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--gold),var(--gold-hi));border-radius:2px;transform-origin:0 50%;width:100%;transform:scaleX(0)}
+.scrub .tick{position:absolute;top:-4px;width:1px;height:10px;background:rgba(245,245,240,.35)}
+.scrub .knob{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--gold-hi);box-shadow:0 0 0 4px rgba(216,178,106,.18);transition:transform .2s var(--E)}
+.scrub:hover .knob,.scrub[data-drag] .knob{transform:scale(1.25)}
+.chapters{position:absolute;left:0;right:0;bottom:34px;height:28px;pointer-events:auto}
+.chapters button{position:absolute;top:0;height:28px;padding:0 8px 0 0;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:visible;text-align:left;transition:color .3s var(--E)}
+.chapters button:hover{color:var(--ink)}
+.chapters button[aria-current=true]{color:var(--gold-hi)}
+
+/* big centre play glyph, shown briefly on toggle */
+#pulse{position:fixed;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(10,10,9,.5);border:1px solid rgba(243,223,168,.35);color:var(--gold-hi);z-index:6;pointer-events:none;opacity:0;transform:scale(.8)}
+#pulse svg{width:30px;height:30px}
+#pulse.on{animation:pulse .7s var(--E)}
+@keyframes pulse{0%{opacity:0;transform:scale(.8)}25%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
+
+/* loader: the thread is drawn as the reel loads */
+#loader{position:fixed;inset:0;z-index:8;display:grid;place-items:center;background:var(--bg);transition:opacity .6s var(--E)}
+#loader[data-done]{opacity:0;pointer-events:none}
+#loader .rail{position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:rgba(216,178,106,.1)}
+#loader .rail i{position:absolute;inset:0;background:linear-gradient(90deg,var(--gold),var(--gold-hi));transform-origin:0 50%;transform:scaleX(0);transition:transform .35s var(--E);box-shadow:0 0 12px rgba(243,223,168,.45)}
+#loader p{position:absolute;top:calc(50% + 22px);left:0;right:0;text-align:center;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);font-variant-numeric:tabular-nums}
+#loader p.err{color:var(--ink);letter-spacing:.04em;text-transform:none;font-size:14px;font-weight:500;padding:0 24px}
+
+/* the still version, for reduced motion (or when WebGL/2D cannot run) */
+#still{display:none;position:fixed;inset:0;overflow-y:auto;z-index:9;background:var(--bg);padding:max(28px,env(safe-area-inset-top)) 20px 64px}
+body[data-still] #still{display:block}
+body[data-still] #stage,body[data-still] .chrome,body[data-still] #loader{display:none}
+#still header{max-width:1080px;margin:0 auto 28px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+#still h1{font-size:clamp(28px,5vw,48px);font-weight:800;letter-spacing:-.02em;line-height:1}
+#still h1 span{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+#still .play{height:44px;padding:0 20px;border-radius:999px;border:1px solid rgba(243,223,168,.45);color:var(--gold-hi);font-size:13px;font-weight:600;letter-spacing:.04em}
+#still .play:hover{background:rgba(216,178,106,.1)}
+#still ol{list-style:none;max-width:1080px;margin:0 auto;display:grid;gap:28px}
+#still li figure{display:grid;gap:10px}
+#still li canvas,#still li img{width:100%;aspect-ratio:16/9;display:block;border-radius:4px;background:#111110;outline:1px solid var(--line);outline-offset:-1px}
+#still figcaption{display:flex;gap:14px;align-items:baseline;font-size:13px;color:var(--dim)}
+#still figcaption b{color:var(--ink);font-weight:700;letter-spacing:.02em}
+#still figcaption time{font-variant-numeric:tabular-nums;font-size:11px;letter-spacing:.12em;color:var(--faint)}
+
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+@media (max-width:640px){
+  .chapters{display:none}
+  .time{min-width:0;font-size:11px}
+  .chrome.top{font-size:10px;letter-spacing:.14em}
+  #hideSmall{display:none}
+}
+</style>
+</head>
+<body>
+<h1 class="sr">Chun Hee — Showreel Two</h1>
+
+<div id="stage" aria-label="Showreel two. Press space to play or pause." role="img">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <canvas id="c2d" aria-hidden="true" data-hidden></canvas>
+</div>
+
+<div class="chrome top" aria-hidden="true">
+  <div><b>Chun Hee</b> <span id="hideSmall">— Showreel Two, 2026</span></div>
+  <div id="chapterLabel">01 / 07</div>
+</div>
+
+<div class="chrome bottom">
+  <div class="transport">
+    <button class="tbtn" id="playBtn" aria-label="Pause">
+      <svg id="icoPause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      <svg id="icoPlay" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.2-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+    </button>
+    <div class="scrubwrap">
+      <nav class="chapters" id="chapters" aria-label="Chapters"></nav>
+      <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="60" aria-valuenow="0" aria-valuetext="0 seconds">
+        <div class="track"><div class="fill" id="fill"></div><div id="ticks"></div></div>
+        <div class="knob" id="knob"></div>
+      </div>
+    </div>
+    <div class="time" id="time"><b>00:00</b> / 01:01</div>
+    <button class="tbtn" id="soundBtn" aria-label="Turn sound on" aria-pressed="false">
+      <svg id="icoMute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+      <svg id="icoSound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+    </button>
+    <button class="tbtn" id="fsBtn" aria-label="Full screen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+  </div>
+</div>
+
+<div id="pulse" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.2-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></div>
+
+<div id="loader" role="status" aria-live="polite">
+  <div class="rail"><i id="loadBar"></i></div>
+  <p id="loadText">Setting the type · 0%</p>
+</div>
+
+<section id="still" aria-label="Showreel, as stills">
+  <header>
+    <h1><span>Chun Hee — Showreel Two, 2026</span>One take, eight colours.</h1>
+    <button class="play" id="playAnyway">Play the reel with motion</button>
+  </header>
+  <ol id="stillList"></ol>
+</section>
+
+<div class="sr" aria-live="polite" id="live"></div>
+
+<script type="module" src="showreel/reel-two.js"></script>
+</body>
+</html>
