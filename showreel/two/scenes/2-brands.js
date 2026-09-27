@@ -12,11 +12,11 @@
    space.js's camera only looks down +z, and its type always faces the lens;
    this chapter needs letters lying on walls and floors and turning in space,
    so it carries a small renderer of its own: a camera with yaw, pitch and
-   roll, and glyphs laid on planes in 3D. Each glyph is drawn with its own
-   affine transform (the local linear part of the perspective at its centre),
-   which stays vector at any size, and is extruded by stacking a few copies
-   between its back and front faces. Everything is a pure function of S.lt. */
-import { text, layout, seg, clamp, lerp, outExpo, inExpo, outCubic, inCubic, inOutCubic, outQuad, inQuad, outQuart, outBack, whip, FONT } from '../../kit.js';
+   roll, and glyphs laid on planes in 3D. Each glyph's face is vector type
+   drawn through one affine transform (the parallelogram that best fits its
+   perspective image); its flank is a stack of bitmap copies between its back
+   and front faces. Everything is a pure function of S.lt. */
+import { text, layout, seg, clamp, lerp, outExpo, inExpo, outCubic, inCubic, inOutCubic, outQuad, inQuad, outBack, whip, FONT } from '../../kit.js';
 import { rgb } from '../../space.js';
 import { BLOCK, BEAT, BAR } from '../palette.js';
 import { nextColour } from '../timeline.js';
@@ -24,7 +24,7 @@ import { nextColour } from '../timeline.js';
 const OR = rgb(BLOCK.signal), INK = rgb(BLOCK.ink), PAPER = rgb(BLOCK.paper);
 const CAP = 70;                      // Archivo's cap height at the 100px reference size
 const FONT100 = `900 100px ${FONT.sans}`;
-const TAU = Math.PI * 2, HALF_PI = Math.PI / 2;
+const HALF_PI = Math.PI / 2;
 
 // ── colour ────────────────────────────────────────────────────────────────
 const css = c => `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`;
@@ -127,7 +127,7 @@ function run(items, C, w, fog) {
       }
       const m = quadAffine(C, O, ex, gy, s, x0, y0, x1, y1);
       if (!m) continue;
-      const st = { m, mb: null, nl: 0, sp: 0, x0, y0, x1, y1 };
+      const st = { m, mb: null, nl: 0, x0, y0, x1, y1 };
       if (B) {
         const mb = quadAffine(C, B, ex, gy, s, x0, y0, x1, y1);
         if (mb) {
@@ -295,7 +295,7 @@ function geometry(ctx, S) {
   // camera rises through the core: the floors sweep out past the edges of the
   // frame as they pass, instead of blacking it out. The first floor's frame
   // spans most of the short side at the hit.
-  const Lg = lay('GACHA'), y0 = -17, gap = 8, K = 7, SZ = 24, firstD = 7;
+  const Lg = lay('GACHA'), y0 = -17, gap = 8, K = 6, SZ = 24, firstD = 7;
   // (its feet stay above the labels at the foot of the frame, on any upright frame)
   const outer = (P ? Math.min(0.88, 0.56 * tall) : 0.74) * firstD / 2;   // half-size of a floor's frame
   const cG = outer / (Lg.width / CAP / 2 + 0.62 + 0.5), sG = cG / CAP;
@@ -338,8 +338,8 @@ function geometry(ctx, S) {
 }
 
 // ── time ──────────────────────────────────────────────────────────────────
-const T_WHIP = 1.43, T_B = BAR, T_TILT = 3.2, T_C = 2 * BAR, T_LEVEL = 4.45, T_LEVELED = 5.0,
-  T_SPIN = T_LEVEL, T_D = 3 * BAR, T_DRIVE = 6.6, T_INK = 7.36;
+const T_WHIP = 3 * BEAT, T_B = BAR, T_TILT = 7 * BEAT, T_C = 2 * BAR, T_LEVEL = 9.5 * BEAT, T_LEVELED = 5.0,
+  T_SPIN = T_LEVEL, T_D = 3 * BAR, T_DRIVE = 14 * BEAT, T_INK = 7.36;
 const helix = k => Math.max(0, 3 - Math.abs(k - 3));
 const pulse = (lt, at, dur) => { const k = (lt - at) / dur; return k < 0 || k > 1 ? 0 : (1 - k) * (1 - k); };
 const OA = [44, 0, 0];      // where the wall's local space sits in the world (turned -90°)
@@ -511,9 +511,10 @@ function hud(ctx, S, lt) {
   const OUT = 6.8;
   const paper = css(PAPER);
 
-  // the eyebrow, with a short rule before it
+  // the eyebrow, with a short rule before it that kicks on every beat
   const rr = outExpo(seg(lt, BEAT, BEAT + 0.5)) - inExpo(seg(lt, OUT, OUT + 0.25));
-  if (rr > 0) { ctx.fillStyle = paper; ctx.fillRect(xL, yT - sz * 0.36, sz * 2.2 * rr, Math.max(1, sz * 0.14)); }
+  const kick = Math.exp(-14 * (lt % BEAT));
+  if (rr > 0) { ctx.fillStyle = paper; ctx.fillRect(xL, yT - sz * 0.36, sz * 2.2 * rr * (0.8 + 0.2 * kick), Math.max(1, sz * 0.14)); }
   label(ctx, S, 'BRAND & GROWTH', xL + sz * 3, yT, { size: sz }, lt, BEAT + 0.06, OUT);
 
   // the counter: 1 → 4, rolling over on each bar
@@ -599,7 +600,7 @@ const scene = {
 
     const items = [];
     if (lt < T_B + 0.05) wall(items, C, G, lt, fog);
-    if (lt > T_WHIP && lt < T_C + 0.05) plaza(items, C, G, lt, fog);
+    if (lt > T_WHIP && lt < T_C + 0.05) plaza(items, C, G, lt, { near: 24, far: 95 });
     if (lt > T_TILT && lt < T_LEVELED) stack(items, C, G, { near: 4, far: 25 });
     if (lt > T_LEVEL + 0.1) ark(items, C, G, lt, { near: 200, far: 300 });
 
@@ -617,7 +618,8 @@ const scene = {
     const h1 = pulse(lt, BEAT, 0.35), h2 = pulse(lt, T_B, 0.45), h3 = pulse(lt, T_C, 0.4), h4 = pulse(lt, T_D, 0.5);
     fx.ab = 0.5 * h1 + 0.8 * h2 + 0.6 * h3 + 0.9 * h4 + 0.5 * pulse(lt, 1.6, 0.3);
     fx.shake = S.u * (0.5 * h1 + 0.9 * h2 + 0.6 * h3 + 1.1 * h4);
-    const wv = (at, dur) => (lt > at && lt < at + dur ? (lt - at) / dur : 0);
+    // the shock ring starts a little way out, so it never folds the frame at its centre
+    const wv = (at, dur) => (lt > at && lt < at + dur ? lerp(0.15, 1, (lt - at) / dur) : 0);
     fx.warp = wv(T_B, 0.55) || wv(T_D, 0.6);
     fx.warpX = 0.5; fx.warpY = 0.5;
     fx.flash = 0.05 * pulse(lt, T_C, 0.16);
