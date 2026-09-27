@@ -1,9 +1,13 @@
 # BUILD-STATUS — `/reel` 和 `/reel2`
 
 ## Now
-- R2-T13：`/reel2` 开 PR 合进 staging
+- 无。`/reel2` 已上 staging（20:16 MYT）
 
 ## Done
+- R2-T13 Go-Live 上 staging（20:16 MYT）
+  - PR https://github.com/chunhee00/Pot/pull/2 已合并进 `staging`（合并提交 `c7f901c`），CI（Vercel）绿，无 review 评论
+  - staging 部署 `dpl_Av4iiosCNCoAVdvHa4zNWjUH4Hwk` 状态 READY：https://chunhee-portfolio-jvq3m59qw-chunhee00s-projects.vercel.app/reel2
+  - 本地分支已删；远端 `claude/reel-two` 删不掉（git 代理在删除时断开连接），需要在 PR #2 页面点「Delete branch」
 - R2-T12 审查与完整测试（20:05 MYT）
   - 审查 5 项全部修复：等待加载时不再漏出下一章音乐；第 1 章在极宽/极高屏幕上钻进「I」不再露底；没有 Web Audio 时声音按钮不再误显示已开；进度条总时长按实际读出；加了 `/reel2` 分享图 `assets/reel/og2-f0bf0bafd5.jpg`
   - 性能：章节可在加载时预先生成缓存（`prepare`）；Code 章节不再在切点上一次生成 13 块面板，3D「G」改为固定尺寸渲染
@@ -40,7 +44,7 @@
 - 无（生产分支等你明确说了才上线）
 
 ## Blockers
-- 上一轮的远端分支 `claude/vibrant-allen-9mlymk` 待你在 PR #1 页面点「Delete branch」
+- 两个远端分支待你手动删除：PR #1 页面的 `claude/vibrant-allen-9mlymk`、PR #2 页面的 `claude/reel-two`（各点一下「Delete branch」）
 
 ## Resume notes
 - 本地预览：`node tests/shoot.mjs <输出目录> <时间,…> [--size 390x844] [--debug]`
