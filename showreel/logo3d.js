@@ -54,6 +54,9 @@ export async function loadModels(names, onProgress) {
       m.traverse(o => { if (o.isMesh && o.material) { o.material.envMapIntensity = 1.5; o.material.needsUpdate = true; } });
       const group = new T.Group(); group.add(m); group.visible = false; scene.add(group);
       loaded[name] = { group, size };
+      // draw it once, small, while the page is still loading: the first render
+      // compiles its shaders, and that stall belongs in the loader, not mid-reel
+      try { renderModel(name, { w: 64, h: 32 }); } catch (e) { console.warn('[reel] warm', name, e); }
       onProgress && onProgress(name);
       res();
     }, null, e => {

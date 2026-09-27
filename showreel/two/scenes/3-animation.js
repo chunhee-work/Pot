@@ -438,7 +438,7 @@ const scene = {
   bg: BLOCK.ink,
   assets: EPS.map(e => e.src),
   models: [],
-  still: 0.95,
+  still: 6.2,   // the held 17 MIN over LAND OF HOPE — a clean frame for the stills
   sfx: [
     { at: PASS[0] - 0.03, type: 'whoosh' },
     { at: PASS[1] - 0.03, type: 'whoosh' },
