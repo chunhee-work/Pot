@@ -140,10 +140,10 @@ async function open(vw, vh, dpr = 1, opts = {}) {
 
   // seams: every boundary, and the loop, look like the rest frame
   const seams = await page.evaluate(() => {
-    const R = window.__reel, rest = R.sampleRest();
-    const diff = a => a.reduce((s, v, i) => s + Math.abs(v - rest[i]), 0) / a.length;
-    const at = [0.0005, ...R.chapters.slice(1).flatMap(c => [c.start - 0.0005, c.start + 0.0005]), R.duration - 0.0005];
-    return at.map(t => ({ t: +t.toFixed(4), d: +diff(R.sample(t)).toFixed(2) }));
+    const R = window.__reel;
+    const diff = (a, rest) => a.reduce((s, v, i) => s + Math.abs(v - rest[i]), 0) / a.length;
+    const at = [[0.0005, 0], ...R.chapters.slice(1).flatMap(c => [[c.start - 0.0005, c.start], [c.start + 0.0005, c.start]]), [R.duration - 0.0005, R.duration]];
+    return at.map(([t, seam]) => ({ t: +t.toFixed(4), d: +diff(R.sample(t), R.sampleRest(seam)).toFixed(2) }));
   });
   const worst = seams.reduce((a, s) => (s.d > a.d ? s : a), { d: -1 });
   check('every chapter seam and the loop seam match the rest frame', worst.d <= 1.5, `worst ${worst.d} at t=${worst.t}`);
@@ -178,7 +178,7 @@ async function open(vw, vh, dpr = 1, opts = {}) {
   // jump to Land of Hope before its pictures are in: it holds on the rest frame, then plays once they land
   await page.evaluate(() => window.__reel.seek(12));
   await page.waitForTimeout(300);
-  const held = await page.evaluate(() => { const R = window.__reel, rest = R.sampleRest(), s = R.sample(R.t); return { t: R.t, label: document.getElementById('chapterLabel').textContent, d: s.reduce((a, v, i) => a + Math.abs(v - rest[i]), 0) / s.length }; });
+  const held = await page.evaluate(() => { const R = window.__reel, rest = R.sampleRest(11), s = R.sample(R.t); return { t: R.t, label: document.getElementById('chapterLabel').textContent, d: s.reduce((a, v, i) => a + Math.abs(v - rest[i]), 0) / s.length }; });
   await page.evaluate(() => window.__reel.allReady);
   await page.waitForTimeout(600);
   const after = await page.evaluate(() => window.__reel.t);
