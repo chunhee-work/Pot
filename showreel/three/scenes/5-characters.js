@@ -557,7 +557,8 @@ export default {
 // ── the words ─────────────────────────────────────────────────────────────
 function drawCopy(ctx, S, F, t, phase) {
   const { u } = S;
-  const sink = seg(t, RELEASE + 0.25, 6.85);               // the sentence sinks behind its sill once the title has split
+  const sink = seg(t, RELEASE + 0.15, 6.62);               // the sentence sinks behind its sill once the title has split,
+                                                           // gone before the returning orbit sweeps the text column
   const TT = { size: F.ts, weight: 800, tracking: -0.01 };
   const titleW = layout(ctx, 'IDENTITY', TT).width;
   // station label and numeral, written on as the orbit opens: the /process card's top row
@@ -620,7 +621,7 @@ function drawCopy(ctx, S, F, t, phase) {
     if (a > 0) mono(ctx, S, '› ' + h.tag, F.x, F.tel2, { size: F.ms, color: UI.muted, reveal: a });
   }
   // the /process sentence, rising with the Earth sheet's approach so it is settled by ~5.1 s
-  // and holds, fully readable, to ~6.55 s
+  // and holds, fully readable, to ~6.45 s
   const sa = seg(t, HERO_B_AT - 0.3, HERO_B_AT + 0.15);
   if (sa > 0) {
     const ss = F.sentSize;
