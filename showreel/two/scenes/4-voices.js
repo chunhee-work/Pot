@@ -515,7 +515,7 @@ const scene = {
     { at: 3 * BAR, type: 'sub' },
     { at: FINAL, type: 'impact' },
     { at: SWITCH, type: 'tick' },
-    { at: 7.44, type: 'riser' }
+    { at: 7.44, type: 'riser', gain: 0.4 }   // the score swells into every seam already
   ],
   draw(ctx, S) {
     const lt = S.lt;

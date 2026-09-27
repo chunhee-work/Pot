@@ -542,7 +542,7 @@ const scene = {
     { at: BAR + T_CROSS, type: 'whoosh' },      // through the I
     { at: 2 * BAR + 2 * BEAT, type: 'glitch' }, // a regrade
     { at: 3 * BAR, type: 'impact' },            // ONE PERSON.
-    { at: OUT, type: 'riser' }                  // into the teal O
+    { at: OUT, type: 'riser', gain: 0.4 }                  // into the teal O
   ],
   draw(ctx, S) {
     const lt = S.lt;

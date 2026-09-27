@@ -446,7 +446,7 @@ const scene = {
     { at: SLAM, type: 'impact' },
     { at: SLAM, type: 'sub' },
     { at: DIVE, type: 'tick' },
-    { at: FILL, type: 'riser' }
+    { at: FILL, type: 'riser', gain: 0.4 }
   ],
   draw(ctx, S) {
     const lt = S.lt, pink = nextColour(scene);

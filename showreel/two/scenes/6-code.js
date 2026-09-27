@@ -631,7 +631,7 @@ const scene = {
     { at: T.link[0], type: 'tick' },      // the first link
     { at: 3 * BAR, type: 'impact' },      // through the O: SHIPPED.
     { at: T.paint, type: 'tick' },        // the I painted butter
-    { at: T.cover, type: 'riser' }        // into the I
+    { at: T.cover, type: 'riser', gain: 0.4 }        // into the I
   ],
   draw(ctx, S) {
     const lt = S.lt;

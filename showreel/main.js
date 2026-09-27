@@ -251,8 +251,11 @@ export function startReel(cfg) {
 
   function seek(x, announce) {
     t = wrap(K.clamp(x, T0, T1 - 1e-3));
+    const wasWaiting = waitingFor;
     waitingFor = null;   // the loop decides afresh whether the new spot has to wait
     sound.seek(t);
+    // a hold had paused the score; restart it here (the loop pauses it again if the new spot must wait too)
+    if (wasWaiting && playing && !dragging) sound.play(t);
     updateUI(chapterAt(t));   // the transport answers at once, even if the new frame is slow to draw
     invalidate();
     if (announce) live.textContent = `${chapterAt(t).scene.title}, ${fmt(t)}`;

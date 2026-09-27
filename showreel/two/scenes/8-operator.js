@@ -372,7 +372,7 @@ const scene = {
   models: [],
   still: 5.9,
   sfx: [
-    { at: T.s17, type: 'riser' },
+    { at: T.s17, type: 'riser', gain: 0.6 },
     { at: T.s17, type: 'impact' },
     { at: T.s12, type: 'impact' },
     { at: T.s4, type: 'impact' },

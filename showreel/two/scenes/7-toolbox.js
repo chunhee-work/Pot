@@ -16,9 +16,10 @@
    (bar) · 4.69 the bar is ruled · 5.16 = · 5.63 ONE STUDIO (bar) · 6.33 the
    drive into the I · 7.34 ink is the frame.
 
-   Landscape keeps the ledger at one size and lets the camera single out each
-   row; on a phone the column is justified — every line set to its full width
-   — and framed whole, so the ledger typesets itself down the page. Either
+   Landscape keeps the ledger at one size and frames the column so far on each
+   landing, header to newest row, backing off a step per tool until the whole
+   equation holds the frame; on a phone the column is justified — every line
+   set to its full width — and framed whole, so it typesets down the page. Either
    way each row sits a step nearer the lens than the last, so the column fans
    out in perspective as it grows. */
 import { text as kitText, layout, seg, clamp, lerp, inCubic, outCubic, outBack, bezier, whip, siteE, rrect, cover } from '../../kit.js';
@@ -266,19 +267,28 @@ function buildPlan(ctx, S) {
   // on a phone the whole column is framed from the first row, so the ledger
   // typesets itself down the page; each landing still rolls and creeps the camera
   const colPts = [...headPts, ...rowPts.flat()];
+  // in landscape each landing frames the column so far — THE TOOLBOX down to
+  // the newest row, centred in the safe band — so the camera backs off a step
+  // per tool and the ledger is never sliced through its header
   const sR = L.rows.map((R, i) => S.portrait
     ? fitPts(S, F, colPts, { w: 0.8, h: 0.8, fy: 0.47 + 0.006 * i, zp: R.z, roll: ROLLS[i] * 0.8 })
     : i === 0
       ? fitPts(S, F, [...headPts, ...rowPts[0]], { w: 0.84, h: 0.6, fy: 0.5, kMax, zp: R.z, roll: ROLLS[0] })
-      : fitPts(S, F, rowPts[i], { w: 0.86, h: 0.4, fy: 0.6, kMax, zp: R.z, roll: ROLLS[i] }));
+      : fitPts(S, F, [...headPts, ...rowPts.slice(0, i + 1).flat()], { w: 0.86, h: 0.7, fy: 0.48, kMax, zp: R.z, roll: ROLLS[i] }));
   if (S.portrait) sR.forEach((sh, i) => { sh.k *= 1 + 0.015 * i; });
-  const sV = fitPts(S, F, [...rowPts.flat(), ...resPts], { w: 0.84, h: 0.76, fy: 0.47, zp: L.res.z, roll: 0.012 });
+  // the overview: in landscape the whole equation, header to sum, centred in y 10–86 %
+  const allPts = [...colPts, ...resPts];
+  const sV = S.portrait
+    ? fitPts(S, F, [...rowPts.flat(), ...resPts], { w: 0.84, h: 0.76, fy: 0.47, zp: L.res.z, roll: 0.012 })
+    : fitPts(S, F, allPts, { w: 0.86, h: 0.72, fy: 0.48, zp: L.res.z, roll: 0.012 });
   const sV2 = { ...drift(sV, T.eq - T.rule), k: sV.k * 0.972 };
   // after the sum lands: a slow push on it, keeping all of = ONE STUDIO in frame
   const I = L.I, rb = L.resBox, rc = [(rb[0] + rb[2]) / 2, (rb[1] + rb[3]) / 2];
   const kV = F / (L.res.z - sV2.zp + F / sV2.k);
   const rOff = [(rc[0] - sV2.x) * kV, (rc[1] - sV2.y) * kV];
-  const sF1 = aim(rc[0], rc[1], L.res.z, rOff[0], rOff[1] * (S.portrait ? 0.88 : 0.6), kV * (S.portrait ? 1.03 : 1.06), 0.02);
+  const sF1 = S.portrait
+    ? aim(rc[0], rc[1], L.res.z, rOff[0], rOff[1] * 0.88, kV * 1.03, 0.02)
+    : fitPts(S, F, allPts, { w: 0.88, h: 0.73, fy: 0.485, zp: L.res.z, roll: 0.02 });
   // the end: the I's stem, centred, a little wider than the frame (at the final roll)
   const rEnd = 0.16, c = Math.abs(Math.cos(rEnd)), s = Math.abs(Math.sin(rEnd));
   const kCover = Math.max((S.W * c + S.H * s) / (2 * I.hw), (S.W * s + S.H * c) / (2 * I.hh));
@@ -395,10 +405,11 @@ const scene = {
   models: [],
   still: 6.2,
   sfx: [
-    ...TOOLS.map(t => ({ at: t.at, type: 'impact' })),
+    // five hits in three seconds over a kick on every beat: the off-bar ones sit back
+    ...TOOLS.map(t => ({ at: t.at, type: 'impact', gain: t.bar ? 1 : 0.6 })),
     { at: T.sum, type: 'impact' },
     { at: T.sum, type: 'sub' },
-    { at: T.cover, type: 'riser' }
+    { at: T.cover, type: 'riser', gain: 0.4 }   // the score swells into every seam already
   ],
   draw(ctx, S) {
     const lt = S.lt;
