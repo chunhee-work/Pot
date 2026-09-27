@@ -583,9 +583,11 @@ export default {
       blk.push([SL.numX - SL.nW, SL.yT - 0.76 * SL.numSize, SL.numX, SL.yT + 0.02 * SL.numSize, numA]);
     }
     if (CL) blk.push([CL.hx, CL.hy - CL.hs, CL.hx + 19.6 * CL.hs, CL.hy + 2.7 * CL.hs, hudA]);
-    if (NL) {                                          // as drawn: scaled about the centre, 1.1 → 1 on the hit
-      // with a margin: the hit owns the middle of the frame, and its glyphs rise from below the sill
-      const k = lerp(1.1, 1, outExpo(seg(lt, T.hit, T.hit + 0.5))), m = 0.15 * NL.size;
+    if (NL) {
+      /* at its largest (it lands at 1.1× and settles to 1), with a margin: the
+         hit owns the middle of the frame, its glyphs rise from below the sill,
+         and a label it clears on the downbeat stays cleared while it holds */
+      const k = 1.1, m = 0.15 * NL.size;
       const [x0, y0, x1, y1] = [NL.box[0] - m, NL.box[1] - m, NL.box[2] + m, NL.box[3] + m];
       blk.push([W / 2 + (x0 - W / 2) * k, H / 2 + (y0 - H / 2) * k, W / 2 + (x1 - W / 2) * k, H / 2 + (y1 - H / 2) * k, noA]);
     }
@@ -609,12 +611,16 @@ export default {
       * clamp((b[1] - 0.08 * H) / (0.03 * H)) * clamp((0.86 * H - b[3]) / (0.03 * H));
     /* every lit sheet this frame: its look, its box on screen and its label's.
        Then the labels are placed nearest first: one that runs into a nearer
-       label, a nearer sheet (which would cover it) or the HUD fades — softly,
+       label, another sheet (a nearer one would cover it, a farther one would
+       sit under the type) or the HUD fades — softly,
        over a little gap, so nothing pops — and a sheet only carries one once it
        is clearly wider than its label. Deterministic: a function of this frame. */
     const st = new Array(NODES.length).fill(null);
     for (let i = 0; i < NODES.length; i++) {
-      if (lt < IGN[i] || (heroOn && i === HERO)) continue;
+      if (lt < IGN[i]) continue;
+      // SB 03 leaves the chart as the hero: from then on it is drawn up front, but its
+      // place in the chart still holds back the labels it covered until they go
+      const ghost = heroOn && i === HERO;
       const p = proj[i];
       if (!p || p.d < 0.6) continue;
       const ig = seg(lt, IGN[i], IGN[i] + 0.42);
@@ -629,8 +635,10 @@ export default {
       const box = boxOf(p.x, p.y, C.roll + rz, -pw / 2, -ph / 2, pw / 2, ph / 2, Math.cos(yaw), Math.sin(yaw) * 0.22);
       const lx = -pw / 2, ly = ph / 2 + labelSize * 1.45;
       const lbox = boxOf(p.x, p.y, C.roll, lx, ly - labelSize * 0.8, lx + lblW, ly + labelSize * 0.1);
-      const la = a * labHero * clamp((pw - 1.4 * lblW) / (0.6 * lblW)) * (1 - fold) * clamp((ig - 0.3) * 2) * (1 - fog) * safeIn(lbox);
-      st[i] = { ig, pw, ph, fog, a, yaw, rz, box, lbox, lx, ly, la };
+      // (its own label goes just before it leaves)
+      const la = ghost ? 0 : a * labHero * clamp((pw - 1.4 * lblW) / (0.6 * lblW)) * (1 - fold) * clamp((ig - 0.3) * 2) * (1 - fog) * safeIn(lbox)
+        * (i === HERO ? 1 - seg(lt, T.heroIn - 0.3, T.heroIn) : 1);
+      st[i] = { ig, pw, ph, fog, a, yaw, rz, box, lbox, lx, ly, la, ghost };
     }
     const order = st.map((s, i) => i).filter(i => st[i]).sort((i, j) => P[i][2] - P[j][2]);
     const pad = 0.6 * labelSize;
@@ -639,17 +647,18 @@ export default {
       const s = st[order[n]];
       if (s.la <= 0.02) { s.la = 0; continue; }
       let m = 1;
-      for (let k = 0; k < n && m > 0; k++) {
+      for (let k = 0; k < order.length && m > 0; k++) {
+        if (k === n) continue;
         const o = st[order[k]];
-        m *= clear(s.lbox, o.box, o.a);                  // a nearer sheet would cover it
-        if (o.la > 0) m *= clear(s.lbox, o.lbox, o.la * 1.5);   // a nearer label has the place
+        m *= clear(s.lbox, o.box, o.a);                  // never on another sheet: a nearer one would cover it, a farther one would be under the type
+        if (k < n && o.la > 0) m *= clear(s.lbox, o.lbox, o.la * 1.5);   // a nearer label has the place
       }
       for (const b of blk) if (m > 0 && b[4] > 0) m *= clear(s.lbox, b, 3 * b[4]);   // HUD type wins while it is more than faint
       s.la *= m;
     }
     for (let i = 0; i < NODES.length; i++) {
       const s = st[i];
-      if (!s) continue;
+      if (!s || s.ghost) continue;
       const w = P[i];
       const img = S.img(SHEETS[i]);
       const { ig, pw, ph, fog, a, yaw, rz, lx, ly, la } = s;
