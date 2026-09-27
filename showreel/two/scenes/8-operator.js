@@ -48,7 +48,7 @@ const STEP = 0.3;                    // the camera's step back into each hit
 
 const STATS = [
   { n: '17', unit: 'MIN', desc: ['ORIGINAL', 'ANIMATION'], color: BLOCK.butter, at: T.s17 },
-  { n: '12', unit: 'VOICES', desc: ['CHARACTER', 'VOICES'], color: BLOCK.pink, at: T.s12 },
+  { n: '12', unit: 'VOICES', desc: ['10 CHARACTERS', '+ 2 NPCS'], color: BLOCK.pink, at: T.s12 },
   { n: '4', unit: 'BRANDS', desc: ['WEB3', 'ECOSYSTEM'], color: BLOCK.signal, at: T.s4 },
   { n: '1', unit: 'OPERATOR', desc: ['ONE PERSON. A WHOLE STUDIO.'], color: BLOCK.paper, at: T.s1 }
 ];
@@ -377,9 +377,9 @@ const scene = {
     { at: T.s12, type: 'impact' },
     { at: T.s4, type: 'impact' },
     { at: T.s1, type: 'impact' },
-    { at: T.fly + 0.25, type: 'whoosh' },
+    { at: 3.46, type: 'whoosh' },           // through the wall
     { at: T.lock, type: 'sub' },
-    { at: 7.25, type: 'whoosh' }
+    { at: 7.32, type: 'whoosh' }            // into the stem
   ],
   draw(ctx, S) {
     const lt = S.lt, W = S.W, H = S.H;
