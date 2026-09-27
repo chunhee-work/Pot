@@ -1,9 +1,11 @@
-# BUILD-STATUS — `/reel` 和 `/reel2`
+# BUILD-STATUS — `/reel`、`/reel2`、`/reel3`
 
 ## Now
-- 无。`/reel2` 已上 staging（20:16 MYT）
+- `/reel3`（分支 `claude/reel-three`）：8 个章节和配乐正在由 5 个 Workflow 并行制作（22:42 MYT 开始），每项都走：制作 → 不带上下文的评审 → 返修 → 章节检查
 
 ## Done
+- R3-T1 骨架（22:33 MYT，提交 `2907944`）：共用视觉工具 `showreel/three/kit3.js`、8 个占位章节、`reel3.html`、`/reel3` 路由、测试加上 reel3；演示帧里导航胶囊、阶段卡片、金属线、星空、交界帧都能正常画出
+
 - R2-T13 Go-Live 上 staging（20:16 MYT）
   - PR https://github.com/chunhee00/Pot/pull/2 已合并进 `staging`（合并提交 `c7f901c`），CI（Vercel）绿，无 review 评论
   - staging 部署 `dpl_Av4iiosCNCoAVdvHa4zNWjUH4Hwk` 状态 READY：https://chunhee-portfolio-jvq3m59qw-chunhee00s-projects.vercel.app/reel2
@@ -41,7 +43,9 @@
   - 首页、`/process`、`/work` 三个文件的 sha256 和开工前一致
 
 ## Queue
-- 无（生产分支等你明确说了才上线）
+- R3-T11 整片审查、分享图、三支 reel 完整测试
+- R3-T12 PR 合进 staging、删分支、截图
+- 生产分支等你明确说了才上线
 
 ## Blockers
 - 两个远端分支待你手动删除：PR #1 页面的 `claude/vibrant-allen-9mlymk`、PR #2 页面的 `claude/reel-two`（各点一下「Delete branch」）
@@ -52,3 +56,4 @@
 - 章节接口约定写在 `showreel/kit.js` 文件头和 `showreel/timeline.js`
 - 容器打不开 `*.vercel.app`、unpkg、esm.sh；reel 不依赖任何 CDN
 - 第二支：`node tests/shoot.mjs <目录> <时间> --page reel2`；`node tests/check-chapter.mjs <id> --page reel2`
+- 第三支：同上，`--page reel3`；章节说明在 `BUILD-PLAN-reel3.md`；如果 session 中断，先看 `showreel/three/scenes/` 里哪些章节已经不是占位文件
