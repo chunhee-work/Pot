@@ -24,6 +24,10 @@
     {
       "source": "/reel2",
       "destination": "/reel2.html"
+    },
+    {
+      "source": "/reel3",
+      "destination": "/reel3.html"
     }
   ],
   "headers": [

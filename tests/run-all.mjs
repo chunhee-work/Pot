@@ -2,13 +2,13 @@
    machine's CPU, and several checks time real playback), and fails if any
    reel fails.
 
-   node tests/run-all.mjs            (exit code 1 if either reel fails)
+   node tests/run-all.mjs            (exit code 1 if any reel fails)
    SKIP_CHAPTERS=1 node tests/run-all.mjs   (skip the per-chapter gates) */
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const PAGES = ['reel', 'reel2'];
+const PAGES = ['reel', 'reel2', 'reel3'];
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 const summary = [];
