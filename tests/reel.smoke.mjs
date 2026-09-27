@@ -136,8 +136,17 @@ async function open(vw, vh, dpr = 1, opts = {}) {
   check('autoplays (muted) on load', s1.playing && s1.t > t0 + 0.2 && s1.frames > 5, `t ${t0.toFixed(2)} → ${s1.t.toFixed(2)}, ${s1.frames} frames`);
   check('sound is off by default', !(await page.evaluate(() => window.__reel.soundOn)));
 
-  await page.mouse.move(640, 360);
-  await page.click('#playBtn');
+  // the controls hide after 2.5 s without a pointer move, which a slow software-rendered page can reach
+  // between two steps: wake them over the target, then click where it is
+  async function tap(loc) {
+    const b = await loc.boundingBox();
+    const x = b.x + b.width / 2, y = b.y + b.height / 2;
+    await page.mouse.move(x, y - 2); await page.mouse.move(x, y);
+    await page.waitForFunction(() => !document.body.hasAttribute('data-idle'), null, { timeout: 3000 }).catch(() => {});
+    await page.mouse.click(x, y);
+  }
+
+  await tap(page.locator('#playBtn'));
   const p1 = await page.evaluate(() => window.__reel.t);
   await page.waitForTimeout(600);
   const p2 = await page.evaluate(() => ({ t: window.__reel.t, playing: window.__reel.playing }));
@@ -151,7 +160,7 @@ async function open(vw, vh, dpr = 1, opts = {}) {
 
   // scrub: click at 50 % of the track
   const box = await page.locator('#scrub .track').boundingBox();
-  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height / 2);
+  await tap(page.locator('#scrub .track'));
   const ts = await page.evaluate(() => window.__reel.t);
   check('clicking the scrubber seeks', Math.abs(ts - D * 0.5) < 0.4, `t = ${ts.toFixed(2)} (want ≈ ${+(D * 0.5).toFixed(2)})`);
   // drag from 25 % to 75 %
@@ -177,7 +186,7 @@ async function open(vw, vh, dpr = 1, opts = {}) {
 
   // the sixth chapter's label on the transport
   const lc = CH[Math.min(5, N - 1)];
-  await page.locator('#chapters button').nth(lc.index).click();
+  await tap(page.locator('#chapters button').nth(lc.index));
   await page.waitForTimeout(150);
   const tc = await page.evaluate(() => window.__reel.t);
   check('chapter labels jump', Math.abs(tc - lc.start) < 0.01, `t = ${tc.toFixed(3)} (want ${lc.start})`);

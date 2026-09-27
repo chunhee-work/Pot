@@ -1,9 +1,21 @@
-# BUILD-STATUS — `/reel` 和 `/reel2`
+# BUILD-STATUS — `/reel`、`/reel2`、`/reel3`
 
 ## Now
-- 无。`/reel2` 已上 staging（20:16 MYT）
+- `/reel3` 三支 reel 完整测试（`node tests/run-all.mjs`，04:50 MYT 开始）
 
 ## Done
+- R3 审查返修（04:48 MYT）：8 章全部返修，每章由不带上下文的复核员再查；复核又发现 3 个问题也已修好（launch 缓存没按像素密度区分；shots 在画布限尺寸的屏幕上字号四舍五入成 9.9px；worlds 横放手机上标签和正文一样大）
+  - 片尾金属字不再被切；第 7→8 章只剩一次跃迁；「同一个地方」换成同一个村庄广场的三次回访（夜/昼/夜）；编造的星图坐标换成 /process 里真实的编号（SB 03 / 23、ENV-AUREA 25 / 29）；「BUILT AS」字距修好
+  - 字号：8 章在 390×844、390×664、844×390、768×1024、1280×720 上，要读的文字全部 ≥ 10px（量出来 0 处小于 10px）
+  - 短竖屏边缘检查：8 章全过
+  - 分享图换成新的片尾定格：`assets/reel/og3-9b69fd3401.jpg`
+- R3 页面修正（02:32 MYT，提交 `78504a0`）：预载 Cinzel 字体（慢网速下第一帧约 6.8s → 3.4s）；加载进度不再在等字体时显示 100%；平板宽度下章节标签互相重叠 → 1180px 以下隐藏；播放器残留的金色改成本片的冷色；无 JavaScript 时显示提示
+- R3 配乐（01:34 MYT，提交 `f309e31`）：96 bpm D 小调，每章 3 小节；每章交界有跃迁上升音和落拍重音，第 5–7 章推高、第 8 章落在 D 大三和弦；离线渲染峰值 −2.4 dBFS 无削波；声音相关测试全过
+- R3 整片审查（02:05 MYT）：4 个维度（整片观感、代码规则与文案、各尺寸构图、页面与播放器），每条发现再由另一位审查员独立复现；确认 1 项必修、11 项应修
+- R3 分享图（00:48 MYT）：`assets/reel/og3-6def29404e.jpg`（1200×630，片尾 Land of Hope 金属字升过星球 Aurea）
+- R3-T2..T9 八个章节（00:43 MYT）：launch、story、shots、boards、characters、worlds、edit、arrival，每章都经过制作 → 独立评审 → 返修；我逐章看过横屏 12 帧 + 手机帧；`check-chapter` 八章全部 PASS，每帧平均绘制 0.8–2.9ms
+  - 播放器修正：`prepare()` 以前可能在字体加载前就生成文字缓存（评审在 Launch 里发现片名用了备用字体、字距不匀），现在等字体到了才生成，三支 reel 都受益
+- R3-T1 骨架（22:33 MYT，提交 `2907944`）：共用视觉工具 `showreel/three/kit3.js`、8 个占位章节、`reel3.html`、`/reel3` 路由、测试加上 reel3；演示帧里导航胶囊、阶段卡片、金属线、星空、交界帧都能正常画出
 - R2-T13 Go-Live 上 staging（20:16 MYT）
   - PR https://github.com/chunhee00/Pot/pull/2 已合并进 `staging`（合并提交 `c7f901c`），CI（Vercel）绿，无 review 评论
   - staging 部署 `dpl_Av4iiosCNCoAVdvHa4zNWjUH4Hwk` 状态 READY：https://chunhee-portfolio-jvq3m59qw-chunhee00s-projects.vercel.app/reel2
@@ -41,7 +53,9 @@
   - 首页、`/process`、`/work` 三个文件的 sha256 和开工前一致
 
 ## Queue
-- 无（生产分支等你明确说了才上线）
+- R3-T11 整片审查、分享图、三支 reel 完整测试
+- R3-T12 PR 合进 staging、删分支、截图
+- 生产分支等你明确说了才上线
 
 ## Blockers
 - 两个远端分支待你手动删除：PR #1 页面的 `claude/vibrant-allen-9mlymk`、PR #2 页面的 `claude/reel-two`（各点一下「Delete branch」）
@@ -52,3 +66,4 @@
 - 章节接口约定写在 `showreel/kit.js` 文件头和 `showreel/timeline.js`
 - 容器打不开 `*.vercel.app`、unpkg、esm.sh；reel 不依赖任何 CDN
 - 第二支：`node tests/shoot.mjs <目录> <时间> --page reel2`；`node tests/check-chapter.mjs <id> --page reel2`
+- 第三支：同上，`--page reel3`；章节说明在 `BUILD-PLAN-reel3.md`；如果 session 中断，先看 `showreel/three/scenes/` 里哪些章节已经不是占位文件
