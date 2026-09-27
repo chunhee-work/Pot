@@ -320,7 +320,7 @@ function drawRow(ctx, K, row, alpha, front) {
   u0 = Math.max(u0, Math.min(ua, ub)); u1 = Math.min(u1, Math.max(ua, ub));
   if (u1 <= u0) return;
   const za = base + Uc[2] * u0, zb = base + Uc[2] * u1, il = 1 / za, ih = 1 / zb;
-  const n = Math.min(40, Math.max(2, Math.ceil(Math.abs(Math.log(zb / za)) * 7)));
+  const n = Math.min(110, Math.max(2, Math.ceil(Math.abs(Math.log(zb / za)) * 22)));
   const at = j => u0 + (1 / lerp(il, ih, j / n) - za) / (zb - za) * (u1 - u0);
   const q = [0, 0];
   ctx.save();
@@ -415,6 +415,12 @@ function world(S, ctx) {
     const sc = W.one.cap / (REFPX * CAP), x0 = -L.width / 2;
     W.gapX = sc * ((x0 + L.xs[1] + GL.N.x1 / 10) + (x0 + L.xs[2] + GL.E.x0 / 10)) / 2;
   }
+  // the full stop, where it lands
+  {
+    const r = W.rows[W.rows.length - 1], L = layout(ctx, r.str, { size: REFPX, weight: 900, tracking: -0.02 });
+    const sc = r.cap / (REFPX * CAP), d = GL['.'];
+    W.dot = [sc * (-L.width / 2 + L.xs[L.chars.length - 1] + (d.x0 + d.x1) / 20), FLOOR - sc * (d.y0 + d.y1) / 20, r.z];
+  }
   // looking down on the fallen word(s): crane up until they lie whole in frame
   const rNear = W.rows[W.rows.length - 1], rFar = W.rows[0], zO = W.one.z;
   const ly0 = rNear.z, ly1 = rFar.z + rFar.cap, lyW = Math.max(...W.rows.map(r => r.w));
@@ -446,9 +452,13 @@ function world(S, ctx) {
   {
     const lane = P ? 2.8 : 4.6, cap = P ? 0.55 : 0.8, z0 = zO - 1, z1 = zF - 3;
     const hw = cap / CAP * 0.95 / 2;               // half the strip's width
+    const ceil = eyeC - (P ? 3.6 : 3.2), cl = lane * 0.8;
     W.floorRows = [
       { O: [-lane - hw, FLOOR, z0], U: [0, 0, 1], V: [1, 0, 0], cap, len: z1 - z0 },
-      { O: [lane + hw, FLOOR, z1], U: [0, 0, -1], V: [-1, 0, 0], cap, len: z1 - z0 }
+      { O: [lane + hw, FLOOR, z1], U: [0, 0, -1], V: [-1, 0, 0], cap, len: z1 - z0 },
+      // and a ceiling, read from below
+      { O: [-cl + hw, ceil, z0 + 6], U: [0, 0, 1], V: [-1, 0, 0], cap, len: z1 - z0 - 6 },
+      { O: [cl - hw, ceil, z1], U: [0, 0, -1], V: [1, 0, 0], cap, len: z1 - z0 - 6 }
     ];
     W.floorZ = [z0, z1];
   }
@@ -461,7 +471,7 @@ function world(S, ctx) {
     [T_BAR3, eyeC, 0], [HITS[5], eyeC, 0], [T_BAR4, holdF.y, -0.5], [T_DRIVE, holdF.y + 0.12, 0.2]
   ]);
   W.cz = curve([
-    [0, -1.5, 0.8], [T_BAR2, 0, 9, 0.8],
+    [0, -1.5, 0.8], [T_BAR2, 0, 13, 0.8],
     [T_FLAT, crane.z], [2.72, ly1 + (P ? 1.4 : 1.8)], [T_THREAD, zO, 52],
     [T_BAR3, zH0, v0], [HITS[5], zH5, v1],
     [T_BAR4, zF - 2.2, 9], [T_DRIVE, zF + 0.9, 1.2]
@@ -536,7 +546,8 @@ function camAt(S, W, t) {
   let [x, y, z] = W.pos(t);
   let [yaw, pitch] = lookAt(W, t);
   // beat kicks in bar 1: the camera leans in on each hit
-  z += 0.2 * outExpo(seg(t, B, B + 0.3)) + 0.35 * outExpo(seg(t, T_PER, T_PER + 0.3)) + 0.25 * outExpo(seg(t, T_DOT, T_DOT + 0.3));
+  // bar 1 leans in on the beats, then creeps forward into the drop as the score swells
+  z += 0.2 * outExpo(seg(t, B, B + 0.3)) + 0.35 * outExpo(seg(t, T_PER, T_PER + 0.3)) + 0.5 * inQuad(seg(t, T_DOT - 0.2, T_BAR2));
   let roll = 0.018 * Math.sin(t * 1.9)
     + 0.06 * Math.sin((t - T_BAR2) * 4.2) * seg(t, T_BAR2, 2.2) * (1 - seg(t, 2.9, 3.4))
     - 0.05 * inOutCubic(seg(t, 3.3, 3.7)) * (1 - seg(t, 5.2, 5.6));
@@ -579,33 +590,51 @@ function build(ctx, W, K, t, Q) {
       if (uu < 0) continue;
       word(Q, ctx, K, 'ONE', {
         at: [0, W.FLOOR, one.z + slam(uu)], size: one.cap, alpha: k ? 0.3 / k : 1,
-        per: g => { g.x += (g.i < 2 ? -1 : 1) * part * (g.i === 0 ? 1.4 : 1); }
+        per: g => {
+          g.x += (g.i < 2 ? -1 : 1) * part * (g.i === 0 ? 1.4 : 1);
+          const hb = (t - (T_BAR2 + 0.03 + (2 - g.i) * 0.035)) / 0.26;
+          if (hb > 0 && hb < 1) g.y -= one.cap * 0.08 * 4 * hb * (1 - hb);
+        }
       });
     }
   }
-  // PERSON. (on a phone PER / SON.): rains down, topples flat, is skimmed
+  /* PERSON. (on a phone PER / SON.): the letters rain down on beat 2; the full
+     stop falls out of the sky and lands on the bar — the drop — and its shock
+     knocks the word flat, a letter at a time, running back from the stop */
   if (t >= T_PER - 0.2 && t < 3.3) {
-    let gi = 0;
-    for (const row of W.rows) {
-      const base = gi;
-      word(Q, ctx, K, row.str, {
-        at: [0, W.FLOOR, row.z], size: row.cap,
-        per: g => {
-          const k = base + g.i, dot = g.ch === '.';
-          const land = dot ? T_DOT : T_PER + k * 0.034;
-          const fall = seg(t, land - 0.17, land);
-          if (fall <= 0) { g.alpha = 0; return; }
-          g.y -= 16 * (1 - fall * fall);
-          const b = t - land;
-          if (b > 0) g.sy = 1 - (dot ? 0.3 : 0.2) * Math.exp(-b * 18) * Math.cos(b * 32);
-          // the topple: backward onto the floor, a letter at a time
-          const t0 = T_BAR2 + k * 0.022, th = (Math.PI / 2) * inQuad(seg(t, t0, t0 + 0.32));
-          const bb = t - t0 - 0.32;
-          const a = th - (bb > 0 ? 0.07 * Math.exp(-bb * 16) * Math.sin(bb * 40) : 0);
-          g.V = [0, -Math.cos(a), Math.sin(a)];
+    const total = W.rows.reduce((n, r) => n + r.str.length, 0);
+    const per = (base, tt, onlyDot, fade) => g => {
+      const k = base + g.i, dot = g.ch === '.';
+      if (onlyDot && !dot) { g.alpha = 0; return; }
+      g.alpha *= fade;
+      if (dot) {
+        const fall = seg(tt, T_BAR2 - 0.36, T_BAR2);
+        if (fall <= 0) { g.alpha = 0; return; }
+        g.y -= 26 * (1 - fall * fall);
+        const b = tt - T_BAR2;
+        if (b > 0) g.sy = 1 - 0.4 * Math.exp(-b * 15) * Math.cos(b * 30);
+      } else {
+        const land = T_PER + k * 0.034, fall = seg(tt, land - 0.17, land);
+        if (fall <= 0) { g.alpha = 0; return; }
+        g.y -= 16 * (1 - fall * fall);
+        const b = tt - land;
+        if (b > 0) g.sy = 1 - 0.2 * Math.exp(-b * 18) * Math.cos(b * 32);
+      }
+      const t0 = T_BAR2 + 0.03 + (total - 1 - k) * 0.03;
+      const th = (Math.PI / 2) * inQuad(seg(tt, t0, t0 + 0.32)), bb = tt - t0 - 0.32;
+      const a = th - (bb > 0 ? 0.07 * Math.exp(-bb * 16) * Math.sin(bb * 40) : 0);
+      g.V = [0, -Math.cos(a), Math.sin(a)];
+    };
+    // a short trail behind the falling stop
+    const trail = t > T_BAR2 - 0.3 && t < T_BAR2 ? 6 : 0;
+    for (let j = trail; j >= 0; j--) {
+      let gi = 0;
+      for (const row of W.rows) {
+        if (j === 0 || gi + row.str.length === total) {
+          word(Q, ctx, K, row.str, { at: [0, W.FLOOR, row.z], size: row.cap, per: per(gi, t - j * 0.007, j > 0, j ? 0.5 * (1 - j / 7) : 1) });
         }
-      });
-      gi += row.str.length;
+        gi += row.str.length;
+      }
     }
   }
   // the departments: each slams in out of the depth along its line of sight
@@ -648,14 +677,15 @@ const scene = {
   models: [],
   still: 6.3,
   sfx: [
-    { at: 0.12, type: 'impact' },
-    { at: T_PER, type: 'impact' },
-    { at: T_FLAT, type: 'sub' },
+    { at: 0.12, type: 'impact', gain: 0.4 },
+    { at: T_PER, type: 'impact', gain: 0.3 },
+    { at: T_BAR2, type: 'impact' },
+    { at: T_BAR2, type: 'sub' },
     { at: T_THREAD, type: 'whoosh' },
     { at: 4.4, type: 'whoosh' },
     { at: T_BAR4, type: 'impact' },
     { at: T_ORANGE, type: 'tick' },
-    { at: 7.45, type: 'riser' }
+    { at: 7.45, type: 'riser', gain: 0.4, len: 0.9 }
   ],
   draw(ctx, S) {
     const t = S.lt;
@@ -690,15 +720,21 @@ const scene = {
 
     // lens: seasoning on the hits only, at rest at both ends
     const fx = S.fx;
-    const h1 = hit(t, 0.13, 0.4), h2 = hit(t, T_PER, 0.3), h3 = hit(t, T_DOT, 0.22), h4 = hit(t, T_FLAT - 0.02, 0.35);
+    // bar 1 is the score's filtered intro: light touches; the drop on 1.875 is the big one
+    const h1 = hit(t, 0.13, 0.3), h2 = hit(t, T_PER, 0.25), h3 = hit(t, T_BAR2, 0.55), h4 = hit(t, 2.38, 0.3);
     const h5 = hit(t, T_BAR4 - 0.02, 0.45), h6 = hit(t, T_ORANGE, 0.25);
     let hd = 0;
     for (const d of W.depts) hd += hit(t, d.th - 0.02, 0.18);
-    fx.shake = S.u * (1.4 * h1 + 0.7 * h2 + 0.35 * h3 + 0.8 * h4 + 1.3 * h5 + 0.35 * hd);
-    fx.ab = 0.55 * h1 + 0.25 * h2 + 0.3 * h4 + 0.5 * h5 + 0.25 * h6 + 0.25 * hd + 0.3 * Math.exp(-(((t - T_THREAD) / 0.09) ** 2));
+    fx.shake = S.u * (0.45 * h1 + 0.25 * h2 + 2.1 * h3 + 0.5 * h4 + 1.3 * h5 + 0.35 * hd);
+    fx.ab = 0.2 * h1 + 0.1 * h2 + 0.85 * h3 + 0.2 * h4 + 0.5 * h5 + 0.25 * h6 + 0.25 * hd + 0.3 * Math.exp(-(((t - T_THREAD) / 0.09) ** 2));
+    fx.flash = 0.24 * hit(t, T_BAR2, 0.16);
     // the shock ring starts already open: at a zero radius the warp pinches the frame's centre
     const ring = (t0, len) => (t > t0 && t < t0 + len ? 0.16 + 0.84 * outCubic(seg(t, t0, t0 + len)) : 0);
-    fx.warp = ring(0.13, 0.5) || ring(T_BAR4 - 0.01, 0.55);
+    fx.warp = ring(T_BAR2, 0.6) || ring(T_BAR4 - 0.01, 0.55);
+    if (t < T_BAR2 + 0.6 && t > T_BAR2) {
+      const c = K.cam(W.dot[0], W.dot[1], W.dot[2], [0, 0, 0]);
+      if (c[2] > 0.5) { const q = project(K, c[0], c[1], c[2], [0, 0]); fx.warpX = clamp(q[0] / S.W); fx.warpY = clamp(q[1] / S.H); }
+    }
     fx.ab += 0.4 * seg(t, T_DRIVE + 0.3, T_FILL - 0.14) * (1 - seg(t, T_FILL - 0.14, T_FILL - 0.03));
   }
 };

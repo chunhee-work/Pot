@@ -180,8 +180,9 @@ function paint(ctx, g) {
     if (g.clip) { ctx.save(); hullClip(ctx, st); }
     // copies spaced wider than a couple of px are fattened with a stroke of
     // the spacing, so the flank reads as one surface instead of steps
-    const thick = st.sp > 2.2;
-    const lw = thick ? st.sp * 1.15 / Math.sqrt(Math.abs(m.a * m.d - m.b * m.c) || 1) : 0;
+    const sc = Math.sqrt(Math.abs(m.a * m.d - m.b * m.c));
+    const thick = st.sp > 2.2 && sc > 0.08;
+    const lw = thick ? Math.min(CAP * 0.2, st.sp * 1.15 / sc) : 0;
     if (thick) { ctx.strokeStyle = g.side; ctx.lineJoin = 'round'; }
     for (let k = 0; k < n; k++) {
       const i = front ? k : n - k;             // back to front, or front to back seen from behind
@@ -527,15 +528,16 @@ const scene = {
   assets: [],
   models: [],
   still: 6.1,
+  // the score already crashes on the downbeat and swells into the seam; these
+  // are the four landings, the moves between them, and the fly-in
   sfx: [
-    { at: BEAT, type: 'impact' },            // OWNERSHIPCOIN settles beside the camera
-    { at: 1.66, type: 'whoosh' },            // the whip onto the plaza
-    { at: T_B, type: 'impact' },             // THE CHILL GALLERY lands
-    { at: T_C, type: 'impact' },             // under the GACHA stack
-    { at: 4.45, type: 'whoosh' },            // rising through the floors
-    { at: T_D, type: 'impact' },             // ARK.TG lands face-on
-    { at: T_D, type: 'sub' },
-    { at: 7.45, type: 'riser' }              // the drive into the dot
+    { at: BEAT, type: 'impact' },                      // OWNERSHIPCOIN punches out of the wall
+    { at: 1.66, type: 'whoosh', gain: 0.6 },           // the whip onto the plaza
+    { at: T_B, type: 'impact' },                       // THE CHILL GALLERY slams upright
+    { at: T_C, type: 'impact' },                       // under the GACHA stack
+    { at: 4.6, type: 'whoosh', gain: 0.6, len: 0.5 },  // out through the last floors
+    { at: T_D, type: 'impact' },                       // ARK.TG lands face-on
+    { at: 7.12, type: 'whoosh', gain: 0.8, len: 0.8 }  // the fly-in: into the dot
   ],
   draw(ctx, S) {
     const lt = S.lt;
@@ -569,7 +571,12 @@ const scene = {
     ctx.save();
     ctx.font = FONT100; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
     items.sort((p, q) => q.z - p.z);
-    for (const g of items) paint(ctx, g);
+    const PROF = typeof window !== 'undefined' && window.__bprof;   // TEMP
+    for (const g of items) {
+      const t0 = PROF ? performance.now() : 0;
+      paint(ctx, g);
+      if (PROF) PROF.push([performance.now() - t0, g.fn ? 'fn' : g.ch, g.strips ? g.strips.length : 0, g.strips ? g.strips.map(s => s.nl + '/' + (s.sp || 0).toFixed(1) + '/' + Math.sqrt(Math.abs(s.m.a * s.m.d - s.m.b * s.m.c)).toFixed(2) + '/' + Math.hypot(s.m.a, s.m.b).toFixed(1) + ',' + Math.hypot(s.m.c, s.m.d).toFixed(1)).join(' ') : '']);
+    }
     ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
