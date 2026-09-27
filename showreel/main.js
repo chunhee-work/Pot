@@ -9,6 +9,7 @@
      rest         (ctx, S, at) => draws the seam frame at time `at` (a chapter
                   boundary): every chapter must begin and end on it
      fill         (chapter) => the colour under a chapter's frame
+     fx           the lens's resting settings, if not the defaults (e.g. a lighter vignette)
      loadingText  the loader's words */
 import * as K from './kit.js';
 import { createPost } from './post.js';
@@ -45,7 +46,7 @@ export function startReel(cfg) {
   };
 
   function fxReset() {
-    return { ab: 0, flash: 0, warp: 0, warpX: 0.5, warpY: 0.5, shake: 0, grain: 1, vignette: 1, exposure: 1 };
+    return { ab: 0, flash: 0, warp: 0, warpX: 0.5, warpY: 0.5, shake: 0, grain: 1, vignette: 1, exposure: 1, ...(cfg.fx || {}) };
   }
 
   function chapterAt(t) {
