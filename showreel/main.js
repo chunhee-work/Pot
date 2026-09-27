@@ -385,18 +385,22 @@ export function startReel(cfg) {
     const models = [...new Set(order.flatMap(c => c.scene.models || []))];
     const firstNeeds = needs(first).length;
     let firstDone = 0;
+    // the loader counts the type as one more thing the first frame waits for
+    const progress = () => {
+      const p = ((fontsIn ? 1 : 0) + firstDone) / (1 + firstNeeds);
+      loadBar.style.transform = `scaleX(${p})`;
+      loadText.textContent = `${LOADING} · ${Math.round(p * 100)}%`;
+    };
     const bump = k => {
       loaded.add(k);
       schedulePrepare();
       if (needs(first).includes(k)) firstDone++;
-      const p = (1 + firstDone) / (1 + firstNeeds);
-      loadBar.style.transform = `scaleX(${p})`;
-      loadText.textContent = `${LOADING} · ${Math.round(p * 100)}%`;
+      progress();
       if (started) invalidate();
     };
     const fonts = Promise.all(['400', '600', '700', '800', '900'].map(w => document.fonts.load(`${w} 40px Archivo`)).concat(document.fonts.load('700 40px Cinzel')))
       .catch(() => {})
-      .then(() => { fontsIn = true; schedulePrepare(); });
+      .then(() => { fontsIn = true; progress(); schedulePrepare(); });
     // pictures in the order they are needed, from wherever playback starts
     const imgs = paths.map(p => new Promise(res => {
       const im = new Image();
