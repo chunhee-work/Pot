@@ -1,9 +1,14 @@
-# BUILD-STATUS — `/reel`
+# BUILD-STATUS — `/reel` 和 `/reel2`
 
 ## Now
-- 无。本轮完成（00:27 MYT）
+- `/reel2`（分支 `claude/reel-two`，计划见 `BUILD-PLAN-reel2.md`）：10 个 agent 并行在做（18:14 MYT 派出）
+  - 8 个章节，每个 agent 只改 `showreel/two/scenes/<n>-<id>.js`
+  - 合成配乐，只改 `showreel/two/sound.js`
+  - 测试，只改 `tests/reel.smoke.mjs`，另加 `tests/run-all.mjs`
 
 ## Done
+- R2-T1 播放器通用化（18:10 MYT）：两支 reel 共用一个播放器；`/reel` 完整测试 51/51 仍全过
+- R2-T2 2.5D 空间模块、`/reel2` 骨架、8 个占位章节（18:12 MYT）
 - T14 Go-Live 上 staging（00:27 MYT）
   - PR https://github.com/chunhee00/Pot/pull/1 已合并进 `staging`（合并提交 `ad075b7`），CI（Vercel）绿，无 review 评论
   - staging 部署 `dpl_53LuxDeLq2qPA5WoE2UdKiG6RJjN` 状态 READY：https://chunhee-portfolio-3ywzwmc5p-chunhee00s-projects.vercel.app/reel
@@ -30,13 +35,15 @@
   - 首页、`/process`、`/work` 三个文件的 sha256 和开工前一致
 
 ## Queue
-- 无（生产分支等你明确说了才上线）
+- R2-T12 审查、修复、完整测试
+- R2-T13 Go-Live 上 staging
 
 ## Blockers
-- 远端分支 `claude/vibrant-allen-9mlymk` 待手动删除（见上）
+- 上一轮的远端分支 `claude/vibrant-allen-9mlymk` 待你在 PR #1 页面点「Delete branch」
 
 ## Resume notes
 - 本地预览：`node tests/shoot.mjs <输出目录> <时间,…> [--size 390x844] [--debug]`
 - 单独看某一章：`/reel.html?solo=<章节 id>&debug`
 - 章节接口约定写在 `showreel/kit.js` 文件头和 `showreel/timeline.js`
 - 容器打不开 `*.vercel.app`、unpkg、esm.sh；reel 不依赖任何 CDN
+- 第二支：`node tests/shoot.mjs <目录> <时间> --page reel2`；`node tests/check-chapter.mjs <id> --page reel2`
