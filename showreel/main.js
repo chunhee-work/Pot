@@ -154,7 +154,7 @@ export function startReel(cfg) {
           next = t < c.start && next >= c.start ? c.start - 1e-4 : Math.min(t, next);
         }
         t = next;
-        sound.tick(t);
+        if (!waitingFor) sound.tick(t);   // a hold that began this frame must not restart the score it just paused
         // if the chapter after the coming seam is still loading, have the score fall silent right on it
         const here = chapterAt(t), after = CHAPTERS[(CHAPTERS.indexOf(here) + 1) % CHAPTERS.length];
         sound.guard(!waitingFor && !chapterReady(after) && here.end - t < 0.75 ? here.end - t : null);
@@ -197,6 +197,7 @@ export function startReel(cfg) {
   const scrub = $('scrub'), fill = $('fill'), knob = $('knob'), timeEl = $('time');
   const chapterLabel = $('chapterLabel'), chaptersNav = $('chapters'), live = $('live');
 
+  scrub.setAttribute('aria-valuemax', String(DURATION));
   const fmt = s => { s = Math.max(0, Math.floor(s + 1e-6)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
 
   CHAPTERS.forEach((c, i) => {
@@ -255,7 +256,7 @@ export function startReel(cfg) {
     waitingFor = null;   // the loop decides afresh whether the new spot has to wait
     sound.seek(t);
     // a hold had paused the score; restart it here (the loop pauses it again if the new spot must wait too)
-    if (wasWaiting && playing && !dragging) sound.play(t);
+    if (wasWaiting && playing && !dragging && chapterReady(chapterAt(t))) sound.play(t);
     updateUI(chapterAt(t));   // the transport answers at once, even if the new frame is slow to draw
     invalidate();
     if (announce) live.textContent = `${chapterAt(t).scene.title}, ${fmt(t)}`;

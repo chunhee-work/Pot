@@ -625,7 +625,7 @@ export function createSound({ duration, chapters }) {
     setOn(v, t, isPlaying) {
       on = !!v;
       if (on) {
-        if (!ensure()) return;
+        if (!ensure()) { on = false; return; }   // no Web Audio here: the button must not claim sound is on
         resume(true);
         loadVoices();
         playing = !!isPlaying;

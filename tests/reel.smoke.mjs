@@ -130,7 +130,8 @@ async function open(vw, vh, dpr = 1, opts = {}) {
   check('the WebGL lens is active', lens);
 
   const t0 = await page.evaluate(() => window.__reel.t);
-  await page.waitForTimeout(1200);
+  // (the first frames after load can be very slow in a software-rendered browser, so give it a few seconds to show it is moving)
+  await page.waitForFunction(t0 => window.__reel.t > t0 + 0.2 && window.__reel.frames > 5, t0, { timeout: 8000 }).catch(() => {});
   const s1 = await page.evaluate(() => ({ t: window.__reel.t, playing: window.__reel.playing, frames: window.__reel.frames }));
   check('autoplays (muted) on load', s1.playing && s1.t > t0 + 0.2 && s1.frames > 5, `t ${t0.toFixed(2)} → ${s1.t.toFixed(2)}, ${s1.frames} frames`);
   check('sound is off by default', !(await page.evaluate(() => window.__reel.soundOn)));

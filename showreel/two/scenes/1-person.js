@@ -190,7 +190,8 @@ function stemQuad(Q, K, g) {
   const c = P((STEM.a0 + STEM.a1) / 2, -STEM.h / 2), dStem = K.cam(c[0], c[1], c[2], [0, 0, 0])[2];
   const quad = (bTop, color, dd) => {
     const pts = [P(STEM.a0, bTop), P(STEM.a1, bTop), P(STEM.a1, 0), P(STEM.a0, 0)].map(p => K.cam(p[0], p[1], p[2], [0, 0, 0]));
-    const poly = clipNear(pts, 0.1);
+    // on very wide or very tall frames the stem only overfills the frame nearer than 0.1 — keep it until then
+    const poly = clipNear(pts, K.stemNear ?? 0.1);
     if (poly.length < 3) return null;
     const scr = poly.map(p => project(K, p[0], p[1], p[2], [0, 0]));
     const d = dStem - dd;
@@ -712,6 +713,7 @@ const scene = {
     if (t >= T_FILL) { ctx.fillStyle = next; ctx.fillRect(0, 0, S.W, S.H); return; }
     const W = world(S, ctx);
     const K = makeCam(S, camAt(S, W, t));
+    K.stemNear = Math.min(0.1, W.dEnd / 2);
 
     // the floor of type (under everything)
     if (t > 2.8 && t < 5.9) {
@@ -724,7 +726,8 @@ const scene = {
 
     // the orange takes the frame once the stem overfills it
     const stemItem = Q.find(q => q.hot);
-    if (t > T_DRIVE && stemItem && covers(stemItem.scr, S.W, S.H)) { ctx.fillStyle = next; ctx.fillRect(0, 0, S.W, S.H); }
+    const stemDepth = K.cam(W.stem.x, W.stem.y, W.stem.z, [0, 0, 0])[2];
+    if (t > T_DRIVE && ((stemItem && covers(stemItem.scr, S.W, S.H)) || stemDepth <= 1.15 * W.dEnd)) { ctx.fillStyle = next; ctx.fillRect(0, 0, S.W, S.H); }
 
     // eyebrow
     const eIn = seg(t, B, B + 0.4), eOut = seg(t, T_BAR2 + 0.02, T_BAR2 + 0.25);
