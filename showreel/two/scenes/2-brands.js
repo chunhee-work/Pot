@@ -276,7 +276,7 @@ function geometry(ctx, S) {
   // sit on the frame, and its size from the share of the width it should fill.
   const camB = P ? { y: -11, z: 1.5, pitch: -0.56 } : { y: -9, z: 1.5, pitch: -0.42 };
   const rowsB = P
-    ? [['THE', 0.36, 0.4], ['CHILL', 0.52, 0.62], ['GALLERY', 0.69, 0.8]]
+    ? [['THE', 0.33, 0.4], ['CHILL', 0.48, 0.62], ['GALLERY', 0.635, 0.8]]
     : [['THE', 0.305, 0.22], ['CHILL', 0.5, 0.44], ['GALLERY', 0.74, 0.74]];
   const h = -camB.y, sp = Math.sin(camB.pitch), cp = Math.cos(camB.pitch);
   G.B = {
@@ -290,11 +290,18 @@ function geometry(ctx, S) {
     })
   };
 
-  // bar 3 — the stack: floors of GACHA over the plaza, read from below
+  // bar 3 — the stack: a stairwell of GACHA over the plaza, read from below.
+  // Each floor is a square frame of four GACHAs round an open core, and the
+  // camera rises through the core: the floors sweep out past the edges of the
+  // frame as they pass, instead of blacking it out. The first floor's frame
+  // spans most of the short side at the hit.
   const Lg = lay('GACHA'), y0 = -17, gap = 8, K = 7, SZ = 24, firstD = 7;
-  const gW = (P ? 0.86 : 0.7) * wide * firstD;
+  // (its feet stay above the labels at the foot of the frame, on any upright frame)
+  const outer = (P ? Math.min(0.88, 0.56 * tall) : 0.74) * firstD / 2;   // half-size of a floor's frame
+  const cG = outer / (Lg.width / CAP / 2 + 0.62 + 0.5), sG = cG / CAP;
   G.C = {
-    L: Lg, s: gW / Lg.width, w: gW, SZ, K, gap, y0, twist: 0.3, start: y0 + firstD,
+    L: Lg, s: sG, w: Lg.width * sG, cap: cG, R: Lg.width * sG / 2 + cG * 0.62,
+    SZ, K, gap, y0, twist: 0.3, start: y0 + firstD,
     // the floors twist out and back like a helix that turns home
     floors: Array.from({ length: K }, (_, k) => ({ y: y0 - k * gap, ang: 0.3 * helix(k), paper: k === K - 1 }))
   };
@@ -455,20 +462,24 @@ function plaza(items, C, G, lt, fog) {
 function stack(items, C, G, fog) {
   const K = G.C;
   for (const fl of K.floors) {
-    const a = fl.ang, ex = [Math.cos(a), 0, Math.sin(a)], ey = [-Math.sin(a), 0, Math.cos(a)];
-    const hc = K.s * CAP / 2;
-    // centre the word on the axis
-    const O = [-ex[0] * K.w / 2 + ey[0] * hc, fl.y, K.SZ - ex[2] * K.w / 2 + ey[2] * hc];
-    run(items, C, { L: K.L, s: K.s, O, ex, ey, T: 0.8, face: fl.paper ? PAPER : INK, side: fl.paper ? mixc(PAPER, OR, 0.5) : SIDE }, fog);
+    for (let j = 0; j < 4; j++) {
+      // side j of the square: the word reads along ex, its feet (ey) outward
+      const a = fl.ang + j * HALF_PI, c = Math.cos(a), s = Math.sin(a);
+      const ex = [c, 0, s], ey = [-s, 0, c];
+      const cx = -s * K.R, cz = c * K.R;                       // the middle of this side
+      const O = [cx - ex[0] * K.w / 2 + ey[0] * K.cap / 2, fl.y, K.SZ + cz - ex[2] * K.w / 2 + ey[2] * K.cap / 2];
+      run(items, C, { L: K.L, s: K.s, O, ex, ey, T: K.cap * 0.3, face: fl.paper ? PAPER : INK, side: fl.paper ? mixc(PAPER, OR, 0.5) : SIDE }, fog);
+    }
   }
 }
 
 function ark(items, C, G, lt, fog) {
   const D = G.D;
   // it comes down out of the sky as the camera tilts down to meet it, turning
-  // a turn and a half about its own upright, and lands face-on on the bar
+  // a turn and a quarter about its own upright (phased so it enters the frame
+  // nearly face-on), and lands face-on on the bar
   const p = seg(lt, T_SPIN, T_D), tau = lt - T_D;
-  const theta = -3 * Math.PI * Math.pow(1 - p, 1.6) + (tau > 0 ? 0.14 * Math.exp(-7 * tau) * Math.sin(tau * 19) : 0);
+  const theta = -2.5 * Math.PI * Math.pow(1 - p, 1.6) + (tau > 0 ? 0.14 * Math.exp(-7 * tau) * Math.sin(tau * 19) : 0);
   const ex = [Math.cos(theta), 0, Math.sin(theta)], ey = [0, 1, 0];
   const lift = 30 * (1 - outCubic(seg(lt, T_LEVEL, T_LEVELED + 0.3)));
   for (const ln of D.lines) {
