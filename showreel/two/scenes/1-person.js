@@ -5,25 +5,36 @@
    Every letter is a plane in the world (set by the little engine below), so
    words can drop, topple flat, stand up, and be flown between and over.
 
-   Time map (local s; beats every 0.46875, bars at 0, 1.875, 3.75, 5.625)
+   Time map (local s; beats every 0.46875, bars at 0, 1.875, 3.75, 5.625 — bar 1
+   is the score's filtered intro, so its hits are light and the drop is 1.875)
      0.00–0.09   Klein
-     0.09–0.40   ONE slams in out of the depth toward the lens, overshoots, settles
+     0.09–0.35   ONE slams in out of the depth toward the lens, overshoots, settles —
+                 framed dead centre, alone
      0.47        eyebrow CHUN HEE — SHOWREEL TWO types on
-     0.94–1.10   PERSON. rains down letter by letter onto the floor (beat 2)
-     1.41        the full stop drops (beat 3) — ONE PERSON. held and read to 1.9
-     1.875       bar 2: PERSON. topples backward flat onto the floor, domino-wise;
-                 the camera kicks, cranes up and looks down on it
-     2.34        it lands flat (beat) — the camera swoops down and skims over it
-     2.60–3.08   ONE's letters part; the camera threads between N and E (the canyon)
-     3.08–3.75   out the other side into a corridor floored with type
+     0.94–1.15   beat 2: PERSON rains down letter by letter (keylined as it crosses
+                 ONE); the camera tilts down to make room for it
+     1.15–1.875  ONE PERSON held and read; the camera creeps in with the swell
+     1.66–1.875  the full stop falls out of the sky and lands on the bar — the drop:
+                 flash, shock ring, shake; ONE hops, and the shock knocks PERSON.
+                 flat, a letter at a time running back from the stop
+     1.875–2.34  the camera kicks, cranes up and looks down on the word on the floor
+     2.34–2.72   it swoops down and skims low over it
+     2.55–3.28   ONE's letters part; the camera threads between N and E (the canyon),
+                 through on beat 7; a floor and ceiling of small type switch on in a
+                 wave racing ahead, and BRAND appears tiny at the far end
      3.75–5.39   the departments slam in and stream past, tiny then colossal, the
-                 camera whip-panning to each: BRAND, ANIMATION, VOICES (quarters),
-                 FILMS, CODE, TOOLS (eighths)
+                 camera whip-panning to each as it lands: BRAND, ANIMATION, VOICES
+                 (quarters), FILMS, CODE, TOOLS (eighths); passing under the big ones
      5.26–5.68   A WHOLE STUDIO. stands up out of the floor, row by row; the camera
                  passes under TOOLS, whips round and brakes — it lands on bar 4
-     5.70–6.90   held and read; the I of STUDIO floods signal orange on 6.09
-     6.56–7.38   the camera drives into the orange I until it is all there is
-     7.38–7.50   signal orange (chapter 2's colour)                                   */
+     5.70–6.56   held and read; the I of STUDIO floods signal orange on 6.09
+     6.56–7.35   the camera drives into the orange I until it overfills the frame
+     7.35–7.50   signal orange (chapter 2's colour)
+
+   Portrait re-blocks the words for the tall frame: ONE / PER / SON., the big
+   departments stand up the frame, A / WHOLE / STUDIO. — every lockup is composed
+   in frame fractions from its hold camera, then placed in the world.
+   */
 import { clamp, lerp, seg, outExpo, outCubic, inOutCubic, inQuad, whip, layout, text, FONT } from '../../kit.js';
 import { mix, fogAt } from '../../space.js';
 import { BLOCK, BEAT, BAR } from '../palette.js';
@@ -31,7 +42,6 @@ import { nextColour } from '../timeline.js';
 
 const INK = BLOCK.paper, BG = BLOCK.klein, HOT = BLOCK.signal;
 const REFPX = 100, CAP = 0.688;                  // glyphs are set at 100px; an Archivo 900 capital is 0.688 of that
-const STEM = { a0: 7.4, a1: 29.5, h: 68.8 };     // the I at 100px: a plain rectangle, so it can be drawn exactly
 const B = BEAT;
 
 // key instants
@@ -119,6 +129,9 @@ for (const ch in OUTLINE) {
   GL[ch] = { ops, xy, x0, x1, y0, y1 };
 }
 
+// the I is a plain rectangle (x 74–295, y 0–688): at 100px it can be drawn exactly as a quad
+const STEM = { a0: GL.I.x0 / 10, a1: GL.I.x1 / 10, h: GL.I.y1 / 10 };
+
 const RIGHT = [1, 0, 0], UP = [0, -1, 0];
 
 /** lay a word out on a plane: o.at = baseline anchor, o.U reading direction,
@@ -173,12 +186,14 @@ function glyph(Q, K, g) {
 function stemQuad(Q, K, g) {
   const su = g.sc * g.sx, sv = g.sc * g.sy;
   const P = (a, b) => [g.x + g.U[0] * a * su - g.V[0] * b * sv, g.y + g.U[1] * a * su - g.V[1] * b * sv, g.z + g.U[2] * a * su - g.V[2] * b * sv];
+  // both pieces sort at the whole stem's depth, the flood just in front
+  const c = P((STEM.a0 + STEM.a1) / 2, -STEM.h / 2), dStem = K.cam(c[0], c[1], c[2], [0, 0, 0])[2];
   const quad = (bTop, color, dd) => {
     const pts = [P(STEM.a0, bTop), P(STEM.a1, bTop), P(STEM.a1, 0), P(STEM.a0, 0)].map(p => K.cam(p[0], p[1], p[2], [0, 0, 0]));
     const poly = clipNear(pts, 0.1);
     if (poly.length < 3) return null;
     const scr = poly.map(p => project(K, p[0], p[1], p[2], [0, 0]));
-    const d = (pts[0][2] + pts[1][2] + pts[2][2] + pts[3][2]) / 4 - dd;
+    const d = dStem - dd;
     const it = { kind: 1, d, scr, color, alpha: g.alpha };
     Q.push(it);
     return it;
@@ -269,7 +284,7 @@ function drawQueue(ctx, K, Q) {
       /* a Klein keyline knocks each letter out of whatever stands behind it, so
          overlapping words stay legible (it vanishes against the open frame) */
       const capPx = g.sc * REFPX * CAP * K.F / Math.max(it.d, 0.2);
-      outline(ctx, K, it, Math.min(capPx * 0.07, 0.03 * K.H));
+      outline(ctx, K, it, g.alpha < 1 ? 0 : Math.min(capPx * 0.07, 0.03 * K.H));   // ghosts blend, no keyline
     }
   }
   ctx.restore();
@@ -435,19 +450,6 @@ function world(S, ctx) {
   const zF = zH5 + 17;
   const holdF = { y: FLOOR - (P ? 5.2 : 4.6), z: zF, pitch: P ? 0.33 : 0.15 };
   W.holdF = holdF;
-  if (P) W.fin = [place(holdF, 'A', 0.415, 0.14, 0.9), place(holdF, 'WHOLE', 0.515, 0.14, 0.9), place(holdF, 'STUDIO.', 0.615, 0.14, 0.9)];
-  else W.fin = [place(holdF, 'A WHOLE', 0.462, 0.205, 0.86), place(holdF, 'STUDIO.', 0.728, 0.215, 0.8)];
-  // the I in STUDIO. — its stem's centre is where the camera ends up
-  {
-    const st = W.fin[W.fin.length - 1];
-    const L = layout(ctx, 'STUDIO.', { size: REFPX, weight: 900, tracking: -0.02 });
-    const sc = st.cap / (REFPX * CAP), x0 = -L.width / 2;
-    W.stem = {
-      x: sc * (x0 + L.xs[4] + (STEM.a0 + STEM.a1) / 2), y: FLOOR - sc * STEM.h / 2, z: st.z,
-      w: sc * (STEM.a1 - STEM.a0), h: sc * STEM.h
-    };
-    W.dEnd = F / (Math.max(S.W / W.stem.w, S.H / W.stem.h) * 1.15);   // close enough that it overfills the frame
-  }
   // the floor of type, either side of the corridor
   {
     const lane = P ? 2.8 : 4.6, cap = P ? 0.55 : 0.8, z0 = zO - 1, z1 = zF - 3;
@@ -474,9 +476,26 @@ function world(S, ctx) {
     [0, -1.5, 0.8], [T_BAR2, 0, 13, 0.8],
     [T_FLAT, crane.z], [2.72, ly1 + (P ? 1.4 : 1.8)], [T_THREAD, zO, 52],
     [T_BAR3, zH0, v0], [HITS[5], zH5, v1],
-    [T_BAR4, zF - 2.2, 9], [T_DRIVE, zF + 0.9, 1.2]
+    [T_BAR4, zF - 0.9, 4.5], [T_DRIVE, zF + 0.3, 0.35]
   ]);
-  W.pos = t => [W.cx(t), W.cy(t), W.cz(t)];
+  // bar 1 leans in on the beats, then creeps forward into the drop as the score swells
+  const lean = t => 0.2 * outExpo(seg(t, B, B + 0.3)) + 0.35 * outExpo(seg(t, T_PER, T_PER + 0.3)) + 0.5 * inQuad(seg(t, T_DOT - 0.2, T_BAR2));
+  W.pos = t => [W.cx(t), W.cy(t), W.cz(t) + lean(t)];
+  // the last lockup is composed from where the camera actually is mid-hold
+  const ref = { y: W.cy(6.45), z: W.pos(6.45)[2], pitch: holdF.pitch };
+  if (P) W.fin = [place(ref, 'A', 0.415, 0.14, 0.84), place(ref, 'WHOLE', 0.515, 0.14, 0.84), place(ref, 'STUDIO.', 0.615, 0.14, 0.84)];
+  else W.fin = [place(ref, 'A WHOLE', 0.462, 0.205, 0.8), place(ref, 'STUDIO.', 0.728, 0.215, 0.74)];
+  // the I in STUDIO. — its stem's centre is where the camera ends up
+  {
+    const st = W.fin[W.fin.length - 1];
+    const L = layout(ctx, 'STUDIO.', { size: REFPX, weight: 900, tracking: -0.02 });
+    const sc = st.cap / (REFPX * CAP), x0 = -L.width / 2;
+    W.stem = {
+      x: sc * (x0 + L.xs[4] + (STEM.a0 + STEM.a1) / 2), y: FLOOR - sc * STEM.h / 2, z: st.z,
+      w: sc * (STEM.a1 - STEM.a0), h: sc * STEM.h
+    };
+    W.dEnd = F / (Math.max(S.W / W.stem.w, S.H / W.stem.h) * 1.15);   // close enough that it overfills the frame
+  }
   // ONE alone is framed dead centre; on beat 2 the camera tilts down to make room for PERSON.
   const oneMid = (W.one.sy - W.one.capPx / 2 / S.H - 0.5) * S.H / F;
   const p1 = hold.pitch + Math.atan(oneMid);
@@ -522,7 +541,8 @@ function world(S, ctx) {
     const lead = i === 0 ? 0.62 : Math.min(0.3, (th - HITS[i - 1]) * 0.9);
     return { str, th, yaw, pitch, U, V, f, at, cap, lead };
   });
-  WC = W;
+  // a layout measured before the font arrived would be wrong: only keep a good one
+  if (typeof document === 'undefined' || !document.fonts || document.fonts.check('900 100px Archivo')) WC = W;
   return W;
 }
 
@@ -534,7 +554,7 @@ function lookAt(W, t) {
     // hold on a department, then whip to the next just as it lands
     let i = 0;
     while (i < pd.length - 1 && t > pd[i].th + 0.03) i++;
-    const a = i === 0 ? { yaw: 0, pitch: 0 } : pd[i - 1], b = pd[i];
+    const a = i === 0 ? { yaw: 0, pitch: W.pOpen(3.3) } : pd[i - 1], b = pd[i];
     const k = i === 0 ? inOutCubic(seg(t, 3.3, b.th - 0.02)) : whip(seg(t, b.th - Math.min(0.2, (b.th - a.th) * 0.75), b.th - 0.01));
     return [lerp(a.yaw, b.yaw, k), lerp(a.pitch, b.pitch, k)];
   }
@@ -546,8 +566,6 @@ function camAt(S, W, t) {
   let [x, y, z] = W.pos(t);
   let [yaw, pitch] = lookAt(W, t);
   // beat kicks in bar 1: the camera leans in on each hit
-  // bar 1 leans in on the beats, then creeps forward into the drop as the score swells
-  z += 0.2 * outExpo(seg(t, B, B + 0.3)) + 0.35 * outExpo(seg(t, T_PER, T_PER + 0.3)) + 0.5 * inQuad(seg(t, T_DOT - 0.2, T_BAR2));
   let roll = 0.018 * Math.sin(t * 1.9)
     + 0.06 * Math.sin((t - T_BAR2) * 4.2) * seg(t, T_BAR2, 2.2) * (1 - seg(t, 2.9, 3.4))
     - 0.05 * inOutCubic(seg(t, 3.3, 3.7)) * (1 - seg(t, 5.2, 5.6));
@@ -562,7 +580,7 @@ function camAt(S, W, t) {
   roll *= 1 - seg(t, 5.45, T_BAR4 + 0.1);
   // the drive: into the stem of the I, in log-distance so it reads as one push
   if (t > T_DRIVE) {
-    const s = seg(t, T_DRIVE, T_FILL), st = W.stem, C0 = W.pos(T_DRIVE);
+    const s = seg(t, T_DRIVE, T_FILL - 0.035), st = W.stem, C0 = W.pos(T_DRIVE);
     const dz0 = st.z - C0[2];
     const e = s * s * (1.4 - 0.4 * s);
     const dz = dz0 * Math.pow(W.dEnd / dz0, e);
@@ -712,7 +730,7 @@ const scene = {
     const eIn = seg(t, B, B + 0.4), eOut = seg(t, T_BAR2 + 0.02, T_BAR2 + 0.25);
     if (eIn > 0 && eOut < 1) {
       const u = S.u, P = S.portrait;
-      text(ctx, S, 'CHUN HEE — SHOWREEL TWO', P ? 7 * u : 5.2 * u, S.H * (P ? 0.115 : 0.125), {
+      text(ctx, S, 'CHUN HEE — SHOWREEL TWO', Math.max(0.06 * S.W, P ? 7 * u : 5.2 * u), S.H * (P ? 0.115 : 0.125), {
         size: (P ? 3.2 : 2.2) * u, weight: 700, tracking: 0.2, color: INK, reveal: eIn, window: 0.3,
         alpha: 1 - eOut, rise: 0.8 * u
       });
@@ -753,4 +771,3 @@ function covers(poly, w, h) {
 }
 
 export default scene;
-export const __debug = { camAt, world };
