@@ -395,7 +395,8 @@ export function startReel(cfg) {
       if (started) invalidate();
     };
     const fonts = Promise.all(['400', '600', '700', '800', '900'].map(w => document.fonts.load(`${w} 40px Archivo`)).concat(document.fonts.load('700 40px Cinzel')))
-      .catch(() => {});
+      .catch(() => {})
+      .then(() => { fontsIn = true; schedulePrepare(); });
     // pictures in the order they are needed, from wherever playback starts
     const imgs = paths.map(p => new Promise(res => {
       const im = new Image();
@@ -411,11 +412,12 @@ export function startReel(cfg) {
   }
 
   /* A chapter may build its expensive caches ahead of time (`prepare(S)`): it
-     is called once the chapter's pictures are in, off the frame loop, and
-     again after a resize, so nothing is built mid-reel on a cut. */
+     is called once the type and the chapter's pictures are in, off the frame
+     loop, and again after a resize, so nothing is built mid-reel on a cut. */
   const prepared = new Set();
-  let prepTimer = 0;
+  let prepTimer = 0, fontsIn = false;
   function prepareReady() {
+    if (!fontsIn) return;   // cached type measured in a fallback face would stay wrong
     for (const c of CHAPTERS) {
       if (prepared.has(c) || !c.scene.prepare || !chapterReady(c)) continue;
       prepared.add(c);
