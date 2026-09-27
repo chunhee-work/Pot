@@ -362,6 +362,7 @@ export function startReel(cfg) {
   // repaint inside the resize itself, so no step of a resize shows a cleared canvas
   new ResizeObserver(() => {
     size();
+    prepared.clear(); schedulePrepare();   // caches may depend on the frame's shape
     if (started && !body.hasAttribute('data-still') && !document.hidden) { dirty = false; paint(performance.now()); }
   }).observe(stage);
 
@@ -385,6 +386,7 @@ export function startReel(cfg) {
     let firstDone = 0;
     const bump = k => {
       loaded.add(k);
+      schedulePrepare();
       if (needs(first).includes(k)) firstDone++;
       const p = (1 + firstDone) / (1 + firstNeeds);
       loadBar.style.transform = `scaleX(${p})`;
@@ -402,10 +404,24 @@ export function startReel(cfg) {
       im.src = p;
     }));
     const mods = loadModels(models, n => bump('model:' + n)).catch(e => { console.error('[reel]', e.message); models.forEach(n => bump('model:' + n)); });
-    Promise.all([fonts, mods, ...imgs]).then(resolveAll);
+    Promise.all([fonts, mods, ...imgs]).then(() => { prepareReady(); resolveAll(); });
     // the first frame waits only for the type and whatever the opening chapter needs
     return Promise.all([fonts, new Promise(res => { const k = () => (chapterReady(first) ? res() : setTimeout(k, 30)); k(); })]);
   }
+
+  /* A chapter may build its expensive caches ahead of time (`prepare(S)`): it
+     is called once the chapter's pictures are in, off the frame loop, and
+     again after a resize, so nothing is built mid-reel on a cut. */
+  const prepared = new Set();
+  let prepTimer = 0;
+  function prepareReady() {
+    for (const c of CHAPTERS) {
+      if (prepared.has(c) || !c.scene.prepare || !chapterReady(c)) continue;
+      prepared.add(c);
+      try { c.scene.prepare(S); } catch (e) { console.error('[reel] prepare', c.scene.id, e); }
+    }
+  }
+  function schedulePrepare() { clearTimeout(prepTimer); prepTimer = setTimeout(prepareReady, 60); }
 
   // ── the still version ─────────────────────────────────────────────────────
   function buildStills() {

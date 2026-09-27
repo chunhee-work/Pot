@@ -53,6 +53,7 @@ const T = {
 const SHOT = k => `assets/g-${k}.jpg`;
 const KEYS = ['home', 'packs', 'reveal', 'vault', 'battle', 'leaderboard', 'codex', 'skills', 'forge', 'ledger', 'settings', 'guide'];
 const PACK = 'assets/gameui/pack2-f7d2ed7b.webp';
+const G_PX = 480;   // the chrome G's render size
 const PACK_SRC = [505, 195, 270, 340];          // the pack with its "tap to open" and its line
 const PACK_AR = PACK_SRC[2] / PACK_SRC[3];
 const AR = { l: 1.31, p: 0.78 };                // a panel on a monitor, a panel on a phone
@@ -117,8 +118,10 @@ function panelArt(S, key, P) {
 }
 /** a panel in the world: o = { x, y, z, w (world width), rot, alpha, sc } */
 function addPanel(L, S, key, P, o) {
-  const c = panelArt(S, key, P), al = o.alpha ?? 1;
-  if (!c || al <= 0.003) return;
+  const al = o.alpha ?? 1;
+  if (al <= 0.003) return;          // an invisible panel is not worth building
+  const c = panelArt(S, key, P);
+  if (!c) return;
   L.custom(o.z, (ctx, p, f) => {
     const a = al * (1 - f);
     if (a <= 0.003) return;
@@ -325,7 +328,8 @@ function gacha(L, S, g, lt) {
     if (a <= 0.01) return;
     const px = gm.s * k * p.k * 1.14;
     if (px < 4 || px > S.W * 3) return;
-    const cv = S.logo3d('gacha', { w: Math.min(560, px), h: Math.min(560, px), yaw, pitch: 0.12, fit: 1.14 });
+    // one fixed render size, scaled on draw: resizing the renderer's buffer every frame is what costs
+    const cv = S.logo3d('gacha', { w: G_PX, h: G_PX, yaw, pitch: 0.12, fit: 1.14 });
     if (!cv) return;
     ctx.globalAlpha *= a;
     ctx.drawImage(cv, -px / 2, -px / 2, px, px);
@@ -633,11 +637,17 @@ const scene = {
     { at: T.paint, type: 'tick' },        // the I painted butter
     { at: T.cover, type: 'riser', gain: 0.4 }        // into the I
   ],
+  /** called by the player once this chapter's pictures are in: build every
+      panel for the current orientation now, so none is built mid-reel */
+  prepare(S) {
+    for (const key of [...KEYS, 'pack']) panelArt(S, key, S.portrait);
+    S.logo3d('gacha', { w: G_PX, h: G_PX, yaw: 0, fit: 1.14 });   // size the renderer once, here
+  },
   draw(ctx, S) {
     const lt = S.lt;
     if (lt < T.open) {
       // a teal frame; warm the chrome G's renderer so its first real frame doesn't stall
-      if (lt < 0.07) S.logo3d('gacha', { w: 32, h: 32, yaw: 0, fit: 1.14 });
+      if (lt < 0.07) S.logo3d('gacha', { w: G_PX, h: G_PX, yaw: 0, fit: 1.14 });
       return;
     }
     if (lt >= T.cover) { ctx.fillStyle = nextColour(scene); ctx.fillRect(0, 0, S.W, S.H); return; }
