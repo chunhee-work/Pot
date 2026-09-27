@@ -13,7 +13,7 @@
 
    Beats (local, BEAT = 0.46875): 0.09 out of the O · 0.94 CLAUDE ·
    1.88 CLAUDE DESIGN (bar) · 2.81 CAPCUT · 3.28 HIGGSFIELD · 3.75 ELEVENLABS
-   (bar) · 4.69 the bar is ruled · 5.16 = · 5.63 ONE STUDIO (bar) · 6.33 the
+   (bar) · 4.69 the bar is ruled · 5.16 = · 5.63 ONE STUDIO (bar) · 6.56 the
    drive into the I · 7.34 ink is the frame.
 
    Landscape keeps the ledger at one size and frames the column so far on each
@@ -46,7 +46,7 @@ const T = {
   rule: 10 * BEAT,      // the reveal lands and the bar is ruled
   eq: 11 * BEAT,        // =
   sum: 12 * BEAT,       // ONE STUDIO
-  dive: 13.5 * BEAT,    // the drive into the I begins
+  dive: 14 * BEAT,      // the drive into the I begins
   cover: 7.34           // the I's ink is the whole frame
 };
 const APP = 0.13;                 // a word's flight from the lens to the wall
@@ -276,10 +276,12 @@ function buildPlan(ctx, S) {
       ? fitPts(S, F, [...headPts, ...rowPts[0]], { w: 0.84, h: 0.6, fy: 0.5, kMax, zp: R.z, roll: ROLLS[0] })
       : fitPts(S, F, [...headPts, ...rowPts.slice(0, i + 1).flat()], { w: 0.86, h: 0.7, fy: 0.48, kMax, zp: R.z, roll: ROLLS[i] }));
   if (S.portrait) sR.forEach((sh, i) => { sh.k *= 1 + 0.015 * i; });
-  // the overview: in landscape the whole equation, header to sum, centred in y 10–86 %
+  // the overview: the whole equation, header to sum, fitted to the frame's
+  // height as well as its width — centred in y 10–86 % (landscape) or 8–86 %
+  // (any upright frame, 9:19.5 down to 3:4)
   const allPts = [...colPts, ...resPts];
   const sV = S.portrait
-    ? fitPts(S, F, [...rowPts.flat(), ...resPts], { w: 0.84, h: 0.76, fy: 0.47, zp: L.res.z, roll: 0.012 })
+    ? fitPts(S, F, allPts, { w: 0.84, h: 0.72, fy: 0.47, zp: L.res.z, roll: 0.012 })
     : fitPts(S, F, allPts, { w: 0.86, h: 0.72, fy: 0.48, zp: L.res.z, roll: 0.012 });
   const sV2 = { ...drift(sV, T.eq - T.rule), k: sV.k * 0.972 };
   // after the sum lands: a slow push on it, keeping all of = ONE STUDIO in frame
@@ -287,7 +289,7 @@ function buildPlan(ctx, S) {
   const kV = F / (L.res.z - sV2.zp + F / sV2.k);
   const rOff = [(rc[0] - sV2.x) * kV, (rc[1] - sV2.y) * kV];
   const sF1 = S.portrait
-    ? aim(rc[0], rc[1], L.res.z, rOff[0], rOff[1] * 0.88, kV * 1.03, 0.02)
+    ? fitPts(S, F, allPts, { w: 0.86, h: 0.74, fy: 0.47, zp: L.res.z, roll: 0.02 })
     : fitPts(S, F, allPts, { w: 0.88, h: 0.73, fy: 0.485, zp: L.res.z, roll: 0.02 });
   // the end: the I's stem, centred, a little wider than the frame (at the final roll)
   const rEnd = 0.16, c = Math.abs(Math.cos(rEnd)), s = Math.abs(Math.sin(rEnd));

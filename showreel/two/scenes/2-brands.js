@@ -575,7 +575,8 @@ const scene = {
     if (lt >= T_DRIVE) {
       const dot = dotWorld(G);
       const p = C.project(dot[0], dot[1], dot[2]);
-      if (lt > T_INK || (p && D.dot.r * 0.94 * C.F / p.d >= Math.hypot(S.W, S.H) / 2 + Math.hypot(p.x - S.W / 2, p.y - S.H / 2))) {
+      // (a dot nearer than the lens can see is one we are already inside)
+      if (lt >= T_INK || !p || D.dot.r * 0.94 * C.F / p.d >= Math.hypot(S.W, S.H) / 2 + Math.hypot(p.x - S.W / 2, p.y - S.H / 2)) {
         ctx.fillStyle = next; ctx.fillRect(0, 0, S.W, S.H);
         return;
       }
