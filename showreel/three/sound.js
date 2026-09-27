@@ -91,7 +91,7 @@ const ARP_AS = [62, 64, 67, 69, 74, 76, 79, 81], ARP_A7 = [61, 64, 67, 69, 73, 7
 const ARP_D = [62, 64, 66, 69, 74, 76, 78, 81];
 const ARPS = [[ARP_DM, ARP_DM, ARP_DM], [ARP_BB, ARP_BB, ARP_BB], [ARP_F, ARP_F, ARP_F], [ARP_C, ARP_C, ARP_C],
               [ARP_GM, ARP_GM, ARP_GM], [ARP_EB, ARP_EB, ARP_EB], [ARP_AS, ARP_AS, ARP_A7], [ARP_D, ARP_D, ARP_D]];
-const ROOT = [38, 34, 29, 36, 31, 39, 33, 38];                  // D2 B♭1 F1 C2 G1 E♭2 A1 D2
+const ROOT = [38, 46, 41, 36, 43, 39, 45, 38];                  // D2 B♭2 F2 C2 G2 E♭2 A2 D2: 65–117 Hz
 // the arpeggio's figures: an index into the bar's eight tones for each 16th
 const FIG_A = [0, 2, 4, 2, 1, 3, 5, 3, 2, 4, 6, 4, 3, 5, 7, 5];
 const FIG_B = [0, 4, 2, 5, 1, 5, 3, 6, 2, 6, 4, 7, 5, 3, 4, 1];
@@ -343,7 +343,7 @@ function engine(ac, score, D, dest, bank) {
     const duck = G(1), music = G(1), pump = G(1), post = G(1), sfx = G(1), voice = G(1);
     wire(music, duck, out); wire(pump, music); wire(post, duck); wire(sfx, out); wire(voice, out);
     // the pulse runs through one soft drive and a lowpass
-    const bass = G(1), drv = ac.createWaveShaper(), blp = F('lowpass', 420, 0.5), bout = G(0.42);
+    const bass = G(globalThis.__PRE ?? 2.4), drv = ac.createWaveShaper(), blp = F('lowpass', globalThis.__BLP ?? 950, 0.5), bout = G(globalThis.__BOUT ?? 0.3);
     drv.curve = kit.drive; wire(bass, drv, blp, bout, music);
     // the arpeggio: its own resonant lowpass (the chapter-long sweeps), then dry and into the ping-pong
     const arp = G(1), arpF = F('lowpass', 800, 3.2);
@@ -444,15 +444,24 @@ function engine(ac, score, D, dest, bank) {
     env(o.frequency, when, [[0, f * 1.6, 0], [0.045, f, 2]], 0);
     env(g.gain, when, [[0, 0, 0], [0.006, 0.34 * v, 1], [0.14, 0.24 * v, 1], [0.52, 1e-4, 2]], 0);
     wire(o, g, T.bass);
-    go(T, [o], [g], when, when + 0.53, when);
+    // the pluck on top: a saw an octave up, its lowpass closing fast — the part of the pulse a phone can play
+    const U = globalThis.__UP ?? { m: 2, v: 0.1, f0: 2400, f1: 420, q: 1.2 };
+    const u = O('sawtooth', f * U.m), ul = F('lowpass', U.f0, U.q), ug = G(0);
+    env(ul.frequency, when, [[0, U.f0, 0], [0.12, U.f1, 2]], 0);
+    env(ug.gain, when, [[0, 0, 0], [0.004, U.v * v, 1], [0.1, 0.4 * U.v * v, 2], [0.4, 1e-4, 2]], 0);
+    wire(u, ul, ug, T.music);
+    go(T, [o, u], [g, ul, ug], when, when + 0.53, when);
   }
   function kick(T, when, v) {
-    const o = O('sine', 130), g = G(0), s = N(), hp = F('highpass', 2600, 0.7), cg = G(0);
+    const K = globalThis.__KICK ?? { kf: 230, kf1: 150, kv: 0.2, kd: 0.05, cf: 2200, cq: 0.9, cv: 0.25, cd: 0.014 };
+    const o = O('sine', 130), g = G(0), s = N(), bp = F('bandpass', K.cf, K.cq), cg = G(0), k = O('sine', K.kf), kg = G(0);
     env(o.frequency, when, [[0, 140, 0], [0.05, 58, 2], [0.36, 42, 2]], 0);
     env(g.gain, when, [[0, 0, 0], [0.002, 0.48 * v, 1], [0.09, 0.33 * v, 1], [0.42, 1e-4, 2]], 0);
-    env(cg.gain, when, [[0, 0, 0], [0.0008, 0.1 * v, 1], [0.01, 1e-4, 2]], 0);
-    wire(o, g, T.music); wire(s, hp, cg, T.music);
-    go(T, [o, s], [g, hp, cg], when, when + 0.44, when);
+    env(k.frequency, when, [[0, K.kf, 0], [0.04, K.kf1, 2]], 0);
+    env(kg.gain, when, [[0, 0, 0], [0.002, K.kv * v, 1], [K.kd, 1e-4, 2]], 0);
+    env(cg.gain, when, [[0, 0, 0], [0.0008, K.cv * v, 1], [K.cd, 1e-4, 2]], 0);
+    wire(o, g, T.music); wire(k, kg, T.music); wire(s, bp, cg, T.music);
+    go(T, [o, k, s], [g, kg, bp, cg], when, when + 0.44, when);
     // the pad leans back from the kick
     env(T.pump.gain, when, [[0, 1, 0], [0.015, 0.66, 1], [0.2, 0.9, 1], [0.45, 1, 1]], 0);
   }

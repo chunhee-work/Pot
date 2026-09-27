@@ -16,7 +16,7 @@
 
    Everything is a function of S.lt; the orbits are real circles projected
    through space.js's camera and drawn back to front with its list. */
-import { clamp, lerp, seg, TAU, rrect, text, layout, cover, outExpo, outCubic, inCubic, inOutCubic, inOutQuad, bezier } from '../../kit.js';
+import { clamp, lerp, seg, TAU, rrect, text, layout, cover, outExpo, outCubic, outBack, inCubic, inOutCubic, inOutQuad } from '../../kit.js';
 import { camera, list } from '../../space.js';
 import { seam, space, metal, chip, numeral, mono, stamp, UI, MONO } from '../kit3.js';
 import { BEAT } from '../palette.js';
@@ -27,8 +27,16 @@ const HERO_A_AT = 4 * BEAT;                     // 2.5  — bar 2: the planet sh
 const HERO_B_AT = 8 * BEAT;                     // 5.0  — bar 3: the same face, on Earth
 const RELEASE = 10 * BEAT;                      // 6.25 — the last dock lets go
 
-const dockE = bezier(0.5, 0, 0.12, 1);          // leaves briskly, glides into the dock
-const swoopE = bezier(0.42, 0, 0.1, 1);         // gathers, comes forward, settles into the dock on the beat
+/* Docking. A move glides out of rest and meets its dock exactly on the beat with
+   some speed still on it (not a long ease-out that has stopped a fifth of a second
+   early); the contact carries it a hair past, and a stiff spring (≈2.6 Hz) takes
+   it back: the overshoot peaks ~0.06 s after contact and is gone by ~0.28 s. */
+const SPR_W = TAU * 2.6, SPR_Z = 12;
+/** cubic Hermite 0 → 1 leaving with slope s0 and arriving with slope s1 */
+const herm = (x, s0, s1) => (((s0 + s1 - 2) * x + (3 - 2 * s0 - s1)) * x + s0) * x;
+/** how far past its dock a move arriving at speed v (units / s) has carried, dt after contact */
+const overshoot = (dt, v) => (dt <= 0 ? 0 : v / SPR_W * Math.exp(-SPR_Z * dt) * Math.sin(SPR_W * dt));
+const ARRIVE = 0.8;                              // a ring's speed into each dock, as a share of an even glide's
 const P = id => `assets/process/img-${id}.webp`;
 
 /* the orbits. Ring A is the thread itself; B peels off it.
@@ -37,8 +45,8 @@ const RING_A = ['b7f278e1e3', '0c13a2f4d1', 'f5482cf5c2', '840afa3051', '5358d41
 const RING_B = ['f4eba29837', '04c5d2f593', '1705e9b48e', '34434613df', 'e8a1948a26'];
 const HERO_A = 2, HERO_B = 6;                   // indices on ring A (ring A steps one slot a beat)
 const HEROES = [
-  { i: HERO_A, from: HERO_A_AT - BEAT, at: HERO_A_AT, back: HERO_B_AT - 0.8, home: HERO_B_AT - 0.2, tags: 1.5 * BEAT, tag: 'ONCE ON THEIR PLANET' },
-  { i: HERO_B, from: HERO_B_AT - 0.55, at: HERO_B_AT, back: RELEASE, home: RELEASE + 0.5, tags: 0.75 * BEAT, tag: 'ONCE ON EARTH' }
+  { i: HERO_A, from: HERO_A_AT - BEAT, at: HERO_A_AT, back: HERO_B_AT - 0.8, home: HERO_B_AT - 0.2, v: 0.95, tags: 1.5 * BEAT, tag: 'ONCE ON THEIR PLANET' },
+  { i: HERO_B, from: HERO_B_AT - 0.55, at: HERO_B_AT, back: RELEASE, home: RELEASE + 0.5, v: 0.7, tags: 0.75 * BEAT, tag: 'ONCE ON EARTH' }
 ];
 /* the six positions on each hero sheet, as fractions of the sheet [x, y, w, h] */
 const SIX = {
@@ -66,34 +74,41 @@ function backOf(t) {
   return 1 - inOutCubic(seg(t, 6.74, 7.3));
 }
 
+/** an orbit that indexes one slot every `period` from t0: it rests a moment after
+    each contact, glides to the next dock and meets it on time (plus the settle) */
+function indexed(t, t0, period, move) {
+  const x = (t - t0) / period, k = Math.floor(x), tau = (x - k) * period;
+  return k + herm(clamp((tau - (period - move)) / move), 0, ARRIVE) + overshoot(tau, ARRIVE / move);
+}
+/** spinning in from `from` slots back, arriving at t1 with the docking speed v */
+const spinIn = (t, t1, from, v) => -from * (1 - herm(seg(t, T_IN, t1), 3, v * (t1 - T_IN) / from));
+
 /** ring A's continuous slot count: 0 at the first dock, +1 on every beat —
     and through bar 3, while the second hero is out, the whole orbit holds */
+const MOVE_A = 0.8 * BEAT, V_A = ARRIVE / MOVE_A;
 function stepsA(t) {
-  if (t <= DOCK1) return -3.4 * (1 - outCubic(seg(t, T_IN, DOCK1)));
-  if (t <= HERO_B_AT) {
-    const x = (t - DOCK1) / BEAT, k = Math.floor(x), f = x - k;
-    return k + dockE(clamp((f - 0.2) / 0.8));
-  }
+  if (t <= DOCK1) return spinIn(t, DOCK1, 3.4, V_A);
+  if (t <= HERO_B_AT) return indexed(t, DOCK1, BEAT, MOVE_A);
   const n = (HERO_B_AT - DOCK1) / BEAT;
-  if (t <= RELEASE) return n;
+  if (t <= RELEASE) return n + overshoot(t - HERO_B_AT, V_A);
   return n + 3.4 * inCubic(seg(t, RELEASE, T_OUT));
 }
 /** ring B counter-rotates and docks every other beat, off the bar lines */
+const MOVE_B = 0.88 * 2 * BEAT, V_B = ARRIVE / MOVE_B;
 function stepsB(t) {
   const d0 = 3 * BEAT, d1 = 9 * BEAT;          // 1.875 … 5.625
-  if (t <= d0) return -2.6 * (1 - outCubic(seg(t, T_IN, d0)));
-  if (t <= d1) {
-    const x = (t - d0) / (2 * BEAT), k = Math.floor(x), f = x - k;
-    return k + dockE(clamp((f - 0.12) / 0.88));
-  }
-  return (d1 - d0) / (2 * BEAT) + 2.4 * inCubic(seg(t, d1, T_OUT));
+  if (t <= d0) return spinIn(t, d0, 2.6, V_B);
+  if (t <= d1) return indexed(t, d0, 2 * BEAT, MOVE_B);
+  return (d1 - d0) / (2 * BEAT) + overshoot(t - d1, V_B) + 2.4 * inCubic(seg(t, d1, T_OUT));
 }
 
-/** a hero's pull: 0 in its slot, 1 docked close */
+/** a hero's pull: 0 in its slot, 1 docked close. It gathers, comes forward, meets
+    the dock on the beat still moving (90 % of the way only ~0.07 s out) and the
+    contact settles it: a little past (bigger, and a touch low) and back by +0.28 s */
 function heroPull(h, t) {
   if (t < h.from || t > h.home) return 0;
-  if (t < h.at) return swoopE(seg(t, h.from, h.at));
-  if (t < h.back) return 1;
+  if (t < h.at) return herm(seg(t, h.from, h.at), 0, h.v);
+  if (t < h.back) return 1 + overshoot(t - h.at, h.v / (h.at - h.from));
   return 1 - inOutCubic(seg(t, h.back, h.home));
 }
 /** how much the frame is given over to a hero (camera framing, dimming) */
@@ -113,12 +128,15 @@ function frame(S) {
     const chipY = t2 + 2.2 * u;
     const ms = 1.65 * u, tel1 = chipY + 7.8 * u;
     const ss = Math.min(3.1 * u, 0.024 * W);
+    // the wreath behind the hero: as steep as 0.62 allows while its front dock stays
+    // above 0.9 H (never cut by the frame) and its back below 0.05 H, at the closest push
+    const fit = fitOrbit(S, 1.1, 0.05 * H, 0.9 * H, 0.62);
     return {
       land: true, x, stageY, ts, t1, t2, chipY, ms, tel1, tel2: tel1 + ms * 1.6,
       sentY: tel1 + ms * 1.6 + 3.2 * u + ss, sentSize: ss,
       hero, numSize: 10 * u, labSize: 1.7 * u, chipSize: 1.2 * u,
-      zoom: 1.25, heroZoom: 1.1, alpha: 0.24, heroAlpha: 0.62, heroBack: 0, bTilt: -0.56, bTiltHero: -0.56,
-      ringY: 0.47 * H, heroRingY: hero.cy - 0.1 * H
+      zoom: 1.25, heroZoom: 1.1, alpha: 0.24, heroAlpha: fit.al, heroBack: 0, bTilt: -0.56, bTiltHero: 0.06 - fit.al,
+      ringY: 0.47 * H, heroRingY: fit.cy
     };
   }
   // portrait: label and title anchored at the top, the readouts at the bottom,
@@ -131,35 +149,41 @@ function frame(S) {
   const ss = 4.6 * u, ms = 2.5 * u;
   const sent2 = 0.84 * H, sentY = sent2 - ss * 1.22;
   const tel2 = sentY - ss - 2 * u, tel1 = tel2 - ms * 1.6;
-  const bottomTop = tel1 - ms * 1.2;
+  const bottomTop = tel1 - ms * 1.9 - 1.5 * u;            // clear of the chrome rule (drawn at tel1 - 1.9 ms)
   const G = bottomTop - topEnd;
-  const hw = Math.min(0.88 * W, (G - 5 * u) / ASPECT);
+  const hw = Math.min(0.88 * W, (G - 6 * u) / ASPECT);     // at least 3u of air above and below the hero
   const hero = { cx: 0.5 * W, cy: (topEnd + bottomTop) / 2, w: hw, h: hw * ASPECT };
-  const zH = 1.0, fit = fitOrbit(S, zH, topEnd + 1.2 * u, bottomTop - 1.2 * u);
+  const zH = 1.0, fit = fitOrbit(S, zH, topEnd + 1.2 * u, bottomTop - 1.2 * u, 1);
+  // before the hero, the open orbit sits between the numeral and 0.88 H, front dock and its
+  // ticks included: a squarer frame (768 × 1024) zooms out rather than cut the front sheet
+  const top0 = t2 + 1.5 * u, bot0 = 0.88 * H - 0.8 * u, ALPHA = 0.86;
+  const [h1, l1] = orbitSpan(Math.min(W, H), ALPHA, Z0);  // at zoom 1; the span scales with zoom
+  const zoom = Math.min(1.05, (bot0 - top0) / (l1 - h1));
+  const ringY = clamp(hero.cy, top0 - h1 * zoom, bot0 - l1 * zoom);
   return {
     land: false, x, stageY, ts, t1, t2, chipY, ms, tel1, tel2, sentY, sentSize: ss,
     hero, numSize: 16 * u, labSize: 2.3 * u, chipSize: 2 * u,
-    zoom: 1.05, heroZoom: zH, alpha: 0.86, heroAlpha: fit.al, heroBack: 0, bTilt: -1.1, bTiltHero: -fit.al,
-    ringY: hero.cy, heroRingY: fit.cy
+    zoom, heroZoom: zH, alpha: ALPHA, heroAlpha: fit.al, heroBack: 0, bTilt: -1.1, bTiltHero: -fit.al,
+    ringY, heroRingY: fit.cy
   };
 }
 
-/* On a phone the hero's orbit has to fit between the title block and the
-   readout: the steepest tilt (≤ 1 rad) whose front sheets stay above `bottom`
-   and back sheets below `top`, and where to centre it. If none fits, the
-   flattest, centred on the gap, tucked behind the hero. */
-function fitOrbit(S, zoom, top, bottom) {
-  const Fp = zoom * Math.min(S.W, S.H), yc = -1.2, Z = Z0 - PUSH;   // measured at the closest push
-  const span = al => {
-    const s = Math.sin(al), c = Math.cos(al);
-    const yC = yc * Fp / Z;
-    const dF = Z - R * c, dB = Z + R * c;
-    const lo = (yc + R * s) * Fp / dF + SW_A * ASPECT / 2 * Fp / dF - yC;   // front sheet's bottom, from the centre
-    const hi = (yc - R * s) * Fp / dB - SW_A * ASPECT / 2 * Fp / dB - yC;   // back sheet's top
-    return [hi, lo];
-  };
-  for (let k = 50; k >= 6; k--) {
-    const al = k / 50, [hi, lo] = span(al);
+/** ring A tilted al, its centre Z ahead of the camera, focal Fp px: the back sheet's
+    top and the front sheet's bottom, in px from the projected centre */
+function orbitSpan(Fp, al, Z) {
+  const s = Math.sin(al), c = Math.cos(al), yc = -1.2, hh = SW_A * ASPECT / 2;
+  const dF = Z - R * c, dB = Z + R * c, yC = yc * Fp / Z;
+  return [(yc - R * s - hh) * Fp / dB - yC, (yc + R * s + hh) * Fp / dF - yC];
+}
+
+/* The hero's orbit has to fit its band of the frame (on a phone, between the
+   title block and the readout): the steepest tilt (≤ alMax) whose front sheets
+   stay above `bottom` and back sheets below `top`, measured at the closest push,
+   and where to centre it. If none fits, the flattest, centred on the gap. */
+function fitOrbit(S, zoom, top, bottom, alMax) {
+  const Fp = zoom * Math.min(S.W, S.H), Z = Z0 - PUSH;
+  for (let k = Math.round(alMax * 50); k >= 6; k--) {
+    const al = k / 50, [hi, lo] = orbitSpan(Fp, al, Z);
     if (lo - hi <= bottom - top || k === 6) return { al, cy: (top + bottom) / 2 - (hi + lo) / 2 };
   }
 }
@@ -428,12 +452,15 @@ export default {
 
     const heroState = HEROES.map(h => ({ h, p: heroPull(h, t) }));
     // ring A's docks: on beat k (from the first dock) sheet k arrives at the front; its ticks close in
-    // over the last of its approach, lock on the beat, and let go as it leaves
+    // over the last of its approach, snap tight on the beat (outBack) and let go as it leaves.
+    // Behind a hero the docks go quiet: no ticks while the frame belongs to the hero.
     const lockOf = i => {
+      if (hs > 0.995) return null;
       for (let k = 0; k <= 5; k++) {
         if (k % RING_A.length !== i || k === HERO_A || k === HERO_B) continue;
-        const b = DOCK1 + k * BEAT, close = seg(t, b - 0.2, b, outCubic), a = close * (1 - seg(t, b + 0.16, b + 0.46));
-        if (a > 0.005) return { a, close };
+        const b = DOCK1 + k * BEAT;
+        const a = seg(t, b - 0.2, b - 0.08) * (1 - seg(t, b + 0.16, b + 0.46)) * (1 - hs);
+        if (a > 0.005) return { a, close: outBack(seg(t, b - 0.2, b + 0.145), 1.7) };
       }
       return null;
     };
@@ -455,7 +482,8 @@ export default {
         if (d <= NEAR * 3) continue;
         const q = cam.project(P3[0], P3[1], P3[2]);
         const wpx = sw * q.k, hpx = wpx * ASPECT;
-        const fog = Math.min(0.9, depthFog(d) + 0.35 * dimAll);
+        // behind a hero the near side of the orbit fogs down too, so its docks stay background
+        const fog = Math.min(0.9, depthFog(d) + 0.35 * dimAll + 0.3 * hs * (1 - clamp((d - zNear) / (zFar - zNear))));
         // sheets too close to the lens (only while the camera is still inside the ring) stay out
         const a = ringAlpha[k] * clamp((d - 5) / 4) * (1 - 0.62 * dimAll);
         if (hero && hero.p > 0.001) {
@@ -487,14 +515,16 @@ export default {
 
     // the heroes: out of the ring toward the lens, into the depth order as they come
     for (const hd of heroDraw) {
-      const p = hd.p, s = hd.slot, T = F.hero;
+      // p runs a little past 1 just after the dock (the contact): the sheet carries on
+      // toward the lens a touch, bigger, and the arc term below dips it slightly
+      const p = hd.p, s = hd.slot, T = F.hero, p1 = Math.min(1, p);
       const x = lerp(s.x, T.cx, p), y = lerp(s.y, T.cy, p) - Math.sin(Math.PI * p) * 3 * u;
-      const fac = lerp(s.f, 1, inOutQuad(p));             // it turns to face the lens as it comes
+      const fac = lerp(s.f, 1, inOutQuad(p1));            // it turns to face the lens as it comes
       const w = lerp(s.w, T.w, p) * Math.max(0.03, Math.abs(fac)), h = lerp(s.h * s.un, T.h, p);
       const front = fac > 0;
       const leaving = seg(t, hd.h.back, hd.h.back + 0.15);
       const o = {
-        a: lerp(s.a, 1, Math.min(1, p * 3)), front, fog: s.fog * (1 - p), rim: p, phase, glow: p * (1 - leaving), sheen: seg(t, hd.h.at - 0.12, hd.h.at + 0.5),
+        a: lerp(s.a, 1, Math.min(1, p * 3)), front, fog: s.fog * (1 - p1), rim: p1, phase, glow: p1 * (1 - leaving), sheen: seg(t, hd.h.at - 0.12, hd.h.at + 0.5),
         six: SIX[hd.id], tags: t >= hd.h.at ? clamp((t - hd.h.at - 0.06) / hd.h.tags) : 0, tagAlpha: 1 - leaving
       };
       const zk = lerp(hd.zSlot, cam.z + 1.5, Math.min(1, p * 3));
@@ -512,7 +542,7 @@ export default {
 // ── the words ─────────────────────────────────────────────────────────────
 function drawCopy(ctx, S, F, t, phase) {
   const { u } = S;
-  const sink = seg(t, RELEASE, 6.6);                       // everything sinks back behind its sill
+  const sink = seg(t, RELEASE + 0.25, 6.85);               // the sentence sinks behind its sill once the title has split
   const TT = { size: F.ts, weight: 800, tracking: -0.01 };
   const titleW = layout(ctx, 'IDENTITY', TT).width;
   // station label and numeral, written on as the orbit opens: the /process card's top row
@@ -574,12 +604,13 @@ function drawCopy(ctx, S, F, t, phase) {
     const a = seg(t, h.at + 0.25, h.at + 0.55) * (1 - seg(t, h.back - 0.05, h.back + 0.2));
     if (a > 0) mono(ctx, S, '› ' + h.tag, F.x, F.tel2, { size: F.ms, color: UI.muted, reveal: a });
   }
-  // the /process sentence, with the second docking
-  const sa = seg(t, HERO_B_AT + 0.02, HERO_B_AT + 0.5);
+  // the /process sentence, rising with the Earth sheet's approach so it is settled by ~5.1 s
+  // and holds, fully readable, to ~6.55 s
+  const sa = seg(t, HERO_B_AT - 0.3, HERO_B_AT + 0.15);
   if (sa > 0) {
     const ss = F.sentSize;
     const o = { size: ss, weight: 500, tracking: -0.005, color: UI.ink, mask: true, window: 0.5 };
-    const r1 = Math.min(sa, 1 - seg(sink, 0.2, 0.9)), r2 = Math.min(seg(t, HERO_B_AT + 0.1, HERO_B_AT + 0.6), 1 - seg(sink, 0.3, 1));
+    const r1 = Math.min(sa, 1 - seg(sink, 0.2, 0.9)), r2 = Math.min(seg(t, HERO_B_AT - 0.22, HERO_B_AT + 0.25), 1 - seg(sink, 0.3, 1));
     if (r1 > 0) text(ctx, S, 'the same face', F.x, F.sentY, { ...o, reveal: r1 });
     if (r2 > 0) text(ctx, S, 'survives every shot.', F.x, F.sentY + ss * 1.22, { ...o, reveal: r2 });
   }

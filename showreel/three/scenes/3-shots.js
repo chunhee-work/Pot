@@ -388,15 +388,17 @@ function waypoints(ctx, S, g, V) {
   }
   /* a label only shows where it has room: setups tick on at the far end on top of each other, so
      each label gives way to the nearer labels below it and comes in as the flight opens the spacing */
-  const shown = [];
+  /* (it gives way to a nearer label's own presence, not to what is left of it after that one gave way:
+     two labels that overlap never both show, even faintly — the farther one waits a step longer) */
+  const near = [];
   for (const n of N) {
     if (n.la <= 0.01) continue;
-    const [x0, y0, x1, y1] = n.box;
-    for (const q of shown) {
+    const own = n.la, [x0, y0, x1, y1] = n.box;
+    for (const q of near) {
       const gap = Math.max(q.box[1] - y1, y0 - q.box[3], q.box[0] - x1, x0 - q.box[2]);
-      n.la *= 1 - q.la * (1 - clamp(gap / (0.5 * n.sz)));
+      n.la *= 1 - q.own * (1 - clamp(gap / (0.5 * n.sz)));
     }
-    if (n.la > 0.01) shown.push(n);
+    near.push({ own, box: n.box });
   }
   // then draw them far → near
   for (let j = N.length - 1; j >= 0; j--) {

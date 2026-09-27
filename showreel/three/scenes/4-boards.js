@@ -239,9 +239,17 @@ function plate3d(ctx, src, cx, cy, w, h, yaw, o = {}) {
     if (o.edge) { ctx.strokeStyle = o.edge; ctx.lineWidth = 1; ctx.strokeRect(cx - w / 2, cy - h / 2, w, h); }
     return q;
   }
-  // thin strips, each scaled for the depth at its own centre, so the content lines up across them
-  const n = Math.round(clamp(Math.abs(r.X - l.X) / 3, 16, 160));   // ~3 px strips: no visible steps on the slanted edges
+  /* thin strips, each scaled for the depth at its own centre, so the content
+     lines up across them. The exact quad is filled with the sheet's paper and
+     clipped to first, so the slanted edges run straight (no strip steps) and
+     the slivers a strip leaves at its taller end are paper, like the margin. */
+  // as many strips as keep each step on the slanted edges under ~0.75 px (few when nearly flat)
+  const span = Math.abs(r.X - l.X);
+  const n = Math.round(clamp(Math.max(span / 8, h * Math.abs(r.k - l.k) / 1.5), 12, Math.max(12, Math.min(160, span / 1.5))));
   const sw = src.width / n, fw = o.frameW ?? Infinity;
+  const quad = () => { ctx.beginPath(); ctx.moveTo(...q.tl); ctx.lineTo(...q.tr); ctx.lineTo(...q.br); ctx.lineTo(...q.bl); ctx.closePath(); };
+  ctx.save();
+  quad(); ctx.fillStyle = o.paper || '#ece9e1'; ctx.fill(); ctx.clip();
   let prev = px(-w / 2);
   for (let i = 0; i < n; i++) {
     const b = px(-w / 2 + ((i + 1) / n) * w);
@@ -251,10 +259,8 @@ function plate3d(ctx, src, cx, cy, w, h, yaw, o = {}) {
     const hh = h * px(-w / 2 + ((i + 0.5) / n) * w).k;
     ctx.drawImage(src, i * sw, 0, sw, src.height, L - 0.35, cy - hh / 2, R - L + 0.7, hh);
   }
-  if (o.edge) {
-    ctx.beginPath(); ctx.moveTo(...q.tl); ctx.lineTo(...q.tr); ctx.lineTo(...q.br); ctx.lineTo(...q.bl); ctx.closePath();
-    ctx.strokeStyle = o.edge; ctx.lineWidth = 1; ctx.stroke();
-  }
+  ctx.restore();
+  if (o.edge) { quad(); ctx.strokeStyle = o.edge; ctx.lineWidth = 1; ctx.stroke(); }
   return q;
 }
 
