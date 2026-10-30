@@ -673,10 +673,14 @@
         ox:0,oy:0, vx:0,vy:0, burst:false, dead:false, delay:seedRand(i+7)});
     }
   }
+  /* called every frame, so it only touches the canvas when the size actually
+     changed: assigning width reallocates and clears the backing store, which
+     was costing a 30-110 ms commit on every frame */
   function size(){
-    if(blast){cv.width=innerWidth*DPR;cv.height=innerHeight*DPR;return;}
+    if(blast){var bw=innerWidth*DPR,bh=innerHeight*DPR;
+      if(cv.width!==bw||cv.height!==bh){cv.width=bw;cv.height=bh;}return;}
     var w=wrap.clientWidth;
-    cv.width=w*DPR; cv.height=w*DPR;
+    if(cv.width!==w*DPR||cv.height!==w*DPR){cv.width=w*DPR;cv.height=w*DPR;}
     R=w*DPR*0.40; CX=w*DPR/2; CY=w*DPR/2;
   }
   build();

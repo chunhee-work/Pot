@@ -256,7 +256,7 @@ landofhope-3d canvas{background:transparent}
 </helmet>
 
 <a href="#series" data-skip="" data-scroll="#series">Skip to the work</a>
-<canvas data-dust="" style="position:fixed;inset:0;z-index:0;pointer-events:none" aria-hidden="true"></canvas>
+<canvas data-dust="" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none" aria-hidden="true"></canvas>
 <div data-navprogress="" style="position:fixed;top:0;left:0;right:0;height:2px;background:#f5f4f0;mix-blend-mode:difference;transform-origin:0 50%;transform:scaleX(0);z-index:95;will-change:transform"></div>
 
 <nav data-metal="" aria-label="Sections" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:90;border-radius:999px;background:#111110;box-shadow:0 12px 30px rgba(0,0,0,.35);max-width:94vw;isolation:isolate"><div style="position:absolute;inset:3px;border-radius:999px;background:linear-gradient(180deg,#1d1d1b 0%,#0a0a09 100%);z-index:1;pointer-events:none"></div><div data-navscroll="" style="position:relative;z-index:2;display:flex;align-items:center;gap:2px;padding:8px 6px;overflow-x:auto;scrollbar-width:none;border-radius:999px">
@@ -382,7 +382,7 @@ landofhope-3d canvas{background:transparent}
     <div class="gu-seq"><div class="gu-srow" style="--gu-a:#4ECDC4">
       <div class="gu-box" data-lb="assets/gameui/pack2-f7d2ed7b.webp" data-lb-no="01" data-lb-name="Nothing is asked for first" style="cursor:zoom-in" tabindex="0" role="button" aria-label="Open Nothing is asked for first"><video class="gu-v" muted loop playsinline preload="none" aria-hidden="true" data-poster="assets/gameui/pack2-f7d2ed7b.webp" data-webm="assets/gameui/pack2-5dd4f512.webm" data-mp4="assets/gameui/pack2-c53ab403.mp4"></video><span class="gu-veil"></span></div>
       <div><span class="gu-num">01</span><h3>Nothing is asked for first</h3><p>A pack in an empty hall, one line under it — <b>guaranteed one of each rarity</b> — and <b>Tap to open</b>. No email, no account, no wallet. The demo pack is the argument, and it is made before the ask rather than behind it.</p></div></div><div class="gu-srow gu-flip" style="--gu-a:#8FDED7">
-      <div class="gu-box" data-lb="assets/gameui/signin2-6b77dc11.webp" data-lb-no="02" data-lb-name="And when it is, the product is still playing" style="cursor:zoom-in" tabindex="0" role="button" aria-label="Open And when it is, the product is still playing"><video class="gu-v" muted loop playsinline preload="none" aria-hidden="true" data-poster="assets/gameui/signin2-6b77dc11.webp" data-webm="assets/gameui/signin2-24778e87.webm" data-mp4="assets/gameui/signin2-bb1c61fd.mp4"></video><span class="gu-veil"></span></div>
+      <div class="gu-box" data-lb="assets/gameui/signin2-6b77dc11.webp" data-lb-no="02" data-lb-name="And when it is, the product is still playing" style="cursor:zoom-in" tabindex="0" role="button" aria-label="Open And when it is, the product is still playing"><video class="gu-v" muted loop playsinline preload="none" aria-hidden="true" data-poster="assets/gameui/signin2-6b77dc11.webp" data-webm="assets/gameui/signin2-8cf135b6.webm" data-mp4="assets/gameui/signin2-e8964a63.mp4"></video><span class="gu-veil"></span></div>
       <div><span class="gu-num">02</span><h3>And when it is, the product is still playing</h3><p>The auth card sits <b>inside the product</b> rather than in front of it. Email or Telegram, nothing else — a Telegram-first product saying so by what it leaves out.</p></div></div></div>
   </div>
 <div style="max-width:1200px;margin:0 auto;padding:1rem clamp(22px,4vw,56px) 7rem;position:relative;z-index:2">
@@ -892,10 +892,12 @@ class Component extends DCLogic {
     const cv = document.querySelector('[data-dust]');
     if (!cv) { setTimeout(() => this.dust(), 300); return; }
     this.cv = cv; this.ctx = cv.getContext('2d');
+    /* soft, faint specks gain nothing from a retina backing store, and this
+       one is cleared and redrawn every frame: at 1x it is a quarter of the
+       pixels (a 2880x1800 clear per frame on a 2x desktop before) */
     const size = () => {
-      const dpr = Math.min(2, devicePixelRatio || 1);
-      cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
-      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cv.width = innerWidth; cv.height = innerHeight;
+      this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     };
     size();
     this.onResizeDust = size;

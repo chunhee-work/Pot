@@ -130,8 +130,10 @@
       if (this.dead) return;
       const dt = this.last ? Math.min(0.05, (t - this.last) / 1000) : 0;
       this.last = t;
-      this.size();
+      /* off screen it does nothing but wait; measuring itself every frame
+         from 16,000px away was still costing layout time */
       if (!this.visible && this.boostTo === 1) { this.raf = requestAnimationFrame(this.loop); return; }
+      this.size();
       this.boost += (this.boostTo - this.boost) * Math.min(1, dt * 2.4);
       const ctx = this.ctx, W = this.cv.width, H = this.cv.height;
       if (!W || !H) { this.raf = requestAnimationFrame(this.loop); return; }
