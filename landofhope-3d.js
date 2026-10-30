@@ -17,11 +17,25 @@
   if (customElements.get('landofhope-3d')) return;
   var BUNDLE = 'assets/gameui/three-ec08179080.js';
   var MODEL = 'assets/landofhope-736112f786.glb';
+  /* the first frame, rendered once at rest and saved: it stands in while the
+     model downloads, and the canvas fades in over it on its first draw */
+  var STILL = 'assets/landofhope-still-05d9d682ed.webp';
 
   var FOV = 28;
   var FIT = 1.28;        // the old fit's margin, unchanged
   var DROP = 0.2807;     // camera height as a share of its distance — 15.68° below
   var SPIN_RANGE = 0.35, SPIN_SPEED = 0.00025;
+
+  /* The section now sits one screen under the hero, close enough to qualify
+     at once. The 2.5MB of bundle and model wait until the page has finished
+     loading and the main thread has a gap, so they never compete with the
+     hero's first paint; the still covers the wait. */
+  function afterLoad(fn) {
+    var idle = window.requestIdleCallback || function (f) { return setTimeout(f, 250); };
+    var run = function () { idle(fn, { timeout: 2000 }); };
+    if (document.readyState === 'complete') run();
+    else addEventListener('load', run, { once: true });
+  }
 
   function load(cb) {
     if (window.__GACHA3__) return cb();
@@ -42,10 +56,12 @@
       this.style.background = 'transparent';
       var self = this;
       var go = function () {
-        load(function () { try { self.build(); } catch (e) { console.warn('[landofhope-3d]', e); } });
+        self.style.background = 'transparent url(' + STILL + ') center / 100% 100% no-repeat';
+        afterLoad(function () {
+          load(function () { try { self.build(); } catch (e) { console.warn('[landofhope-3d]', e); } });
+        });
       };
-      /* not before it is close — the model is 1.3MB and this sits well down
-         the page */
+      /* not before it is close */
       if (!('IntersectionObserver' in window)) return go();
       new IntersectionObserver(function (es, io) {
         if (es.some(function (e) { return e.isIntersecting; })) { io.disconnect(); go(); }
@@ -71,6 +87,9 @@
         cv.style.cssText = 'display:block;width:100%;height:100%;background:transparent';
         this.appendChild(cv);
       }
+      cv.style.opacity = '0';
+      cv.style.transition = 'opacity .7s cubic-bezier(.16,1,.3,1)';
+      var drawn = false;
       var r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
       this.renderer = r;
       r.setClearColor(0x000000, 0);
@@ -171,6 +190,11 @@
           spin = base + Math.sin((performance.now() - spinT0) * SPIN_SPEED) * SPIN_RANGE;
         group.rotation.y = spin;
         r.render(sc, cam);
+        if (!drawn) {               // the real thing is up: it takes over from the still
+          drawn = true;
+          cv.style.opacity = '1';
+          setTimeout(function () { if (!self.dead) self.style.backgroundImage = 'none'; }, 800);
+        }
         raf = requestAnimationFrame(loop);
       }
 

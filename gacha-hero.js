@@ -123,8 +123,15 @@
     var probe = null;
     try { probe = cv.getContext('webgl2') || cv.getContext('webgl'); } catch (e) {}
     if (!probe) { fail('no webgl context'); return; }
-    D.gl = probe.getParameter(probe.VERSION) + ' · ' +
-      (probe.getParameter(probe.UNMASKED_RENDERER_WEBGL) || probe.getParameter(probe.RENDERER));
+    /* the GPU name is only for the ?dbg panel. UNMASKED_RENDERER_WEBGL lives on
+       the debug extension, not the context — asking the context for it is the
+       INVALID_ENUM every Safari visitor used to get in the console */
+    if (DBG) {
+      var info = null;
+      try { info = probe.getExtension('WEBGL_debug_renderer_info'); } catch (e) {}
+      D.gl = probe.getParameter(probe.VERSION) + ' · ' +
+        ((info && probe.getParameter(info.UNMASKED_RENDERER_WEBGL)) || probe.getParameter(probe.RENDERER));
+    }
     function showStill(on) {
       var s = host.querySelector('img[data-gstill]');
       if (s) s.style.opacity = on ? '1' : '0';

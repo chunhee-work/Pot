@@ -3,20 +3,27 @@
 (function () {
   if (customElements.get('cylinder-carousel')) return;
 
+  /* all four are served from this site; ogl is cut down to the seven classes
+     used below (52 KB rather than the full 133 KB bundle) */
   const U = {
-    ogl: 'https://esm.sh/ogl@1.0.11/es2022/ogl.bundle.mjs',
-    gsap: 'https://unpkg.com/gsap@3.13.0/dist/gsap.min.js',
-    st: 'https://unpkg.com/gsap@3.13.0/dist/ScrollTrigger.min.js',
-    ce: 'https://unpkg.com/gsap@3.13.0/dist/CustomEase.min.js'
+    ogl: '/assets/vendor/ogl-1.0.11.carousel.mjs',
+    gsap: '/assets/vendor/gsap-3.13.0.min.js',
+    st: '/assets/vendor/ScrollTrigger-3.13.0.min.js',
+    ce: '/assets/vendor/CustomEase-3.13.0.min.js'
   };
   function res(u){var m=window.__resources;return (m&&typeof m[u]==='string'&&m[u])?m[u]:u;}
-  function script(u){return new Promise(function(ok,no){var s=document.createElement('script');s.src=res(u);s.onload=ok;s.onerror=no;document.head.appendChild(s);});}
-  async function deps(){
-    if(!window.ogl) window.ogl = await import(res(U.ogl));
-    if(!window.gsap) await script(U.gsap);
-    if(!window.ScrollTrigger) await script(U.st);
-    if(!window.CustomEase) await script(U.ce);
-    return [window.ogl, {gsap:window.gsap}, {ScrollTrigger:window.ScrollTrigger}, {CustomEase:window.CustomEase}];
+  function script(u){return new Promise(function(ok,no){var s=document.createElement('script');s.src=res(u);s.async=false;s.onload=ok;s.onerror=no;document.head.appendChild(s);});}
+  let depsP = null;
+  function deps(){
+    /* fetched side by side; async=false keeps the GSAP plugins executing after GSAP itself */
+    return depsP || (depsP = Promise.all([
+      window.ogl ? window.ogl : import(res(U.ogl)).then(function(m){ return (window.ogl = m); }),
+      window.gsap ? null : script(U.gsap),
+      window.ScrollTrigger ? null : script(U.st),
+      window.CustomEase ? null : script(U.ce)
+    ]).then(function(r){
+      return [r[0], {gsap:window.gsap}, {ScrollTrigger:window.ScrollTrigger}, {CustomEase:window.CustomEase}];
+    }));
   }
   const cylinderVertex = `
   attribute vec2 uv;
@@ -147,7 +154,13 @@
       this.dragRot = 0;
       this.dragVel = 0;
       this.bindDrag();
-      this.boot().catch((e) => console.warn('[cylinder-carousel]', e));
+      /* the libraries, the ten portraits and a WebGL context all wait until the
+         section is within two screens, instead of competing with the first paint */
+      const go = () => { if (this._started) return; this._started = true; if (this.near) this.near.disconnect();
+        this.boot().catch((e) => console.warn('[cylinder-carousel]', e)); };
+      if (!('IntersectionObserver' in window)) { go(); return; }
+      this.near = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) go(); }, { rootMargin: '200% 0px' });
+      this.near.observe(this);
     }
 
     disconnectedCallback() {
@@ -157,6 +170,7 @@
       if (this._stSync) removeEventListener('scroll', this._stSync);
       if (this.triggers) this.triggers.forEach((t) => t.kill());
       if (this.io) this.io.disconnect();
+      if (this.near) this.near.disconnect();
     }
 
     get imageList() {
