@@ -14,6 +14,10 @@
       "destination": "/work.dc.html"
     },
     {
+      "source": "/cv",
+      "destination": "/cv.html"
+    },
+    {
       "source": "/gameui-staging",
       "destination": "/gameui-staging.html"
     }
