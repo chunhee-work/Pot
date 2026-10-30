@@ -334,18 +334,23 @@
       this.onResize();
 
       this.triggers = [];
-      const tl = gsap.timeline({
-        scrollTrigger: { trigger: scroller, start: 'top top', end: 'bottom bottom', scrub: 1 },
-      });
-      this.triggers.push(tl.scrollTrigger);
+      /* with reduced motion there is no fly-through: the camera holds its
+         opening view and the cylinder turns only when dragged. The captions
+         below still change with the scroll, as fades. */
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: scroller, start: 'top top', end: 'bottom bottom', scrub: 1 },
+        });
+        this.triggers.push(tl.scrollTrigger);
 
-      tl.to(cameraAnim, { x: 0, y: 0, z: dimensions.cameraZ, duration: 1, ease: 'cinematicSilk' })
-        .to(cameraAnim, { x: 0, y: 5, z: 5, duration: 1, ease: 'cinematicFlow' })
-        .to(cameraAnim, { x: 1.5, y: 2, z: 2, duration: 2, ease: 'cinematicLinear' })
-        .to(cameraAnim, { x: 0.5, y: 0, z: 0.8, duration: 3.5, ease: 'power1.inOut' })
-        .to(cameraAnim, { x: -6, y: -1, z: dimensions.cameraZ, duration: 1, ease: 'cinematicSmooth' });
+        tl.to(cameraAnim, { x: 0, y: 0, z: dimensions.cameraZ, duration: 1, ease: 'cinematicSilk' })
+          .to(cameraAnim, { x: 0, y: 5, z: 5, duration: 1, ease: 'cinematicFlow' })
+          .to(cameraAnim, { x: 1.5, y: 2, z: 2, duration: 2, ease: 'cinematicLinear' })
+          .to(cameraAnim, { x: 0.5, y: 0, z: 0.8, duration: 3.5, ease: 'power1.inOut' })
+          .to(cameraAnim, { x: -6, y: -1, z: dimensions.cameraZ, duration: 1, ease: 'cinematicSmooth' });
 
-      tl.to(cylinder.rotation, { y: '+=28.27', duration: 8.5, ease: 'none' }, 0);
+        tl.to(cylinder.rotation, { y: '+=28.27', duration: 8.5, ease: 'none' }, 0);
+      }
 
       caps.forEach((textEl, index) => {
         const sectionDuration = 100 / caps.length;

@@ -347,6 +347,11 @@
 
         history.pushState({ arrived: true }, '', href);
         scrollTo(0, 0);
+        /* a new page in all but name: give it its title, and put focus on its
+           heading so a screen reader announces where the visitor now is */
+        document.title = doc.title;
+        const h = [...document.querySelectorAll('h1')].find((n) => !n.closest('#__home-stash'));
+        if (h) { h.tabIndex = -1; h.style.outline = 'none'; h.focus({ preventScroll: true }); }
         addEventListener('popstate', function back() {
           removeEventListener('popstate', back);
           location.href = '/';

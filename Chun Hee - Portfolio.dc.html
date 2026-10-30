@@ -108,6 +108,11 @@ img,video{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 a:hover{color:#57564f}
 :focus-visible{outline:2px solid #111110;outline-offset:3px}
+html{scroll-padding-top:96px}
+section[tabindex="-1"]:focus{outline:none}
+/* the portrait is clipped by its rounded figure, so the figure carries the ring */
+figure:has(>img[role="button"]:focus-visible){outline:2px solid #111110;outline-offset:3px}
+figure>img[role="button"]:focus-visible{outline:none}
 #gateway :focus-visible,#gacha :focus-visible,#farm :focus-visible,#process :focus-visible,nav[data-metal] :focus-visible,[data-lightbox] :focus-visible{outline-color:#f5f5f2}
 [data-skip]{position:fixed;left:16px;top:-80px;z-index:200;background:#111110;color:#f5f4f0;font-weight:700;font-size:14px;padding:12px 18px;border-radius:999px;transition:top .25s cubic-bezier(.32,.72,0,1)}
 [data-skip]:focus{top:16px;color:#f5f4f0}
@@ -116,7 +121,7 @@ a:hover{color:#57564f}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes streak{to{transform:rotate(360deg)}}
 @keyframes drift{0%{transform:translate3d(-2%,-1%,0) scale(1.05)}50%{transform:translate3d(2%,2%,0) scale(1.14)}100%{transform:translate3d(-2%,-1%,0) scale(1.05)}}
-@media (prefers-reduced-motion:reduce){*{animation-duration:.001s !important;transition-duration:.001s !important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s !important;animation-iteration-count:1 !important;transition-duration:.001s !important}}
 nav[data-metal] [data-navscroll]::-webkit-scrollbar{display:none}
 @media (max-width:620px){
 nav[data-metal] [data-navscroll]{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent)}
@@ -161,8 +166,8 @@ gacha-hero[data-touched] .gu-drag{opacity:0}
 @media (max-width:880px){
 .gu-pair{grid-template-columns:1fr;gap:30px}
 .gu-row{grid-template-columns:1fr;gap:8px;padding:22px 0}
-.gu-was::before{content:'Was — ';color:#5f7a76;font-weight:700}
-.gu-why::before{content:'Why — ';color:#5f7a76;font-weight:700}
+.gu-was::before{content:'Was — ';color:#7fa19c;font-weight:700}
+.gu-why::before{content:'Why — ';color:#7fa19c;font-weight:700}
 .gu-srow,.gu-srow.gu-flip>.gu-box{grid-template-columns:1fr;order:0}
 /* On a phone there is no room to stand the mark beside the copy, so it
    takes the upper half outright and the copy takes the lower. Half opacity
@@ -184,7 +189,7 @@ gacha-hero>span{right:50% !important;top:30% !important;width:86vw !important;he
 .gu-tag.gu-now span{color:#4ECDC4}
 .gu-tag em{font-style:normal;font-size:12.5px;color:#7fa19c}
 .gu-tag b{flex:1 0 100%;margin-top:7px;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;
-  font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#5f7a76}
+  font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#7fa19c}
 .gu-tag.gu-now b{color:#8fded7}
 .gu-num{display:block;font-family:inherit;font-weight:800;font-size:clamp(30px,3.4vw,46px);
   letter-spacing:-.03em;line-height:1;color:var(--gu-a);margin-bottom:6px}
@@ -207,7 +212,11 @@ gacha-hero>span{right:50% !important;top:30% !important;width:86vw !important;he
 @media (max-width:640px){[data-grid2]{grid-template-columns:1fr !important;gap:22px !important}}
 /* the before/after pair stays side by side on an iPad */
 @media (min-width:701px) and (max-width:880px){.gu-pair{grid-template-columns:1fr 1fr !important;gap:18px !important}}
-@media (max-width:747px){[data-proofs]{order:2}[data-hero-photo]{order:3}#hero>div{gap:2.2rem !important}}
+/* the work index precedes the portrait in the source, so Tab and screen readers
+   reach it first; once the portrait fits beside the intro (814px and up),
+   it is placed there and the index runs underneath */
+@media (min-width:814px){[data-hero-photo]{order:1}[data-proofs]{order:2}}
+@media (max-width:747px){#hero>div{gap:2.2rem !important}}
 /* the work index under the hero: four across, two on a tablet, compact pairs on a phone */
 @media (max-width:1000px){[data-proofs]{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
 @media (max-width:560px){
@@ -233,7 +242,7 @@ gacha-hero>span{right:50% !important;top:30% !important;width:86vw !important;he
 [data-voices]>div>div:last-child>span{font-size:10.5px !important;letter-spacing:.1em !important}
 [data-voices] button{flex-basis:40px !important;width:40px !important;height:40px !important;min-width:40px !important}
 }
-landofhope-3d{background:transparent}
+landofhope-3d{display:block;width:100%;aspect-ratio:16/7;background:transparent}
 landofhope-3d canvas{background:transparent}
 /* Printing or saving as PDF never scrolls, so nothing waiting for a scroll
    reveal may stay invisible, and the moving parts have nothing to give paper */
@@ -290,18 +299,18 @@ landofhope-3d canvas{background:transparent}
         <a href="mailto:chunhee437@gmail.com" style="font-size:14px;font-weight:600;color:#3d3c37;padding:12px 4px;text-decoration:underline;text-decoration-color:rgba(17,17,16,.25);text-underline-offset:5px;transition:text-decoration-color .3s" style-hover="text-decoration-color:#111110">chunhee437@gmail.com</a>
       </div>
     </div>
-    <div data-hero-photo="" style="flex:.92 1 min(300px,100%);min-width:0;position:relative;display:flex;justify-content:center;align-items:flex-end">
-      <figure style="margin:0;position:relative;width:min(430px,100%);aspect-ratio:4/5;border-radius:26px;overflow:hidden;background:linear-gradient(175deg,#efede8 0%,#e4e1d9 100%);box-shadow:0 34px 64px -24px rgba(17,17,16,.34)">
-        <img data-lb="assets/portrait-ae911719ff.webp" data-lb-no="PORTRAIT" data-lb-name="Chun Hee Lim — Kuala Lumpur" src="assets/portrait-ae911719ff.webp" alt="Chun Hee Lim — portrait in a hand-knit sweater" fetchpriority="high" decoding="async" width="720" height="900" style="width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block;cursor:zoom-in" tabindex="0" role="button" aria-label="Open Chun Hee Lim — Kuala Lumpur">
-        <span aria-hidden="true" style="position:absolute;inset:0;border-radius:26px;box-shadow:inset 0 0 0 1px rgba(17,17,16,.07);pointer-events:none"></span>
-      </figure>
-    </div>
     <nav aria-label="Selected work" data-proofs="" style="flex:1 1 100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
       <a href="#series" data-scroll="#series" data-proof="" data-reveal="" data-d="1" data-hpair="" data-hin="transform:scale(1.06)" data-hout="transform:scale(1)" style="display:flex;align-items:center;gap:14px;min-width:0;padding:9px 16px 9px 9px;border:1px solid rgba(17,17,16,.12);border-radius:18px;background:rgba(255,255,255,.42);color:#111110;text-decoration:none;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s,background .5s" style-hover="transform:translateY(-4px);border-color:rgba(17,17,16,.26);background:rgba(255,255,255,.75)"><span style="flex:0 0 auto;width:62px;height:62px;border-radius:12px;overflow:hidden;background:#111110"><img loading="lazy" decoding="async" data-hchild="" src="assets/ep1-a133e9fe19.webp" alt="" width="900" height="506" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.16,1,.3,1)"></span><span style="min-width:0;display:flex;flex-direction:column;gap:3px"><b style="font-size:14.5px;font-weight:700;letter-spacing:-.01em;line-height:1.2">Land of Hope</b><span style="font-size:12.5px;color:#57564f;line-height:1.35">Original series · 4 episodes in a month</span></span></a>
       <a href="#gacha" data-scroll="#gacha" data-proof="" data-reveal="" data-d="2" data-hpair="" data-hin="transform:scale(1.06)" data-hout="transform:scale(1)" style="display:flex;align-items:center;gap:14px;min-width:0;padding:9px 16px 9px 9px;border:1px solid rgba(17,17,16,.12);border-radius:18px;background:rgba(255,255,255,.42);color:#111110;text-decoration:none;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s,background .5s" style-hover="transform:translateY(-4px);border-color:rgba(17,17,16,.26);background:rgba(255,255,255,.75)"><span style="flex:0 0 auto;width:62px;height:62px;border-radius:12px;overflow:hidden;background:#111110"><img loading="lazy" decoding="async" data-hchild="" src="assets/gameui/packs-after-210a9a6933.webp" alt="" width="1240" height="1204" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.16,1,.3,1)"></span><span style="min-width:0;display:flex;flex-direction:column;gap:3px"><b style="font-size:14.5px;font-weight:700;letter-spacing:-.01em;line-height:1.2">Gacha</b><span style="font-size:12.5px;color:#57564f;line-height:1.35">Live game UI, built from my prototype</span></span></a>
       <a href="#films" data-scroll="#films" data-proof="" data-reveal="" data-d="3" data-hpair="" data-hin="transform:scale(1.06)" data-hout="transform:scale(1)" style="display:flex;align-items:center;gap:14px;min-width:0;padding:9px 16px 9px 9px;border:1px solid rgba(17,17,16,.12);border-radius:18px;background:rgba(255,255,255,.42);color:#111110;text-decoration:none;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s,background .5s" style-hover="transform:translateY(-4px);border-color:rgba(17,17,16,.26);background:rgba(255,255,255,.75)"><span style="flex:0 0 auto;width:62px;height:62px;border-radius:12px;overflow:hidden;background:#111110"><img loading="lazy" decoding="async" data-hchild="" src="assets/ccats-9e3291fa11.webp" alt="" width="900" height="506" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.16,1,.3,1)"></span><span style="min-width:0;display:flex;flex-direction:column;gap:3px"><b style="font-size:14.5px;font-weight:700;letter-spacing:-.01em;line-height:1.2">Brand films</b><span style="font-size:12.5px;color:#57564f;line-height:1.35">Four cuts · story to final edit</span></span></a>
       <a href="#farm" data-scroll="#farm" data-proof="" data-reveal="" data-d="4" data-hpair="" data-hin="transform:scale(1.06)" data-hout="transform:scale(1)" style="display:flex;align-items:center;gap:14px;min-width:0;padding:9px 16px 9px 9px;border:1px solid rgba(17,17,16,.12);border-radius:18px;background:rgba(255,255,255,.42);color:#111110;text-decoration:none;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s,background .5s" style-hover="transform:translateY(-4px);border-color:rgba(17,17,16,.26);background:rgba(255,255,255,.75)"><span style="flex:0 0 auto;width:62px;height:62px;border-radius:12px;overflow:hidden;background:#111110"><img loading="lazy" decoding="async" data-hchild="" src="assets/char-zeyo-307d498ac3.webp" alt="" width="900" height="508" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.16,1,.3,1)"></span><span style="min-width:0;display:flex;flex-direction:column;gap:3px"><b style="font-size:14.5px;font-weight:700;letter-spacing:-.01em;line-height:1.2">The cast</b><span style="font-size:12.5px;color:#57564f;line-height:1.35">Twelve character voices</span></span></a>
     </nav>
+    <div data-hero-photo="" style="flex:.92 1 min(300px,100%);min-width:0;position:relative;display:flex;justify-content:center;align-items:flex-end">
+      <figure style="margin:0;position:relative;width:min(430px,100%);aspect-ratio:4/5;border-radius:26px;overflow:hidden;background:linear-gradient(175deg,#efede8 0%,#e4e1d9 100%);box-shadow:0 34px 64px -24px rgba(17,17,16,.34)">
+        <img data-lb="assets/portrait-ae911719ff.webp" data-lb-no="PORTRAIT" data-lb-name="Chun Hee Lim — Kuala Lumpur" src="assets/portrait-ae911719ff.webp" alt="Chun Hee Lim — portrait in a hand-knit sweater" fetchpriority="high" decoding="async" width="720" height="900" style="width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block;cursor:zoom-in" tabindex="0" role="button" aria-label="Open Chun Hee Lim — Kuala Lumpur">
+        <span aria-hidden="true" style="position:absolute;inset:0;border-radius:26px;box-shadow:inset 0 0 0 1px rgba(17,17,16,.07);pointer-events:none"></span>
+      </figure>
+    </div>
   </div>
 </section>
 
@@ -310,8 +319,8 @@ landofhope-3d canvas{background:transparent}
   <div style="position:absolute;inset:0;background:linear-gradient(180deg,#050505 0%,transparent 22%,transparent 72%,#f5f4f0 100%),radial-gradient(90% 70% at 50% 50%,transparent 40%,rgba(0,0,0,.6) 100%)"></div>
   <div style="position:relative;z-index:2;padding:10rem 22px;max-width:900px;margin:0 auto">
     <span data-reveal="" style="display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(245,245,242,.24);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#a3a39c;margin-bottom:22px;background:rgba(5,5,5,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)"><span style="width:6px;height:6px;border-radius:50%;background:#f5f5f2;flex:0 0 6px"></span>The Work — An Original Universe</span>
-    <div style="display:flex;justify-content:center;align-items:center;width:100%;margin:0 0 8px"><x-import component-from-global-scope="landofhope-3d" aria-label="Land of Hope" style="display:block;width:min(480px,78vw);aspect-ratio:16/7;margin:0 auto;background:transparent" hint-size="min(480px,78vw),210px"></x-import></div>
-    <p data-reveal="" data-d="2" style="color:#e2e1da;margin:18px auto 0;font-weight:300;max-width:640px;text-wrap:pretty;text-shadow:0 1px 16px rgba(0,0,0,.65),0 0 2px rgba(0,0,0,.4)">A world, its characters and their voices — written, generated, voiced and cut by me.</p>
+    <div style="display:flex;justify-content:center;align-items:center;width:100%;margin:0 0 8px"><h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">Land of Hope</h2><x-import component-from-global-scope="landofhope-3d" aria-hidden="true" style="display:block;width:min(480px,78vw);aspect-ratio:16/7;margin:0 auto;background:transparent" hint-size="min(480px,78vw),210px"></x-import></div>
+    <p data-reveal="" data-d="2" style="color:#e2e1da;margin:18px auto 0;font-weight:300;max-width:640px;text-wrap:pretty;text-shadow:0 1px 16px rgba(0,0,0,.65),0 0 2px rgba(0,0,0,.4)">A world, its story and its voices — written, generated, voiced and cut by me.</p>
   </div>
 </section>
 
@@ -359,7 +368,7 @@ landofhope-3d canvas{background:transparent}
       <p style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:#4ECDC4;margin:0">The Product — UI/UX I Designed</p>
       <h2 style="font-weight:200;font-size:clamp(38px,5.4vw,76px);letter-spacing:-.025em;line-height:.98;margin:18px 0 0;color:#f5f5f2">Gacha, screen <b style="font-weight:800">by screen.</b></h2>
       <p style="color:#9fb8b4;font-size:16px;font-weight:300;line-height:1.65;margin:22px 0 0;max-width:46ch;text-wrap:pretty">The live game at <b style="color:#f5f5f2;font-weight:700">gacha.thechillgallery.com</b>. I designed its screens and flows and prototyped them with Claude Code — engineering adopted the prototype as the working spec.</p>
-      <p style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#6f8f8a;margin:20px 0 0">Screens &amp; flows: mine · Mark &amp; card art: the brand's</p>
+      <p style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#6f8f8a;margin:20px 0 0">Screens &amp; flows: mine · Mark, pack &amp; card art: the brand's</p>
     </div>
   </gacha-hero>
   <div class="gu-wrap" style="position:relative;z-index:1">
@@ -375,7 +384,7 @@ landofhope-3d canvas{background:transparent}
     </div>
 
     <h2 class="gu-h">Four decisions, <b>and what each one prevents.</b></h2>
-    <div class="gu-rows"><div class="gu-row"><h3>Refills became a ring</h3><p class="gu-was">A number in a collapsed strip — <s>Refills: 0/10</s> — that you read rather than used.</p><p class="gu-why">A count is something you check. <b>Ten bolts around the pack are something you spend.</b> Tapping one returns a pack, so the resource and the action are the same object.</p></div><div class="gu-row"><h3>The dead half became the panel</h3><p class="gu-was">Content stopped just under halfway down. The rest was black.</p><p class="gu-why">A hero screen that ends in nothing reads as unfinished, and it trains the player not to look down. <b>Energy, boosts and both spend actions now live in that space.</b></p></div><div class="gu-row"><h3>One action became two</h3><p class="gu-was">A single <s>Open Pack (Free)</s>.</p><p class="gu-why"><b>Use Refills (1)</b> and <b>Use all Refills (10)</b> are for two different people — the one savouring a pull and the one clearing a stack before work.</p></div><div class="gu-row"><h3>The pack got its weight back</h3><p class="gu-was">Small, flat, adrift in the middle of the frame.</p><p class="gu-why">It is the product. <b>Rim light, depth and roughly twice the area</b> make it the largest thing on the screen.</p></div></div>
+    <div class="gu-rows"><div class="gu-row"><h3>Refills became a ring</h3><p class="gu-was">A number in a collapsed strip — <s>Refills: 0/10</s> — that you read rather than used.</p><p class="gu-why">A count is something you check. <b>Ten bolts around the pack are something you spend.</b> Tapping one returns a pack, so the resource and the action are the same object.</p></div><div class="gu-row"><h3>The dead half became the panel</h3><p class="gu-was">Content stopped just under halfway down. The rest was black.</p><p class="gu-why">A hero screen that ends in nothing reads as unfinished, and it trains the player not to look down. <b>Energy, boosts and both spend actions now live in that space.</b></p></div><div class="gu-row"><h3>One action became two</h3><p class="gu-was">A single <s>Open Pack (Free)</s>.</p><p class="gu-why"><b>Use Refills (1)</b> and <b>Use all Refills (10)</b> are for two different people — the one savouring a pull and the one clearing a stack before work.</p></div><div class="gu-row"><h3>The pack got its weight back</h3><p class="gu-was">Small, flat, adrift in the middle of the frame.</p><p class="gu-why">It is the product. I staged the brand's art at <b>roughly twice the area, with rim light and depth</b>, so it is the largest thing on the screen.</p></div></div>
 
     <h2 class="gu-h">Before the <b>account.</b></h2>
     <p class="gu-lede">There is no “before” for these — the product opened on a sign-in box and nothing else. Between them they make the whole case: <b>let them hold a pack before asking them for anything.</b></p>
@@ -448,15 +457,15 @@ landofhope-3d canvas{background:transparent}
       <x-import component-from-global-scope="cylinder-carousel" images="assets/char-zeyo-307d498ac3.webp,assets/char-fot-9e1e5d15f4.webp,assets/char-sket-eaf8d7751b.webp,assets/char-ccats-9d2b35a2df.webp,assets/char-ketdonut-28d255ef70.webp,assets/char-gst-63a0644f86.webp,assets/char-hearta-86a414bf25.webp,assets/char-ecox-9b9d2ccaa2.webp,assets/char-froak-af20a9ef55.webp,assets/char-lychee-baad7b0436.webp" darkness="0.3" style="position:absolute;inset:0;z-index:1" hint-size="100%,100%"></x-import>
       <div data-cyl-caps="" style="position:absolute;inset:0;z-index:10;pointer-events:none;color:#f5f5f2">
         <div data-cap="" style="position:absolute;top:clamp(4.5rem,11vh,7.5rem);left:50%;transform:translateX(-50%);opacity:0;width:min(90vw,860px);padding:0 22px;text-align:center;will-change:opacity">
-          <h3 style="font-weight:200;font-size:clamp(34px,5.6vw,84px);line-height:.86;letter-spacing:-.02em;color:#f5f5f2">Ten Originals</h3>
-          <p style="margin-top:12px;font-weight:400;font-size:clamp(14px,1.5vw,22px);color:rgba(245,245,242,.8);text-wrap:pretty">OG10 — collectible characters born from The Chill Gallery</p>
+          <h3 style="font-weight:300;font-size:clamp(34px,5.6vw,84px);line-height:.86;letter-spacing:-.02em;color:#f5f5f2;text-shadow:0 2px 24px rgba(0,0,0,.7)">Ten Originals</h3>
+          <p style="margin-top:12px;font-weight:400;font-size:clamp(14px,1.5vw,22px);color:#f5f5f2;text-wrap:pretty;text-shadow:0 1px 14px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.6)">OG10 — collectible characters born from The Chill Gallery</p>
         </div>
         <div data-cap="" style="position:absolute;bottom:clamp(5.5rem,12vh,8rem);left:50%;transform:translateX(-50%);opacity:0;width:min(90vw,860px);padding:0 22px;text-align:center;will-change:opacity">
-          <h3 style="font-weight:200;font-size:clamp(34px,5.6vw,84px);line-height:.86;letter-spacing:-.02em;color:#f5f5f2">Built for Battle</h3>
-          <p style="margin-top:12px;font-weight:400;font-size:clamp(14px,1.5vw,22px);color:rgba(245,245,242,.8);text-wrap:pretty">Stats, rarity and combat power, ready for Gacha</p>
+          <h3 style="font-weight:300;font-size:clamp(34px,5.6vw,84px);line-height:.86;letter-spacing:-.02em;color:#f5f5f2;text-shadow:0 2px 24px rgba(0,0,0,.7)">Built for Battle</h3>
+          <p style="margin-top:12px;font-weight:400;font-size:clamp(14px,1.5vw,22px);color:#f5f5f2;text-wrap:pretty;text-shadow:0 1px 14px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.6)">Stats, rarity and combat power, ready for Gacha</p>
         </div>
       </div>
-      <div style="position:absolute;left:0;right:0;bottom:26px;z-index:11;text-align:center;font-size:10px;font-weight:700;letter-spacing:.2em;color:rgba(245,245,242,.5);pointer-events:none">DRAG TO FLY THROUGH ↔</div>
+      <div style="position:absolute;left:0;right:0;bottom:26px;z-index:11;text-align:center;font-size:10px;font-weight:700;letter-spacing:.2em;color:rgba(245,245,242,.78);text-shadow:0 1px 10px rgba(0,0,0,.8);pointer-events:none">DRAG TO FLY THROUGH <span aria-hidden="true">↔</span></div>
     </div>
   </div>
 
@@ -467,18 +476,18 @@ landofhope-3d canvas{background:transparent}
       <h2 data-reveal="" style="font-weight:200;font-size:clamp(42px,6.2vw,84px);letter-spacing:-.02em;line-height:1;margin:22px 0 0;color:#f5f5f2">Press play. <b style="font-weight:800">Meet the cast.</b></h2>
       <p data-reveal="" data-d="1" style="max-width:640px;margin-top:24px;color:#a3a39c;font-size:16.5px;font-weight:300;text-wrap:pretty">Twelve voices — ten collectible characters plus two story NPCs — each cast, directed and generated by me with <b style="color:#f5f5f2;font-weight:700">ElevenLabs</b>, matched to their design and role in the world.</p>
       <div data-voices="" data-reveal="" data-d="2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:34px;margin-top:56px;position:relative;z-index:2">
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-zeyo-307d498ac3.webp" alt="ZEYO" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">ZEYO</span><button data-voice="zeyo" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="zeyo" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="zeyo" preload="none" src="assets/voice-zeyo.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-fot-9e1e5d15f4.webp" alt="FOT" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">FOT</span><button data-voice="fot" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="fot" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="fot" preload="none" src="assets/voice-fot.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-sket-eaf8d7751b.webp" alt="SKET" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">SKET</span><button data-voice="sket" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="sket" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="sket" preload="none" src="assets/voice-sket.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-ccats-9d2b35a2df.webp" alt="CCATS" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">CCATS</span><button data-voice="ccats" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="ccats" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="ccats" preload="none" src="assets/voice-ccats.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-ketdonut-28d255ef70.webp" alt="KETDONUT" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">KETDONUT</span><button data-voice="ketdonut" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="ketdonut" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="ketdonut" preload="none" src="assets/voice-ketdonut.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-gst-63a0644f86.webp" alt="GST" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">GST</span><button data-voice="gst" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="gst" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="gst" preload="none" src="assets/voice-gst.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-hearta-86a414bf25.webp" alt="HEARTA" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">HEARTA</span><button data-voice="hearta" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="hearta" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="hearta" preload="none" src="assets/voice-hearta.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-ecox-9b9d2ccaa2.webp" alt="ECOX" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">ECOX</span><button data-voice="ecox" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="ecox" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="ecox" preload="none" src="assets/voice-ecox.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-froak-af20a9ef55.webp" alt="FROAK" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">FROAK</span><button data-voice="froak" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="froak" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="froak" preload="none" src="assets/voice-froak.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-lychee-baad7b0436.webp" alt="LYCHEE" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">LYCHEE</span><button data-voice="lychee" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="lychee" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="lychee" preload="none" src="assets/voice-lychee.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/v-wick-a4b6cde272.webp" alt="WICK" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">WICK · NPC</span><button data-voice="wick" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="wick" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="wick" preload="none" src="assets/voice-wick.mp3"></audio></div></div>
-        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/v-keeper-a55bb2a179.webp" alt="OLD KEEPER" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">OLD KEEPER · NPC</span><button data-voice="keeper" aria-label="Play voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="keeper" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="keeper" preload="none" src="assets/voice-keeper.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-zeyo-307d498ac3.webp" alt="ZEYO" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">ZEYO</span><button data-voice="zeyo" aria-label="Play ZEYO's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="zeyo" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="zeyo" preload="none" src="assets/voice-zeyo.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-fot-9e1e5d15f4.webp" alt="FOT" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">FOT</span><button data-voice="fot" aria-label="Play FOT's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="fot" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="fot" preload="none" src="assets/voice-fot.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-sket-eaf8d7751b.webp" alt="SKET" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">SKET</span><button data-voice="sket" aria-label="Play SKET's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="sket" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="sket" preload="none" src="assets/voice-sket.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-ccats-9d2b35a2df.webp" alt="CCATS" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">CCATS</span><button data-voice="ccats" aria-label="Play CCATS's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="ccats" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="ccats" preload="none" src="assets/voice-ccats.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-ketdonut-28d255ef70.webp" alt="KETDONUT" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">KETDONUT</span><button data-voice="ketdonut" aria-label="Play KETDONUT's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="ketdonut" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="ketdonut" preload="none" src="assets/voice-ketdonut.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-gst-63a0644f86.webp" alt="GST" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">GST</span><button data-voice="gst" aria-label="Play GST's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="gst" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="gst" preload="none" src="assets/voice-gst.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-hearta-86a414bf25.webp" alt="HEARTA" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">HEARTA</span><button data-voice="hearta" aria-label="Play HEARTA's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="hearta" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="hearta" preload="none" src="assets/voice-hearta.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-ecox-9b9d2ccaa2.webp" alt="ECOX" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">ECOX</span><button data-voice="ecox" aria-label="Play ECOX's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="ecox" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="ecox" preload="none" src="assets/voice-ecox.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-froak-af20a9ef55.webp" alt="FROAK" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">FROAK</span><button data-voice="froak" aria-label="Play FROAK's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="froak" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="froak" preload="none" src="assets/voice-froak.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/char-lychee-baad7b0436.webp" alt="LYCHEE" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">LYCHEE</span><button data-voice="lychee" aria-label="Play LYCHEE's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="lychee" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="lychee" preload="none" src="assets/voice-lychee.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/v-wick-a4b6cde272.webp" alt="WICK" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">WICK · NPC</span><button data-voice="wick" aria-label="Play WICK's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="wick" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="wick" preload="none" src="assets/voice-wick.mp3"></audio></div></div>
+        <div data-voice-card="" style="border:1px solid rgba(245,245,242,.13);border-radius:26px;background:rgba(10,10,10,.72);padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:16px;transition:transform .5s cubic-bezier(.32,.72,0,1),border-color .5s" style-hover="transform:translateY(-6px);border-color:rgba(245,245,242,.24)"><div style="border-radius:18px;overflow:hidden"><img loading="lazy" src="assets/v-keeper-a55bb2a179.webp" alt="OLD KEEPER" style="width:100%;aspect-ratio:16/9;object-fit:cover"></div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 2px"><span style="font-size:12.5px;font-weight:800;letter-spacing:.16em;color:#f5f5f2">OLD KEEPER · NPC</span><button data-voice="keeper" aria-label="Play KEEPER's voice" style="flex:0 0 46px;width:46px;height:46px;min-width:46px;border-radius:50%;border:1px solid rgba(245,245,242,.32);background:transparent;color:#f5f5f2;font-family:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .35s cubic-bezier(.32,.72,0,1),background .35s cubic-bezier(.32,.72,0,1),color .35s cubic-bezier(.32,.72,0,1)" style-hover="border-color:#f5f5f2;background:#f5f5f2;color:#0a0a0a"><span data-voice-icon="keeper" style="pointer-events:none;letter-spacing:.04em">▶</span></button><audio data-voice-audio="keeper" preload="none" src="assets/voice-keeper.mp3"></audio></div></div>
       </div>
     </div>
   </div>
@@ -499,7 +508,7 @@ landofhope-3d canvas{background:transparent}
     </a>
   </div>
 
-  <div style="position:absolute;left:0;right:0;bottom:0;z-index:3;pointer-events:none;height:clamp(230px,30vw,400px);background:linear-gradient(180deg,rgba(10,10,9,0) 0%,#0a0a09 34%,#f5f4f0 100%)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:1;pointer-events:none;height:clamp(230px,30vw,400px);background:linear-gradient(180deg,rgba(10,10,9,0) 0%,#0a0a09 34%,#f5f4f0 100%)"></div>
 </section>
 
 <section id="range" data-screen-label="Range" style="position:relative;padding:clamp(2rem,4vw,3rem) 0 clamp(2rem,4vw,3.5rem)">
@@ -578,32 +587,32 @@ landofhope-3d canvas{background:transparent}
   </div>
 </section>
 
-</main>
-
-<section id="contact" data-screen-label="Contact" style="position:relative;padding:clamp(5rem,9vw,8.5rem) 0 4rem">
+<section id="contact" data-screen-label="Contact" style="position:relative;padding:clamp(5rem,9vw,8.5rem) 0 clamp(5rem,8vw,7rem)">
   <div style="max-width:1200px;margin:0 auto;padding:0 clamp(22px,4vw,56px);position:relative;z-index:2">
     <span data-reveal="" style="display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(17,17,16,.22);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#57564f"><span style="width:6px;height:6px;border-radius:50%;background:#111110;flex:0 0 6px"></span>Contact</span>
     <h2 data-reveal="" data-d="1" style="margin-top:24px;font-weight:200;font-size:clamp(44px,7.4vw,100px);line-height:1;letter-spacing:-.02em;color:#111110">Let's build <b style="font-weight:800">something next.</b></h2>
     <p data-reveal="" data-d="2" style="max-width:600px;margin-top:22px;color:#57564f;font-size:17px;font-weight:300;text-wrap:pretty">Open to <b style="color:#111110;font-weight:700">full-time Creative Lead roles</b> — on-site or hybrid in Kuala Lumpur, or remote. Email is the fastest way to reach me.</p>
     <div data-reveal="" data-d="3" style="display:flex;gap:14px;margin-top:34px;flex-wrap:wrap">
-      <a href="mailto:chunhee437@gmail.com" data-hpair="" data-hin="background:#f5f4f0;color:#111110;transform:translate(2px,-1px)" data-hout="background:#111110;color:#f5f4f0;transform:none" style="display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:1.5px solid #111110;background:#111110;color:#f5f4f0;font-weight:700;font-size:14px;padding:11px 11px 11px 24px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s,border-color .4s" style-hover="background:transparent;color:#111110">chunhee437@gmail.com <span data-hchild="" style="width:32px;height:32px;border-radius:50%;background:#f5f4f0;color:#111110;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s">↘</span></a>
-      <a href="/Chun-Hee-Lim-CV.pdf" download="" data-hpair="" data-hin="background:#f5f4f0;color:#111110;transform:translate(2px,-1px)" data-hout="background:#111110;color:#f5f4f0;transform:none" style="display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:1.5px solid rgba(17,17,16,.22);background:transparent;color:#111110;font-weight:700;font-size:14px;padding:11px 11px 11px 24px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s,border-color .4s" style-hover="background:#111110;color:#f5f4f0;border-color:#111110">CV (PDF) <span data-hchild="" style="width:32px;height:32px;border-radius:50%;background:#111110;color:#f5f4f0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s">↓</span></a>
-      <a href="https://www.linkedin.com/in/chun-hee-lim" target="_blank" rel="noopener" data-hpair="" data-hin="background:#f5f4f0;color:#111110;transform:translate(2px,-1px)" data-hout="background:#111110;color:#f5f4f0;transform:none" style="display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:1.5px solid rgba(17,17,16,.22);background:transparent;color:#111110;font-weight:700;font-size:14px;padding:11px 11px 11px 24px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s,border-color .4s" style-hover="background:#111110;color:#f5f4f0;border-color:#111110">LinkedIn <span data-hchild="" style="width:32px;height:32px;border-radius:50%;background:#111110;color:#f5f4f0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s">↗</span></a>
+      <a href="mailto:chunhee437@gmail.com" data-hpair="" data-hin="background:#f5f4f0;color:#111110;transform:translate(2px,-1px)" data-hout="background:#111110;color:#f5f4f0;transform:none" style="display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:1.5px solid #111110;background:#111110;color:#f5f4f0;font-weight:700;font-size:14px;padding:11px 11px 11px 24px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s,border-color .4s" style-hover="background:transparent;color:#111110">chunhee437@gmail.com <span data-hchild="" aria-hidden="true" style="width:32px;height:32px;border-radius:50%;background:#f5f4f0;color:#111110;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s">↘</span></a>
+      <a href="/Chun-Hee-Lim-CV.pdf" download="" data-hpair="" data-hin="background:#f5f4f0;color:#111110;transform:translate(2px,-1px)" data-hout="background:#111110;color:#f5f4f0;transform:none" style="display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:1.5px solid rgba(17,17,16,.22);background:transparent;color:#111110;font-weight:700;font-size:14px;padding:11px 11px 11px 24px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s,border-color .4s" style-hover="background:#111110;color:#f5f4f0;border-color:#111110">CV (PDF) <span data-hchild="" aria-hidden="true" style="width:32px;height:32px;border-radius:50%;background:#111110;color:#f5f4f0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s">↓</span></a>
+      <a href="https://www.linkedin.com/in/chun-hee-lim" target="_blank" rel="noopener" data-hpair="" data-hin="background:#f5f4f0;color:#111110;transform:translate(2px,-1px)" data-hout="background:#111110;color:#f5f4f0;transform:none" style="display:inline-flex;align-items:center;gap:13px;border-radius:999px;border:1.5px solid rgba(17,17,16,.22);background:transparent;color:#111110;font-weight:700;font-size:14px;padding:11px 11px 11px 24px;cursor:pointer;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s,border-color .4s" style-hover="background:#111110;color:#f5f4f0;border-color:#111110">LinkedIn <span data-hchild="" aria-hidden="true" style="width:32px;height:32px;border-radius:50%;background:#111110;color:#f5f4f0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .4s cubic-bezier(.32,.72,0,1),background .4s,color .4s">↗</span></a>
     </div>
   </div>
-  <footer style="border-top:1px solid rgba(17,17,16,.12);margin-top:6rem;padding:28px 0 36px;position:relative;z-index:2">
+</section>
+</main>
+<footer style="border-top:1px solid rgba(17,17,16,.12);margin-top:0;padding:28px 0 36px;position:relative;z-index:2">
     <div style="max-width:1200px;margin:0 auto;padding:0 clamp(22px,4vw,56px);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center">
       <span style="font-size:13px;color:#57564f;font-weight:400">Chun Hee Lim — Kuala Lumpur</span>
       <p style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6b6a63;text-transform:uppercase">© 2026 · This site: designed &amp; built by me with Claude Code</p>
     </div>
-  </footer>
-</section>
+</footer>
 
-<div data-lightbox="" role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.32,.72,0,1),visibility .5s">
+
+<div data-lightbox="" role="dialog" aria-modal="true" aria-labelledby="lb-title" style="position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.32,.72,0,1),visibility .5s">
   <div data-lb-wrap="" style="width:min(1080px,92vw);transform:translateY(24px) scale(.98);transition:transform .55s cubic-bezier(.16,1,.3,1)">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:13px;gap:12px">
-      <div style="font-weight:300;font-size:17px;color:#f5f5f2"><b data-lb-no="" style="font-size:9.5px;font-weight:800;letter-spacing:.22em;color:#a3a39c;display:block;margin-bottom:4px"></b><span data-lb-name=""></span></div>
-      <button data-lb-close="" style="background:none;border:1px solid rgba(245,245,242,.24);color:#f5f5f2;border-radius:999px;padding:8px 18px;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.18em;cursor:pointer;transition:border-color .35s" style-hover="border-color:#f5f5f2">CLOSE ✕</button>
+      <div style="font-weight:300;font-size:17px;color:#f5f5f2"><b data-lb-no="" style="font-size:9.5px;font-weight:800;letter-spacing:.22em;color:#a3a39c;display:block;margin-bottom:4px"></b><span data-lb-name="" id="lb-title"></span></div>
+      <button data-lb-close="" style="background:none;border:1px solid rgba(245,245,242,.24);color:#f5f5f2;border-radius:999px;min-height:44px;padding:0 20px;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.18em;cursor:pointer;transition:border-color .35s" style-hover="border-color:#f5f5f2">CLOSE ✕</button>
     </div>
     <img data-lb-img="" alt="" style="width:100%;border-radius:14px;box-shadow:0 40px 110px rgba(0,0,0,.75);background:#000;max-height:76vh;object-fit:contain"><div data-lb-video="" style="display:none;position:relative;width:100%;margin:0 auto;aspect-ratio:16/9;border-radius:14px;overflow:hidden;box-shadow:0 40px 110px rgba(0,0,0,.75);background:#000"><iframe data-lb-frame="" src="" title="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>
   </div>
@@ -647,6 +656,15 @@ class Component extends DCLogic {
       if ((e.key === 'Enter' || e.key === ' ') && t && t.matches && t.matches('[data-lb][role="button"]')) { e.preventDefault(); t.click(); }
     };
     document.addEventListener('keydown', this.onKey);
+    // the page behind an open lightbox is inert; where inert isn't supported,
+    // focus that lands outside the dialog is sent back to CLOSE
+    this.onFocusIn = (e) => {
+      const box = document.querySelector('[data-lightbox]');
+      if (!box || box.style.visibility !== 'visible' || box.contains(e.target)) return;
+      const c = box.querySelector('[data-lb-close]');
+      if (c) c.focus({ preventScroll: true });
+    };
+    document.addEventListener('focusin', this.onFocusIn);
 
     this.rims = [];
     if (typeof mountMetalRim === 'function') {
@@ -678,6 +696,8 @@ class Component extends DCLogic {
     document.removeEventListener('mouseout', this.onOut);
     document.removeEventListener('click', this.onClick);
     document.removeEventListener('keydown', this.onKey);
+    document.removeEventListener('focusin', this.onFocusIn);
+    this.inertRest(null, false);
   }
 
   scan() {
@@ -689,15 +709,25 @@ class Component extends DCLogic {
         this._lettersDone = true;
       }
     }
-    document.querySelectorAll('[data-reveal]:not([data-rv])').forEach((el) => {
-      el.setAttribute('data-rv', '1');
-      if (this.reduced) return;
+    const els = [...document.querySelectorAll('[data-reveal]:not([data-rv])')];
+    if (!els.length) return;
+    els.forEach((el) => el.setAttribute('data-rv', '1'));
+    if (this.reduced) return;
+    /* where each one sits before it is pushed down (one layout for the batch) */
+    const line = innerHeight * 0.94;
+    const tops = els.map((el) => el.getBoundingClientRect().top);
+    /* the hide must not animate: a card sliding 36px down past the observer's
+       line before its first check never intersected, and stayed invisible */
+    els.forEach((el) => { el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(36px)'; });
+    document.body.offsetHeight;
+    const now = [];
+    els.forEach((el, i) => {
       const d = parseInt(el.getAttribute('data-d') || '0', 10);
       el.style.transition = 'opacity .85s cubic-bezier(.16,1,.3,1) ' + (d * 0.08) + 's, transform .85s cubic-bezier(.16,1,.3,1) ' + (d * 0.08) + 's';
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(36px)';
-      this.io.observe(el);
+      if (tops[i] < line) now.push(el); else this.io.observe(el);
     });
+    // already on screen: play the entrance now instead of waiting on the observer
+    if (now.length) requestAnimationFrame(() => now.forEach((el) => { el.style.opacity = '1'; el.style.transform = 'none'; }));
   }
 
   hoverFx(e, on) {
@@ -736,14 +766,13 @@ class Component extends DCLogic {
     const sc = t.closest('[data-scroll]');
     if (sc) {
       e.preventDefault();
-      const el = document.querySelector(sc.getAttribute('data-scroll'));
-      if (el) { this.revealIn(el); scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'smooth' }); }
+      this.jump(document.querySelector(sc.getAttribute('data-scroll')));
       return;
     }
     const nav = t.closest('nav a[href^="#"]');
     if (nav) {
       const el = document.querySelector(nav.getAttribute('href'));
-      if (el) { e.preventDefault(); this.revealIn(el); scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'smooth' }); }
+      if (el) { e.preventDefault(); this.jump(el); }
       return;
     }
     const vb = t.closest('[data-voice]');
@@ -767,7 +796,18 @@ class Component extends DCLogic {
     });
   }
 
-  /* the nav marks the section under the top third of the screen */
+  /* scroll to a section and move focus with it, so the next Tab carries on
+     from there instead of from the link that was pressed */
+  jump(el) {
+    if (!el) return;
+    this.revealIn(el);
+    scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: this.reduced ? 'auto' : 'smooth' });
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+    el.focus({ preventScroll: true });
+  }
+
+  /* the nav marks the section under the top third of the screen, counting
+     only the links it shows (the phone pill hides Films and Voices) */
   spy(vh) {
     let links = this._navLinks;
     if (!links || !links.length || !document.contains(links[0][0])) {
@@ -775,7 +815,7 @@ class Component extends DCLogic {
         .map((a) => [a, document.querySelector(a.getAttribute('href'))]).filter((x) => x[1]);
     }
     let cur = null;
-    for (const [a, sec] of links) if (sec.getBoundingClientRect().top <= vh * 0.35) cur = a;
+    for (const [a, sec] of links) if (a.offsetParent !== null && sec.getBoundingClientRect().top <= vh * 0.35) cur = a;
     for (const [a] of links) {
       const on = a === cur;
       if (on === a._on) continue;
@@ -793,7 +833,8 @@ class Component extends DCLogic {
       btn.style.borderColor = playing ? '#f5f5f2' : 'rgba(245,245,242,.32)';
       btn.style.background = playing ? '#f5f5f2' : 'transparent';
       btn.style.color = playing ? '#0a0a0a' : '#f5f5f2';
-      btn.setAttribute('aria-label', playing ? 'Pause voice' : 'Play voice');
+      const lab = btn.getAttribute('aria-label') || 'Play voice';
+      btn.setAttribute('aria-label', (playing ? 'Pause' : 'Play') + lab.replace(/^(Play|Pause)/, ''));
     }
   }
 
@@ -826,12 +867,17 @@ class Component extends DCLogic {
     const frame = box.querySelector('[data-lb-frame]');
     if (yt && vid && frame) {
       img.style.display = 'none';
+      img.removeAttribute('src');
       vid.style.display = 'block';
       // Shorts are 9:16. Letterboxing them inside the wide shell wastes most of
-      // the box, so the shell takes the clip's shape and caps its width to keep
-      // the full height on screen.
+      // the box, so the shell takes the clip's shape. Its width is also capped
+      // by the screen's height (less the title row), so the whole frame and
+      // CLOSE stay on screen on a phone or a short laptop; vh first for
+      // browsers without dvh.
       vid.style.aspectRatio = vert ? '9/16' : '16/9';
-      vid.style.maxWidth = vert ? 'min(420px,92vw)' : '100%';
+      const r = vert ? '9 / 16' : '16 / 9';
+      vid.style.maxWidth = 'min(' + (vert ? '420px,92vw' : '100%') + ',calc((100vh - 120px) * ' + r + '))';
+      vid.style.maxWidth = 'min(' + (vert ? '420px,92vw' : '100%') + ',calc((100dvh - 120px) * ' + r + '))';
       frame.title = name;
       frame.src = 'https://www.youtube-nocookie.com/embed/' + yt + '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
     } else {
@@ -843,29 +889,46 @@ class Component extends DCLogic {
     }
     box.querySelector('[data-lb-no]').textContent = no;
     box.querySelector('[data-lb-name]').textContent = name;
+    // focus goes into the dialog, and comes back to whatever opened it
+    if (box.style.visibility !== 'visible') this._lbFrom = document.activeElement;
+    // no visibility transition on the way in, so CLOSE can take focus at once
+    box.style.transition = 'opacity .5s cubic-bezier(.32,.72,0,1)';
     box.style.opacity = '1'; box.style.visibility = 'visible';
     const w = box.querySelector('[data-lb-wrap]');
     if (w) w.style.transform = 'translateY(0) scale(1)';
-    // focus goes into the dialog, and comes back to whatever opened it
-    this._lbFrom = document.activeElement;
+    this.inertRest(box, true);
     const close = box.querySelector('[data-lb-close]');
-    if (close) setTimeout(() => close.focus({ preventScroll: true }), 60);
+    if (close) close.focus({ preventScroll: true });
+  }
+
+  /* everything outside the open dialog is inert: no Tab stops, no clicks,
+     nothing for a screen reader to wander into */
+  inertRest(box, on) {
+    if (this._inert) { this._inert.forEach((n) => { n.inert = false; }); this._inert = null; }
+    if (!on || !box) return;
+    this._inert = [];
+    for (let n = box; n.parentElement && n !== document.body; n = n.parentElement) {
+      for (const s of n.parentElement.children) {
+        if (s !== n && !s.inert && !/^(SCRIPT|STYLE|LINK|META)$/.test(s.tagName)) { s.inert = true; this._inert.push(s); }
+      }
+    }
   }
 
   closeLb() {
     const box = document.querySelector('[data-lightbox]');
     if (!box) return;
+    // the iframe goes now to stop the sound; the image and video panes stay as
+    // they are through the fade (openLb sets both), so nothing old flashes up
     const frame = box.querySelector('[data-lb-frame]');
     if (frame) frame.removeAttribute('src');
-    const vid = box.querySelector('[data-lb-video]');
-    if (vid) vid.style.display = 'none';
-    const img = box.querySelector('[data-lb-img]');
-    if (img) img.style.display = '';
     const wasOpen = box.style.visibility === 'visible';
+    box.style.transition = 'opacity .5s cubic-bezier(.32,.72,0,1),visibility .5s';
     box.style.opacity = '0'; box.style.visibility = 'hidden';
     const w = box.querySelector('[data-lb-wrap]');
     if (w) w.style.transform = 'translateY(24px) scale(.98)';
-    if (wasOpen && this._lbFrom && this._lbFrom.focus) { this._lbFrom.focus({ preventScroll: true }); this._lbFrom = null; }
+    this.inertRest(box, false);
+    if (wasOpen && this._lbFrom && this._lbFrom.focus) this._lbFrom.focus({ preventScroll: true });
+    if (wasOpen) this._lbFrom = null;
   }
 
   frame(now) {
