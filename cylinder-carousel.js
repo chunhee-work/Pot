@@ -44,11 +44,18 @@
 
   uniform sampler2D tMap;
   uniform float uDarkness;
+  uniform float uCount;
 
   varying vec2 vUv;
 
   void main() {
-    vec4 tex = texture2D(tMap, vUv);
+    // the wall's u runs the other way round from how it is seen from outside,
+    // so every portrait (and the name baked into it) read mirrored on the
+    // outer face: 'ZEYO' came out as 'OYƎZ'. Flipping each tile on the outer
+    // face fixes it, and the inner face, seen from behind, reads true as is
+    vec2 uv = vUv;
+    if (gl_FrontFacing) { float t = uv.x * uCount; uv.x = (floor(t) + 1.0 - fract(t)) / uCount; }
+    vec4 tex = texture2D(tMap, uv);
     tex.rgb *= (1.0 - uDarkness);
     gl_FragColor = tex;
   }
@@ -303,6 +310,7 @@
         uniforms: {
           tMap: { value: texture },
           uDarkness: { value: isNaN(darkness) ? 0.3 : darkness },
+          uCount: { value: numImages },
         },
         cullFace: null,
       });
