@@ -111,7 +111,6 @@ a:hover{color:#57564f}
 html{scroll-padding-top:96px}
 section[tabindex="-1"]:focus{outline:none}
 /* the portrait is clipped by its rounded figure, so the figure carries the ring */
-figure:has(>img[role="button"]:focus-visible){outline:2px solid #111110;outline-offset:3px}
 figure>img[role="button"]:focus-visible{outline:none}
 #gateway :focus-visible,#gacha :focus-visible,#farm :focus-visible,#process :focus-visible,nav[data-metal] :focus-visible,[data-lightbox] :focus-visible{outline-color:#f5f5f2}
 [data-skip]{position:fixed;left:16px;top:-80px;z-index:200;background:#111110;color:#f5f4f0;font-weight:700;font-size:14px;padding:12px 18px;border-radius:999px;transition:top .25s cubic-bezier(.32,.72,0,1)}
@@ -212,10 +211,12 @@ gacha-hero>span{right:50% !important;top:30% !important;width:86vw !important;he
 @media (max-width:640px){[data-grid2]{grid-template-columns:1fr !important;gap:22px !important}}
 /* the before/after pair stays side by side on an iPad */
 @media (min-width:701px) and (max-width:880px){.gu-pair{grid-template-columns:1fr 1fr !important;gap:18px !important}}
-/* the work index precedes the portrait in the source, so Tab and screen readers
-   reach it first; once the portrait fits beside the intro (814px and up),
-   it is placed there and the index runs underneath */
-@media (min-width:814px){[data-hero-photo]{order:1}[data-proofs]{order:2}}
+/* the work index precedes the portrait in the source, so screen readers reach
+   it first; once the portrait fits beside the intro (a 748px row: 400 + 48 +
+   300) it is placed there and the index runs underneath. The row's own width
+   decides, so a desktop scrollbar can't tip it into a third arrangement. */
+#hero>div{container-type:inline-size}
+@container (min-width:748px){[data-hero-photo]{order:1}[data-proofs]{order:2}}
 @media (max-width:747px){#hero>div{gap:2.2rem !important}}
 /* the work index under the hero: four across, two on a tablet, compact pairs on a phone */
 @media (max-width:1000px){[data-proofs]{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
@@ -307,7 +308,7 @@ landofhope-3d canvas{background:transparent}
     </nav>
     <div data-hero-photo="" style="flex:.92 1 min(300px,100%);min-width:0;position:relative;display:flex;justify-content:center;align-items:flex-end">
       <figure style="margin:0;position:relative;width:min(430px,100%);aspect-ratio:4/5;border-radius:26px;overflow:hidden;background:linear-gradient(175deg,#efede8 0%,#e4e1d9 100%);box-shadow:0 34px 64px -24px rgba(17,17,16,.34)">
-        <img data-lb="assets/portrait-ae911719ff.webp" data-lb-no="PORTRAIT" data-lb-name="Chun Hee Lim — Kuala Lumpur" src="assets/portrait-ae911719ff.webp" alt="Chun Hee Lim — portrait in a hand-knit sweater" fetchpriority="high" decoding="async" width="720" height="900" style="width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block;cursor:zoom-in" tabindex="0" role="button" aria-label="Open Chun Hee Lim — Kuala Lumpur">
+        <img src="assets/portrait-ae911719ff.webp" alt="Chun Hee Lim — portrait in a hand-knit sweater" fetchpriority="high" decoding="async" width="720" height="900" style="width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block">
         <span aria-hidden="true" style="position:absolute;inset:0;border-radius:26px;box-shadow:inset 0 0 0 1px rgba(17,17,16,.07);pointer-events:none"></span>
       </figure>
     </div>
@@ -395,7 +396,7 @@ landofhope-3d canvas{background:transparent}
       <div><span class="gu-num">02</span><h3>And when it is, the product is still playing</h3><p>The auth card sits <b>inside the product</b> rather than in front of it. Email or Telegram, nothing else — a Telegram-first product saying so by what it leaves out.</p></div></div></div>
   </div>
 <div style="max-width:1200px;margin:0 auto;padding:1rem clamp(22px,4vw,56px) 7rem;position:relative;z-index:2">
-      <a href="https://gacha.thechillgallery.com/#/" target="_blank" rel="noopener" class="gu-cta" data-hpair="" data-hin="transform:translate(3px,-3px)" data-hout="transform:none"><span class="gu-cta-l">Open the live game</span><span class="gu-cta-m">gacha.thechillgallery.com</span><span class="gu-cta-i" data-hchild="" style="transition:transform .45s cubic-bezier(.32,.72,0,1)">&#8599;</span></a>
+      <a href="https://gacha.thechillgallery.com/#/" target="_blank" rel="noopener" class="gu-cta" data-hpair="" data-hin="transform:translate(3px,-3px)" data-hout="transform:none"><span class="gu-cta-l">Open the live game</span><span class="gu-cta-m">gacha.thechillgallery.com</span><span class="gu-cta-i" aria-hidden="true" data-hchild="" style="transition:transform .45s cubic-bezier(.32,.72,0,1)">&#8599;</span></a>
     </div>
   
   <div aria-hidden="true" style="position:relative;z-index:6;height:clamp(150px,17vw,250px);background:linear-gradient(180deg,#0a0a0a 0%,#f5f4f0 100%)"></div>
@@ -456,7 +457,7 @@ landofhope-3d canvas{background:transparent}
     <div style="position:sticky;top:0;height:100svh;overflow:hidden;background:#000">
       <x-import component-from-global-scope="cylinder-carousel" images="assets/char-zeyo-307d498ac3.webp,assets/char-fot-9e1e5d15f4.webp,assets/char-sket-eaf8d7751b.webp,assets/char-ccats-9d2b35a2df.webp,assets/char-ketdonut-28d255ef70.webp,assets/char-gst-63a0644f86.webp,assets/char-hearta-86a414bf25.webp,assets/char-ecox-9b9d2ccaa2.webp,assets/char-froak-af20a9ef55.webp,assets/char-lychee-baad7b0436.webp" darkness="0.3" style="position:absolute;inset:0;z-index:1" hint-size="100%,100%"></x-import>
       <div data-cyl-caps="" style="position:absolute;inset:0;z-index:10;pointer-events:none;color:#f5f5f2">
-        <div data-cap="" style="position:absolute;top:clamp(4.5rem,11vh,7.5rem);left:50%;transform:translateX(-50%);opacity:0;width:min(90vw,860px);padding:0 22px;text-align:center;will-change:opacity">
+        <div data-cap="" style="position:absolute;top:clamp(6.5rem,11vh,7.5rem);left:50%;transform:translateX(-50%);opacity:0;width:min(90vw,860px);padding:0 22px;text-align:center;will-change:opacity">
           <h3 style="font-weight:300;font-size:clamp(34px,5.6vw,84px);line-height:.86;letter-spacing:-.02em;color:#f5f5f2;text-shadow:0 2px 24px rgba(0,0,0,.7)">Ten Originals</h3>
           <p style="margin-top:12px;font-weight:400;font-size:clamp(14px,1.5vw,22px);color:#f5f5f2;text-wrap:pretty;text-shadow:0 1px 14px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.6)">OG10 — collectible characters born from The Chill Gallery</p>
         </div>
@@ -608,7 +609,7 @@ landofhope-3d canvas{background:transparent}
 </footer>
 
 
-<div data-lightbox="" role="dialog" aria-modal="true" aria-labelledby="lb-title" style="position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.32,.72,0,1),visibility .5s">
+<div data-lightbox="" role="dialog" aria-modal="true" aria-labelledby="lb-title" style="position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.97);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.32,.72,0,1),visibility .5s">
   <div data-lb-wrap="" style="width:min(1080px,92vw);transform:translateY(24px) scale(.98);transition:transform .55s cubic-bezier(.16,1,.3,1)">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:13px;gap:12px">
       <div style="font-weight:300;font-size:17px;color:#f5f5f2"><b data-lb-no="" style="font-size:9.5px;font-weight:800;letter-spacing:.22em;color:#a3a39c;display:block;margin-bottom:4px"></b><span data-lb-name="" id="lb-title"></span></div>
@@ -636,6 +637,18 @@ class Component extends DCLogic {
 
     this.scan();
     this.scanTimer = setInterval(() => this.scan(), 400);
+
+    /* the runtime rebuilds the page after the browser has already tried the
+       URL's #fragment, so links such as /#series (from /work, /process and the
+       CV) landed on the hero. Land them here once fonts have settled layout. */
+    this.goHash = () => {
+      const id = location.hash ? decodeURIComponent(location.hash.slice(1)) : '';
+      const t = id && document.getElementById(id);
+      if (t && t.tagName === 'SECTION') this.jump(t, true);
+    };
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
+      .then(() => requestAnimationFrame(() => { if (!this.dead) this.goHash(); }));
+    addEventListener('hashchange', this.goHash);
     setTimeout(() => clearInterval(this.scanTimer), 20000);
 
     this.onScroll = () => { this.dirty = true; };
@@ -697,6 +710,7 @@ class Component extends DCLogic {
     document.removeEventListener('click', this.onClick);
     document.removeEventListener('keydown', this.onKey);
     document.removeEventListener('focusin', this.onFocusIn);
+    removeEventListener('hashchange', this.goHash);
     this.inertRest(null, false);
   }
 
@@ -798,10 +812,10 @@ class Component extends DCLogic {
 
   /* scroll to a section and move focus with it, so the next Tab carries on
      from there instead of from the link that was pressed */
-  jump(el) {
+  jump(el, instant) {
     if (!el) return;
     this.revealIn(el);
-    scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: this.reduced ? 'auto' : 'smooth' });
+    scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: instant || this.reduced ? 'auto' : 'smooth' });
     if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
     el.focus({ preventScroll: true });
   }

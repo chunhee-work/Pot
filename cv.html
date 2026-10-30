@@ -76,6 +76,8 @@ footer{margin-top:5mm;padding-top:2.5mm;border-top:1px solid var(--rule);font-si
   .work,.cols{grid-template-columns:1fr}
   .what p,.what li,.work p,.cols p{font-size:14.5px}
 }
+/* on screen the contact links get real targets; print keeps the A4 layout */
+@media screen and (min-width:761px){.contact{line-height:1.25}.contact a{display:inline-block;padding:5px 0}}
 @page{size:A4;margin:0}
 @media print{
   body{background:#fff}
@@ -86,7 +88,7 @@ footer{margin-top:5mm;padding-top:2.5mm;border-top:1px solid var(--rule);font-si
 </style>
 </head>
 <body>
-<div class="bar"><a href="/">← Portfolio</a><a class="dl" href="/Chun-Hee-Lim-CV.pdf" download>Download PDF</a></div>
+<header class="bar"><a href="/"><span aria-hidden="true">←</span> Portfolio</a><a class="dl" href="/Chun-Hee-Lim-CV.pdf" download>Download PDF</a></header>
 <main class="sheet">
   <header>
     <div>

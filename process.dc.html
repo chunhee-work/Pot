@@ -216,6 +216,9 @@
          cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-y}
   .strip.grabbing{cursor:grabbing}
   .strip:focus-visible{outline:2px solid var(--ink);outline-offset:-6px}
+  /* a light ring for everything else; html-qualified so it also wins over the
+     home page's dark ring, which stays in the document after the sphere portal */
+  html :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
   .striprow{display:flex;align-items:center;gap:clamp(18px,2.4vw,40px);width:max-content;
             padding:10px 0 18px;will-change:transform}
   .striprow img{height:clamp(220px,38vh,380px);width:auto;border-radius:22px;display:block;
@@ -254,11 +257,12 @@
 <audio id="sfx" preload="auto" src="assets/process/intro-04358c6d22.mp3"></audio>
 <audio id="bgm" loop preload="none" src="assets/process/bgm-0ac7bdea7b.mp3"></audio>
 
-<div class="topbar"><a class="back" href="/">&#8592; Back to portfolio</a></div>
+<header class="topbar"><a class="back" href="/"><span aria-hidden="true">&#8592;</span> Back to portfolio</a>
 <button class="snd" id="snd" type="button" aria-pressed="false" aria-label="Mute music" title="Mute music">
   <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
   <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6"/><path d="m21 9-5 6"/></svg>
 </button>
+</header>
 
 <main>
 <section class="scene" id="scene">
@@ -926,15 +930,17 @@
       S.base=reduced?0:(si%2?30:-30);
       S.vel=S.base;
     };
-    /* the drift stops while a mouse is over the strip or it has focus, and a
-       tap without a drag stops or restarts it on touch */
+    /* the drift stops while a mouse is over the strip or it has keyboard
+       focus, and a tap without a drag stops or restarts it on touch (a click
+       or tap focuses the strip too, but that focus must not hold it still) */
     S.hover=false;S.focus=false;S.tap=false;
     st.addEventListener('pointerenter',function(e){if(e.pointerType==='mouse')S.hover=true;});
     st.addEventListener('pointerleave',function(e){if(e.pointerType==='mouse')S.hover=false;});
-    st.addEventListener('focus',function(){S.focus=true;});
+    st.addEventListener('focus',function(){try{S.focus=st.matches(':focus-visible');}catch(_){S.focus=true;}});
     st.addEventListener('blur',function(){S.focus=false;});
     /* arrow keys move it one image along: a glide, or a jump under reduced motion */
     st.addEventListener('keydown',function(e){
+      S.focus=true;
       var dir=e.key==='ArrowRight'?-1:e.key==='ArrowLeft'?1:0;
       if(!dir||!S.ready)return;
       e.preventDefault();
