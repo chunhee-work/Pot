@@ -909,6 +909,9 @@
            drag:false,px:0,ready:false,vis:false};
     S.fit=function(){
       if(VMODE===1)return;
+      /* measured with transitions off: the reduced-motion rule gives every
+         property a 1ms transition, and the read would catch the old margin */
+      st.style.transition='none';
       st.style.marginLeft='0px';
       st.style.width=document.documentElement.clientWidth+'px';
       st.style.marginLeft=(-st.getBoundingClientRect().left)+'px';
@@ -940,10 +943,9 @@
     st.addEventListener('blur',function(){S.focus=false;});
     /* arrow keys move it one image along: a glide, or a jump under reduced motion */
     st.addEventListener('keydown',function(e){
-      S.focus=true;
       var dir=e.key==='ArrowRight'?-1:e.key==='ArrowLeft'?1:0;
       if(!dir||!S.ready)return;
-      e.preventDefault();
+      e.preventDefault();S.focus=true;
       var step=row.children[0].getBoundingClientRect().width+(parseFloat(getComputedStyle(row).gap)||0);
       if(reduced)S.x+=dir*step;else S.vel=dir*step*2;
     });
@@ -967,8 +969,14 @@
   function initStrips(){
     if(strips.length)return;
     strips=[].slice.call(document.querySelectorAll('[data-strip]')).map(setupStrip);
+    function refit(){strips.forEach(function(S){S.fit();if(S.ready)S.measure();});}
     strips.forEach(function(S){S.fit();});
     requestAnimationFrame(function(){strips.forEach(function(S){S.fit();});});
+    /* fit again once layout has settled: the first fit can run before the
+       cards are placed, and nothing else re-fits under reduced motion */
+    if(document.readyState==='complete')setTimeout(refit,0);else addEventListener('load',refit);
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(refit);
+    setTimeout(refit,1200);
     function wake(S){
       if(S.ready)return;
       var ims=[].slice.call(S.row.children).slice(0,S.n);
