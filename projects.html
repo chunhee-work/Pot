@@ -69,6 +69,35 @@
         <figcaption><b>Fig. 01</b><span>Danial</span></figcaption>
       </figure>
     </div>
+    <div class="try" id="try-danial" aria-labelledby="h-try">
+      <div class="try-head">
+        <p class="mono accent"><span class="dot"></span>Live demo</p>
+        <h3 id="h-try">Show Danial something.</h3>
+        <p>Drop a photo, a voice note or a short video, the way a customer would. He tells you what he understood and writes the reply.</p>
+      </div>
+      <div class="try-body">
+        <div class="drop" id="dz">
+          <input type="file" id="dz-file" class="vh" accept="image/*,audio/*,video/mp4,video/quicktime,video/webm">
+          <label for="dz-file" class="drop-in">
+            <span class="drop-ic" aria-hidden="true">↥</span>
+            <b>Drop a file here, or choose one</b>
+            <span class="mono">Photo · voice note · video, up to 3 MB</span>
+          </label>
+          <div class="drop-prev" id="dz-prev" hidden></div>
+        </div>
+        <div class="try-out" id="dz-out" aria-live="polite">
+          <p class="try-state" id="dz-state">Waiting for a file.</p>
+          <div class="try-res" id="dz-res" hidden>
+            <p class="mono">What Danial understood</p>
+            <p class="try-und" id="dz-und"></p>
+            <p class="mono">His reply</p>
+            <p class="try-rep" id="dz-rep"></p>
+            <button type="button" class="btn" id="dz-again">Try another</button>
+          </div>
+        </div>
+      </div>
+      <p class="mono fine">Your file is sent to the AI once to be read, then thrown away. Nothing is stored. A demo with no real shop behind it.</p>
+    </div>
     <div class="case-body g">
       <div class="col">
         <p class="mono">The problem</p>
@@ -268,5 +297,6 @@
   </div>
 </footer>
 
+<script src="/danial-demo.js" defer></script>
 </body>
 </html>
