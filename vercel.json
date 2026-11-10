@@ -7,7 +7,7 @@
     },
     {
       "source": "/process",
-      "destination": "/process.dc.html"
+      "destination": "/process.html"
     },
     {
       "source": "/work",
