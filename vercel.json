@@ -11,7 +11,7 @@
     },
     {
       "source": "/work",
-      "destination": "/work.dc.html"
+      "destination": "/work.html"
     },
     {
       "source": "/projects",
