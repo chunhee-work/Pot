@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://chunhee-portfolio.vercel.app/</loc></url>
   <url><loc>https://chunhee-portfolio.vercel.app/process</loc></url>
+  <url><loc>https://chunhee-portfolio.vercel.app/projects</loc></url>
   <url><loc>https://chunhee-portfolio.vercel.app/work</loc></url>
   <url><loc>https://chunhee-portfolio.vercel.app/cv</loc></url>
 </urlset>

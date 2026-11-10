@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/Chun%20Hee%20-%20Portfolio.dc.html"
+      "destination": "/home.html"
     },
     {
       "source": "/process",
@@ -15,7 +15,7 @@
     },
     {
       "source": "/projects",
-      "destination": "/projects.dc.html"
+      "destination": "/projects.html"
     },
     {
       "source": "/cv",
