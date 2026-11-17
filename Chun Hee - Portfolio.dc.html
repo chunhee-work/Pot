@@ -268,7 +268,7 @@ landofhope-3d canvas{background:transparent}
 /* ---- Home: clean hero, "at a glance" card, work wheel (all three live in this file) ---- */
 html.hx-on nav[data-metal]{opacity:0;visibility:hidden}
 nav[data-metal]{transition:opacity .45s ease,visibility .45s}
-.hx{position:relative;min-height:100vh;min-height:100dvh;background:#000;color:#fff;overflow:hidden;display:flex;flex-direction:column}
+.hx{--hp:0;position:relative;min-height:100vh;min-height:100dvh;background:linear-gradient(180deg,#000 0%,#000 62%,#0a0a0a 100%);color:#fff;overflow:hidden;display:flex;flex-direction:column}
 .hx-top{position:relative;z-index:5;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:22px clamp(18px,2.4vw,32px)}
 .hx-menu{position:relative;justify-self:start}
 .hx-menu summary{list-style:none;cursor:pointer;color:#8c8c8c;display:grid;place-items:center;width:48px;height:48px;border-radius:10px;transition:color .3s}
@@ -327,7 +327,20 @@ nav[data-metal]{transition:opacity .45s ease,visibility .45s}
 @media (max-width:900px){.gl-card{grid-template-columns:minmax(0,1fr)}.gl-links{margin-top:0}}
 @media (max-width:640px){.gl-card{border-radius:22px}.gl-pill{letter-spacing:.22em}.gl-cta{letter-spacing:.18em}}
 
-.rg{position:relative;background:#0a0a0a;color:#f1efe9;--r:500px;--cw:380px;--ch:224px}
+.rg{position:relative;background:#0a0a0a;color:#f1efe9;--r:600px;--cw:460px;--ch:276px}
+/* hero parallax: each layer sinks at its own speed while the page scrolls up, then the bottom fade hands over to the next screen */
+.hx-w,.hx-pill,.hx-tag,.hx-down{will-change:translate}
+.hx-w:first-child{translate:0 calc(var(--hp) * 28vh)}
+.hx-w+.hx-w{translate:0 calc(var(--hp) * 62vh)}
+.hx-pill{translate:0 calc(var(--hp) * 45vh)}
+.hx-tag{translate:0 calc(var(--hp) * 10vh);opacity:calc(1 - var(--hp) * 1.6)}
+.hx-down{opacity:calc(1 - var(--hp) * 3)}
+.hx::after{content:"";position:absolute;left:0;right:0;bottom:0;height:22%;z-index:4;pointer-events:none;background:linear-gradient(180deg,rgba(10,10,10,0),#0a0a0a 80%)}
+.gl{--gp:1}
+.gl-card{transform:translateY(calc((1 - var(--gp)) * 90px)) scale(calc(.94 + var(--gp) * .06));opacity:calc(.2 + var(--gp) * .8);transform-origin:50% 0}
+.rg-head{transform:translateY(calc((1 - var(--wp,1)) * 50px));opacity:var(--wp,1)}
+.rg-track::after{content:"";position:absolute;left:0;right:0;bottom:0;height:140px;background:linear-gradient(180deg,rgba(5,5,5,0),#050505);pointer-events:none}
+@media (prefers-reduced-motion:reduce){.hx-w,.hx-pill,.hx-tag{translate:none}.hx-tag,.hx-down,.gl-card,.rg-head{opacity:1}.gl-card,.rg-head{transform:none}}
 .rg-head{text-align:center;padding:clamp(48px,6vw,88px) 16px 0}
 .rg-eye{font-size:10.5px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:#7d796f}
 .rg-head h2{margin-top:6px;font-size:clamp(34px,3.4vw,46px);line-height:1;font-weight:700;letter-spacing:-.04em;color:#fff}
@@ -337,26 +350,27 @@ nav[data-metal]{transition:opacity .45s ease,visibility .45s}
 .rg-mask{position:relative;width:100%;height:calc(var(--r) + var(--ch) * .5 + 120px);max-height:calc(100% - 96px);overflow:hidden;overflow:clip;-webkit-mask-image:linear-gradient(to top,transparent 0%,#000 38%);mask-image:linear-gradient(to top,transparent 0%,#000 38%)}
 .rg-wheel{list-style:none;margin:0;padding:0;position:absolute;left:50%;width:calc(var(--r) * 2);height:calc(var(--r) * 2);margin-left:calc(var(--r) * -1);bottom:calc(var(--r) * -1);will-change:transform}
 .rg-it{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(var(--a)) translateY(calc(var(--r) * -1))}
-.rg-card{position:relative;display:grid;grid-template-columns:62% 38%;width:var(--cw);height:var(--ch);border-radius:14px;overflow:hidden;background:#141413;border:1px solid rgba(255,255,255,.09);box-shadow:0 24px 50px -20px rgba(0,0,0,.8);color:#fff;transition:transform .5s ease-out,filter .5s ease-out,opacity .5s ease-out}
+.rg-card{--d:0;position:relative;display:block;width:var(--cw);height:var(--ch);border-radius:22px;overflow:hidden;background:#141413;box-shadow:0 0 0 1px rgba(255,255,255,.07) inset,0 30px 60px -24px rgba(0,0,0,.9);color:#fff;filter:blur(calc(var(--d) * 3.5px)) brightness(calc(1 - var(--d) * .55));opacity:calc(1 - var(--d) * .35);transition:transform .5s ease-out,opacity .5s ease-out}
 .rg-card:hover{color:#fff}
-.rg-im{position:relative;overflow:hidden}
-.rg-im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(.3);transition:transform .7s ease-out,filter .7s ease-out}
-.rg-tx{position:relative;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 14px 16px;border-left:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,#191918 0%,#111110 100%)}
-.rg-cat{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#d9d6ce;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:3px 9px;white-space:nowrap}
-.rg-go{position:absolute;right:12px;top:12px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#f1efe9;color:#0a0a0a;opacity:0;transform:rotate(-45deg);transition:opacity .5s,transform .5s}
-.rg-go svg{width:12px;height:12px}
+.rg-im{position:absolute;inset:0;overflow:hidden}
+.rg-im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.rg-im::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.28) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 48%,rgba(0,0,0,.72) 100%)}
+.rg-tx{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:16px 18px 18px}
+.rg-cat{font-size:11px;font-weight:600;letter-spacing:.01em;color:#fff;background:rgba(14,14,14,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:999px;padding:5px 11px;white-space:nowrap;box-shadow:0 0 0 1px rgba(255,255,255,.06) inset}
+.rg-go{position:absolute;right:14px;top:14px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#f1efe9;color:#0a0a0a;opacity:0;transform:rotate(-45deg) scale(.8);transition:opacity .5s,transform .5s}
+.rg-go svg{width:13px;height:13px}
 .rg-t{width:100%;transform:translateY(4px);transition:transform .5s}
-.rg-t b{display:block;font-size:20px;line-height:1.1;font-weight:700;letter-spacing:-.02em;overflow-wrap:anywhere}
-.rg-t i{display:block;height:2px;background:#f1efe9;margin-top:8px;width:0;opacity:0;transition:width .5s,opacity .5s}
-.rg-wheel[data-hot] .rg-card{filter:grayscale(1) blur(2px);opacity:.4}
+.rg-t b{display:block;font-size:26px;line-height:1.05;font-weight:700;letter-spacing:-.03em;text-shadow:0 2px 18px rgba(0,0,0,.45);overflow-wrap:anywhere}
+.rg-t i{display:block;height:2px;background:#f1efe9;margin-top:9px;width:0;opacity:0;transition:width .5s,opacity .5s}
+.rg-wheel[data-hot] .rg-card{filter:grayscale(1) blur(3px) brightness(.5);opacity:.45}
 .rg-it.is-hot{z-index:5}
-.rg-it.is-hot .rg-card{filter:none;opacity:1;transform:translateY(-28px) scale(1.18)}
-.rg-it.is-hot .rg-im img{transform:scale(1.1);filter:none}
+.rg-it.is-hot .rg-card{filter:none;opacity:1;transform:translateY(-24px) scale(1.12)}
+.rg-it.is-hot .rg-im img{transform:scale(1.08)}
 .rg-it.is-hot .rg-go{opacity:1;transform:none}
 .rg-it.is-hot .rg-t{transform:none}
 .rg-it.is-hot .rg-t i{width:100%;opacity:1}
 .rg :focus-visible{outline:2px solid #f1efe9;outline-offset:4px}
-@media (max-width:767px){.rg{--r:250px;--cw:236px;--ch:140px}.rg-sticky{align-items:center}.rg-t b{font-size:15px}.rg-tx{padding:10px 10px 12px}.rg-cat{font-size:9.5px;padding:2px 7px}.rg-track{height:calc(100vh + 1200px)}}
+@media (max-width:767px){.rg{--r:280px;--cw:280px;--ch:168px}.rg-sticky{align-items:center}.rg-t b{font-size:18px}.rg-tx{padding:11px 12px 13px}.rg-cat{font-size:10px;padding:4px 9px}.rg-card{border-radius:16px}.rg-track{height:calc(100vh + 1200px)}}
 @media (prefers-reduced-motion:reduce){.rg-track{height:auto}.rg-sticky{position:relative;height:auto;min-height:calc(var(--r) + var(--ch) * .5 + 140px)}.rg-mask{height:calc(var(--r) + var(--ch) * .5 + 140px)}.rg-it.is-hot .rg-card{transform:none}}
 </style>
 </helmet>
@@ -1166,7 +1180,14 @@ class Component extends DCLogic {
   /* nav: hidden while the hero fills the screen */
   function navState(){
     var h = $('#hero'); if (!h) return;
-    root.classList.toggle('hx-on', h.getBoundingClientRect().bottom > innerHeight * 0.35);
+    var hr = h.getBoundingClientRect();
+    root.classList.toggle('hx-on', hr.bottom > innerHeight * 0.35);
+    if (reduce) return;
+    var cl = function(v){ return Math.min(1, Math.max(0, v)).toFixed(3); };
+    /* one continuous move: the name lifts away as the glance card rises into its place, then the wheel title follows */
+    h.style.setProperty('--hp', cl(-hr.top / hr.height));
+    var g = $('#glance'); if (g) g.style.setProperty('--gp', cl((innerHeight - g.getBoundingClientRect().top) / (innerHeight * 0.75)));
+    var w = $('#wheel'); if (w) w.style.setProperty('--wp', cl((innerHeight - w.getBoundingClientRect().top) / (innerHeight * 0.6)));
   }
 
   /* menu closes after a pick, on Escape and on a click outside */
@@ -1195,10 +1216,19 @@ class Component extends DCLogic {
   }
   function tick(){
     var w = wheelEls(); if (!w.wheel) { running = false; return; }
-    if (!reduce) target = progress(w.track) * 360;
+    if (!reduce) {
+      var k0 = w.wheel.querySelectorAll('.rg-card').length || 6, seg = progress(w.track) * k0, i0 = Math.floor(seg), fr = seg - i0;
+      fr = Math.min(1, Math.max(0, (fr - 0.3) / 0.7)); fr = fr * fr * (3 - 2 * fr);   /* hold, then ease to the next card */
+      target = Math.min(k0, i0 + fr) * 360 / k0;
+    }
     cur += (target - cur) * (reduce ? 1 : 0.1);
     if (Math.abs(target - cur) < 0.02) cur = target;
-    w.wheel.style.transform = 'rotate(' + cur.toFixed(2) + 'deg)';
+    w.wheel.style.transform = 'rotate(' + (-cur).toFixed(2) + 'deg)';
+    var cs = w.wheel.querySelectorAll('.rg-card'), k = cs.length;
+    for (var j = 0; j < k; j++) {               /* distance from the top of the wheel: 0 crisp, 1 dim and soft */
+      var ang = ((j * 360 / k - cur) % 360 + 360) % 360, dist = Math.min(ang, 360 - ang);
+      cs[j].style.setProperty('--d', Math.min(1, Math.max(0, (dist - 6) / 80)).toFixed(3));
+    }
     var r = w.track.getBoundingClientRect();
     if (cur !== target || (r.bottom > 0 && r.top < innerHeight)) requestAnimationFrame(tick); else running = false;
   }
@@ -1214,7 +1244,7 @@ class Component extends DCLogic {
     var a = e.target.closest && e.target.closest('.rg-card'); if (!a) return;
     hot(a, true);
     var w = wheelEls(), all = w.wheel.querySelectorAll('.rg-card'), i = +a.getAttribute('data-i');
-    var turn = i ? 360 - i * 360 / all.length : 0;          /* wheel angle that puts this card on top */
+    var turn = i * 360 / all.length;          /* wheel angle that puts this card on top */
     if (reduce) { setTimeout(function(){ var m = w.wheel.parentNode; m.scrollTop = m.scrollLeft = 0; m.parentNode.scrollTop = 0; }, 0); target = cur = turn; kick(); return; }
     /* after the browser's own scroll-to-focus, park the page where this card is on top */
     setTimeout(function(){
