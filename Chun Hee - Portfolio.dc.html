@@ -446,6 +446,15 @@ html[data-view="oeru"] #hero,html[data-view="oeru"] #glance,html[data-view="oeru
 html[data-view="about"] #hero,html[data-view="about"] #glance,html[data-view="about"] #wheel,html[data-view="about"] #gateway,html[data-view="about"] #series,html[data-view="about"] #farm,html[data-view="about"] #process,html[data-view="about"] #gacha,html[data-view="about"] #films,html[data-view="about"] #danial,html[data-view="about"] #ship{display:none!important}
 html[data-view="home"] [data-skip]{display:none}
 html[data-view="loh"] [data-film="tcg"],html[data-view="tcg"] [data-film="loh"]{display:none!important}
+.rg-bg{position:absolute;inset:0;z-index:0;pointer-events:none;background:#0a0a0a}
+.rg-bgl{position:absolute;inset:0;opacity:0;overflow:hidden;will-change:opacity}
+.rg-bgl[data-rg-bg="0"]{opacity:1}
+.rg-bg-tcg{background:radial-gradient(40vw 40vw at 70% 50%,rgba(78,205,196,.2),rgba(78,205,196,0) 70%),radial-gradient(1.2px 1.2px at 12% 18%,rgba(78,205,196,.7),transparent),radial-gradient(1.2px 1.2px at 34% 72%,rgba(78,205,196,.6),transparent),radial-gradient(1.2px 1.2px at 58% 28%,rgba(78,205,196,.6),transparent),radial-gradient(1.2px 1.2px at 82% 82%,rgba(78,205,196,.7),transparent),radial-gradient(1.2px 1.2px at 91% 12%,rgba(78,205,196,.6),transparent),radial-gradient(1.2px 1.2px at 22% 48%,rgba(78,205,196,.5),transparent),#0a0a0a;background-size:100% 100%,340px 300px,340px 300px,340px 300px,340px 300px,340px 300px,340px 300px,auto}
+.rg-bg-tcg img{position:absolute;right:2%;top:50%;height:74%;width:auto;transform:translateY(-50%);opacity:.2;filter:blur(1px)}
+.rg-bg-oeru{background:radial-gradient(50% 60% at 50% 60%,rgba(47,212,163,.2),rgba(47,212,163,0) 70%),repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 66px),#000}
+.rg-bg-apc img{position:absolute;inset:-4%;width:108%;height:108%;object-fit:cover;object-position:0 50%;opacity:.28;filter:blur(18px) saturate(1.2)}
+.rg-bg-shade{position:absolute;inset:0;background:linear-gradient(180deg,#0a0a0a 0%,rgba(10,10,10,0) 18%,rgba(10,10,10,0) 82%,#0a0a0a 100%),radial-gradient(80% 70% at 50% 50%,transparent 40%,rgba(0,0,0,.55) 100%)}
+.rg-mask{z-index:1}
 .rg-head{text-align:center;padding:clamp(48px,6vw,88px) 16px 0}
 .rg-eye{font-size:10.5px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:#7d796f}
 .rg-head h2{margin-top:6px;font-size:clamp(34px,3.4vw,46px);line-height:1;font-weight:700;letter-spacing:-.04em;color:#fff}
@@ -614,6 +623,13 @@ html[data-view="oeru"] .dn::before{display:none}
   </div>
   <div class="rg-track" data-rg-track="">
     <div class="rg-sticky">
+      <div class="rg-bg" aria-hidden="true">
+        <div class="rg-bgl" data-rg-bg="0"><section-video src="assets/workintro-720-346fa23aea.mp4" src-webm="assets/workintro-720-4ed4dd7243.webm" src-portrait="assets/workintro-portrait-b5a452f285.mp4" src-portrait-webm="assets/workintro-portrait-8c59664fc6.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/gateway-poster-674668924e.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.42"></video></section-video></div>
+        <div class="rg-bgl rg-bg-tcg" data-rg-bg="1"><img loading="lazy" decoding="async" src="assets/gameui/mark-8a779647f0.webp" alt=""></div>
+        <div class="rg-bgl rg-bg-oeru" data-rg-bg="2"></div>
+        <div class="rg-bgl rg-bg-apc" data-rg-bg="3"><img loading="lazy" decoding="async" src="assets/autopilotclaim-7d43e50b2f.webp" alt=""></div>
+        <div class="rg-bg-shade"></div>
+      </div>
       <div class="rg-mask">
         <ul class="rg-wheel" data-rg-wheel="">
           <li class="rg-it" style="--k:0"><a class="rg-card" href="/land-of-hope" data-i="0"><span class="rg-im"><img src="assets/ep1-a133e9fe19.webp" alt="" loading="lazy" decoding="async"></span><span class="rg-tx"><span class="rg-cat">Original series</span><span class="rg-t"><b>Land of Hope</b></span></span></a></li>
@@ -1462,7 +1478,7 @@ class Component extends DCLogic {
   function stepOf(w){ return parseFloat(getComputedStyle(w.wheel).getPropertyValue('--step')) || 30; }
   function tick(){
     var w = wheelEls(); if (!w.wheel) { running = false; return; }
-    var cards = w.wheel.querySelectorAll('.rg-it'), labs = w.labels ? w.labels.querySelectorAll('.rg-lb') : [], k = cards.length, step = stepOf(w);
+    var cards = w.wheel.querySelectorAll('.rg-it'), labs = w.labels ? w.labels.querySelectorAll('.rg-lb') : [], bgs = w.track.querySelectorAll('[data-rg-bg]'), k = cards.length, step = stepOf(w);
     if (!reduce || target === cur) {
       var seg = Math.min(k - 1, progress(w.track) * (k - 0.6)), i0 = Math.floor(seg), fr = seg - i0;
       fr = Math.min(1, Math.max(0, (fr - 0.25) / 0.5)); fr = fr * fr * (3 - 2 * fr);   /* hold on each piece, then glide to the next */
@@ -1475,6 +1491,7 @@ class Component extends DCLogic {
       cards[j].style.setProperty('--t', t.toFixed(2) + 'deg');
       cards[j].firstElementChild.style.setProperty('--d', d);
       if (labs[j]) { var sj = j - cur; labs[j].style.setProperty('--s', sj.toFixed(3)); labs[j].style.setProperty('--o', Math.max(0, 1 - Math.abs(sj) * 1.6).toFixed(3)); labs[j].classList.toggle('on', Math.abs(sj) < 0.5); }
+      if (bgs[j]) bgs[j].style.opacity = Math.max(0, 1 - Math.abs(j - cur) * 1.25).toFixed(3);
     }
     var r = w.track.getBoundingClientRect();
     if (cur !== target || (r.bottom > 0 && r.top < innerHeight)) requestAnimationFrame(tick); else running = false;
