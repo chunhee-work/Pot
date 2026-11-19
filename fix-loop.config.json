@@ -1,0 +1,68 @@
+{
+  "owner": "chunhee-work",
+  "base": "staging",
+  "branchPrefix": "fix-loop/",
+  "trusted": [],
+  "issueLabels": [
+    "fix-loop"
+  ],
+  "allowedPaths": [
+    "*.html",
+    "*.js",
+    "showreel/**",
+    "assets/**",
+    "tests/**"
+  ],
+  "protectedPaths": [
+    ".github/**",
+    "scripts/**",
+    "fix-loop.config.json",
+    "vercel.json",
+    ".vercelignore"
+  ],
+  "requireOkPaths": [],
+  "requireOkForIssueFixes": false,
+  "onlyOwnerCiFailures": true,
+  "maxRounds": 5,
+  "codexTimeoutMin": 120,
+  "debounceMin": 5,
+  "maxClaudeRunsPerDay": 20,
+  "runawayIssuesPerDay": 3,
+  "checkCommands": [],
+  "extraPrBodyLines": [],
+  "promptRules": [
+    "Pot is a static portfolio site deployed on Vercel. There is no package.json and no build step. Do not add one, and do not add any dependency, framework, font or animation library.",
+    "Never change vercel.json, .vercelignore or anything under .github/ or scripts/.",
+    "Do not change the homepage (Chun Hee - Portfolio.dc.html), process.dc.html or work.dc.html unless the issue names that page.",
+    "Write PR descriptions and comments in Simplified Chinese, in plain words. Keep code, file names and error text in English.",
+    "Keep the change as small as the issue needs."
+  ],
+  "timezoneOffsetHours": 8,
+  "planReview": {
+    "enabled": true,
+    "planLabel": "plan",
+    "maxRounds": 5,
+    "reviewers": [
+      "grok",
+      "dots"
+    ],
+    "grok": {
+      "mode": "api",
+      "model": "grok-4",
+      "inputUsdPer1M": 3,
+      "outputUsdPer1M": 15
+    },
+    "dots": {
+      "model": "gpt-5",
+      "inputUsdPer1M": 1.25,
+      "outputUsdPer1M": 10,
+      "monthlyCeilingUsd": 20
+    },
+    "gate": false,
+    "fixLabels": [
+      "fix",
+      "hotfix",
+      "copy"
+    ]
+  }
+}
