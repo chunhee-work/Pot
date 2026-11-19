@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
+<script>(function(){var m=location.search.match(/[?&]apc=([123])/);if(m)document.documentElement.setAttribute("data-apc",m[1])})()</script>
 <script>(function(){var m={'/land-of-hope':'loh','/the-chill-gallery':'tcg','/oeru':'oeru','/about':'about'},p=location.pathname.replace(/\/+$/,'')||'/',q=/[?&]v=([a-z]+)/.exec(location.search),v=q?q[1]:(m[p]||'home');document.documentElement.setAttribute('data-view',v);var dv=/[?&]dn=([abc])/.exec(location.search);document.documentElement.setAttribute('data-dv',dv?dv[1]:'b');var hl=/[?&]hl=([abc])/.exec(location.search);document.documentElement.setAttribute('data-hl',hl?hl[1]:'b');var sv=/[?&]sv=([123])/.exec(location.search);document.documentElement.setAttribute('data-sv',sv?sv[1]:'3');var tl=/[?&]tl=([123])/.exec(location.search);document.documentElement.setAttribute('data-tl',tl?tl[1]:'3');if(v==='home'&&!q&&location.hash){var t={'gateway':'/land-of-hope','series':'/land-of-hope','farm':'/land-of-hope','process':'/land-of-hope','gacha':'/the-chill-gallery','films':'/the-chill-gallery','danial':'/oeru','ship':'/oeru','about':'/about','range':'/about'}[location.hash.slice(1)];if(t)location.replace(t+location.hash);}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chun Hee Lim — Product &amp; Creative Lead · Original IP, AI film &amp; product UI · Kuala Lumpur</title>
@@ -414,6 +415,12 @@ nav[data-metal]{transition:opacity .45s ease,visibility .45s}
 .nx-eye{font-family:ui-monospace,Menlo,monospace!important;font-size:11px!important;font-weight:400!important;letter-spacing:.18em!important;color:#8d8d86!important}
 .nx-go span{width:44px!important;height:44px!important;border:1px solid #f5f5f2!important}
 .nx-go svg{width:16px!important;height:16px!important}
+/* Autopilotclaim: recorded login-page 3D scan as the wheel background (?apc=1|2|3, default 2) */
+.rg-bg-apc{background:#0a0a0a}
+.rg-bg-apc [data-apcv]{display:none!important}
+html:not([data-apc]) .rg-bg-apc [data-apcv="2"],html[data-apc="1"] .rg-bg-apc [data-apcv="1"],html[data-apc="2"] .rg-bg-apc [data-apcv="2"],html[data-apc="3"] .rg-bg-apc [data-apcv="3"]{display:block!important}
+.rg-bg-apc [data-apcv] video{opacity:.5}
+.rg-bg-apc::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 62% 55%,rgba(10,10,10,0) 30%,rgba(10,10,10,.75) 100%),linear-gradient(90deg,rgba(10,10,10,.55),rgba(10,10,10,0) 45%);pointer-events:none}
 .gl-kick{font-size:11px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:#7d796f}
 .gl-note{margin-top:12px;font-size:16px;line-height:1.6;color:#dedad1}
 .gl-links{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:12px}
@@ -910,7 +917,7 @@ html[data-view="oeru"] .dn::before{display:none}
         <div class="rg-bgl" data-rg-bg="0"><section-video src="assets/wi1080-dae4c86e33.mp4" src-webm="assets/wi1080-a60cd8d216.webm" src-portrait="assets/workintro-portrait-b5a452f285.mp4" src-portrait-webm="assets/workintro-portrait-8c59664fc6.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/gateway-poster-674668924e.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.42"></video></section-video></div>
         <div class="rg-bgl rg-bg-tcg" data-rg-bg="1"><span class="rg-stars"></span><span class="rg-stars rg-stars2"></span><span class="rg-tcg-glow"></span><img loading="lazy" decoding="async" src="assets/gameui/mark-8a779647f0.webp" alt=""></div>
         <div class="rg-bgl rg-bg-oeru" data-rg-bg="2"><img class="rg-oeru-bg" loading="lazy" decoding="async" src="assets/oeru-bg-413135159e.webp" alt=""><span class="rg-stars"></span><span class="rg-stars rg-stars2"></span><img class="rg-oeru-mark" loading="lazy" decoding="async" src="assets/oeru-mark-74901490c7.webp" alt=""></div>
-        <div class="rg-bgl rg-bg-apc" data-rg-bg="3"><span class="apc-mo apc-v3" aria-hidden="true"><img src="assets/apc/bay-0-36fe0ace69.webp" alt="" decoding="async" style="--d:0"><img src="assets/apc/bay-1-4aa22fee56.webp" alt="" decoding="async" style="--d:1"><img src="assets/apc/bay-2-feb84ae38b.webp" alt="" decoding="async" style="--d:2"><img src="assets/apc/bay-3-ad80fb7fa8.webp" alt="" decoding="async" style="--d:3"><img src="assets/apc/bay-4-3fb68523e9.webp" alt="" decoding="async" style="--d:4"></span></div>
+        <div class="rg-bgl rg-bg-apc" data-rg-bg="3"><section-video data-apcv="1" src="assets/apc/scan-v1-b732cfe04d.mp4" src-webm="assets/apc/scan-v1-e602543248.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/apc/scan-v1-poster-2a513106fb.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video></section-video><section-video data-apcv="2" src="assets/apc/scan-v2-63b46f335a.mp4" src-webm="assets/apc/scan-v2-5adfb40b18.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/apc/scan-v2-poster-76cce89709.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video></section-video><section-video data-apcv="3" src="assets/apc/scan-v3-086a1bad78.mp4" src-webm="assets/apc/scan-v3-cd469be5b8.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/apc/scan-v3-poster-d2b53f9c5b.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video></section-video></div>
         <div class="rg-bg-shade"></div>
       </div>
       <div class="rg-mask">
