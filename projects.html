@@ -18,6 +18,16 @@
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="preload" href="/assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/site.css">
+<style>
+.case-more{margin-top:clamp(20px,2.6vw,36px);border-top:1px solid var(--line,rgba(17,17,16,.14));border-bottom:1px solid var(--line,rgba(17,17,16,.14))}
+.case-more>summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 18px;min-height:56px;padding:12px 0;font-weight:700;font-size:16px}
+.case-more>summary::-webkit-details-marker{display:none}
+.case-more>summary::after{content:"+";font-size:22px;font-weight:400;line-height:1;transition:transform .3s}
+.case-more[open]>summary::after{transform:rotate(45deg)}
+.case-more>summary .mono{flex:1;opacity:.7}
+.case-more>.case-body{margin-top:0;padding-bottom:clamp(20px,2.6vw,36px)}
+.try[hidden]{display:none}
+</style>
 </head>
 <body>
 <a class="skip" href="#cases">Skip to the builds</a>
@@ -69,7 +79,7 @@
         <figcaption><b>Fig. 01</b><span>Danial</span></figcaption>
       </figure>
     </div>
-    <div class="try" id="try-danial" aria-labelledby="h-try">
+    <div class="try" id="try-danial" hidden aria-labelledby="h-try">
       <div class="try-head">
         <p class="mono accent"><span class="dot"></span>Live demo</p>
         <h3 id="h-try">Show Danial something.</h3>
@@ -98,6 +108,7 @@
       </div>
       <p class="mono fine">Your file is sent to the AI once to be read, then thrown away. Nothing is stored. A demo with no real shop behind it.</p>
     </div>
+<details class="case-more"><summary><span>How I built it</span><span class="mono">Problem · what I built · role</span></summary>
     <div class="case-body g">
       <div class="col">
         <p class="mono">The problem</p>
@@ -115,7 +126,8 @@
         <ul class="tags"><li>Next.js</li><li>React</li><li>TypeScript</li><li>Postgres on Neon</li><li>Vercel</li><li>English, Bahasa Malaysia, 中文</li></ul>
       </div>
     </div>
-  </div>
+
+</details>  </div>
 </section>
 
 <section class="sec case" id="finn" aria-labelledby="h-finn">
@@ -134,6 +146,7 @@
         <figcaption><b>Fig. 02</b><span>Finn</span></figcaption>
       </figure>
     </div>
+<details class="case-more"><summary><span>How I built it</span><span class="mono">Problem · what I built · role</span></summary>
     <div class="case-body g">
       <div class="col">
         <p class="mono">The problem</p>
@@ -150,7 +163,8 @@
         <ul class="tags"><li>Next.js</li><li>React</li><li>TypeScript</li><li>Postgres on Neon</li><li>Vercel</li><li>Seedance</li><li>Higgsfield</li></ul>
       </div>
     </div>
-  </div>
+
+</details>  </div>
 </section>
 
 <section class="sec case" id="tools" aria-labelledby="h-tools">
@@ -176,6 +190,7 @@
         <figcaption><b>Fig. 03b</b><span>In-house tools</span></figcaption>
       </figure>
     </div>
+<details class="case-more"><summary><span>How I built it</span><span class="mono">Problem · what I built · role</span></summary>
     <div class="case-body g">
       <div class="col">
         <p class="mono">The problem</p>
@@ -192,7 +207,8 @@
         <ul class="tags"><li>Next.js</li><li>React</li><li>TypeScript</li><li>Postgres on Neon</li><li>Vercel</li></ul>
       </div>
     </div>
-  </div>
+
+</details>  </div>
 </section>
 
 <section class="sec case" id="mrm" aria-labelledby="h-mrm">
@@ -220,6 +236,7 @@
         <figcaption><b>Fig. 04</b><span>Photo-naming screen, redrawn without case data</span></figcaption>
       </figure>
     </div>
+<details class="case-more"><summary><span>How I built it</span><span class="mono">Problem · what I built · role</span></summary>
     <div class="case-body g">
       <div class="col">
         <p class="mono">The problem</p>
@@ -236,7 +253,8 @@
         <ul class="tags"><li>Claude Code</li><li>Custom vision model (DINOv2)</li><li>Chrome automation</li><li>Python</li><li>Google Sheets</li></ul>
       </div>
     </div>
-  </div>
+
+</details>  </div>
 </section>
 
 <section class="sec case" id="minifarm" aria-labelledby="h-minifarm">
@@ -255,6 +273,7 @@
         <figcaption><b>Fig. 05</b><span>minifarm</span></figcaption>
       </figure>
     </div>
+<details class="case-more"><summary><span>How I built it</span><span class="mono">Problem · what I built · role</span></summary>
     <div class="case-body g">
       <div class="col">
         <p class="mono">The problem</p>
@@ -271,7 +290,8 @@
         <ul class="tags"><li>Tailscale</li><li>Flamenco</li><li>Blender</li><li>noVNC</li><li>Python</li><li>Shell</li></ul>
       </div>
     </div>
-  </div>
+
+</details>  </div>
 </section>
 </main>
 

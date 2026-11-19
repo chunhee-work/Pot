@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
-<script>(function(){var m={'/land-of-hope':'loh','/the-chill-gallery':'tcg','/oeru':'oeru','/about':'about'},p=location.pathname.replace(/\/+$/,'')||'/',q=/[?&]v=([a-z]+)/.exec(location.search),v=q?q[1]:(m[p]||'home');document.documentElement.setAttribute('data-view',v);var dv=/[?&]dn=([abc])/.exec(location.search);document.documentElement.setAttribute('data-dv',dv?dv[1]:'b');if(v==='home'&&!q&&location.hash){var t={'gateway':'/land-of-hope','series':'/land-of-hope','farm':'/land-of-hope','process':'/land-of-hope','gacha':'/the-chill-gallery','films':'/the-chill-gallery','danial':'/oeru','ship':'/oeru','about':'/about','range':'/about'}[location.hash.slice(1)];if(t)location.replace(t+location.hash);}})();</script>
+<script>(function(){var m={'/land-of-hope':'loh','/the-chill-gallery':'tcg','/oeru':'oeru','/about':'about'},p=location.pathname.replace(/\/+$/,'')||'/',q=/[?&]v=([a-z]+)/.exec(location.search),v=q?q[1]:(m[p]||'home');document.documentElement.setAttribute('data-view',v);var dv=/[?&]dn=([abc])/.exec(location.search);document.documentElement.setAttribute('data-dv',dv?dv[1]:'b');var hl=/[?&]hl=([abc])/.exec(location.search);document.documentElement.setAttribute('data-hl',hl?hl[1]:'b');if(v==='home'&&!q&&location.hash){var t={'gateway':'/land-of-hope','series':'/land-of-hope','farm':'/land-of-hope','process':'/land-of-hope','gacha':'/the-chill-gallery','films':'/the-chill-gallery','danial':'/oeru','ship':'/oeru','about':'/about','range':'/about'}[location.hash.slice(1)];if(t)location.replace(t+location.hash);}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chun Hee Lim — Creative Lead · Original IP, AI film &amp; product UI · Kuala Lumpur</title>
 <meta name="description" content="Chun Hee Lim, creative lead in Kuala Lumpur: an original animated series, four brand films, twelve cast voices and the screens of a live game — written, directed, cut and prototyped by one person. Open to full-time roles.">
@@ -439,12 +439,83 @@ nav[data-metal]{transition:opacity .45s ease,visibility .45s}
 .sf-spin{transform-box:fill-box;transform-origin:center;animation:sfSpin 6s linear infinite}.sf-spin.rev{animation-duration:8s}
 @keyframes sfSpin{to{transform:rotate(360deg)}}
 @media (max-width:860px){.sf-wrap{grid-template-columns:minmax(0,1fr)}.sf-copy{position:static}.sf-logos{grid-template-columns:repeat(8,minmax(0,44px));gap:8px}.sf-svg{max-width:460px;margin:0 auto}.sf-logos img{width:44px;height:44px;border-radius:11px}}
-html[data-view="home"] #gateway,html[data-view="home"] #series,html[data-view="home"] #farm,html[data-view="home"] #process,html[data-view="home"] #gacha,html[data-view="home"] #films,html[data-view="home"] #danial,html[data-view="home"] #ship,html[data-view="home"] #about,html[data-view="home"] #range{display:none!important}
+html[data-view="home"] #gateway,html[data-view="home"] #series,html[data-view="home"] #farm,html[data-view="home"] #process,html[data-view="home"] #gacha,html[data-view="home"] #films,html[data-view="home"] #danial,html[data-view="home"] #ship,html[data-view="home"] #about{display:none!important}
 html[data-view="loh"] #hero,html[data-view="loh"] #glance,html[data-view="loh"] #wheel,html[data-view="loh"] #gacha,html[data-view="loh"] #danial,html[data-view="loh"] #ship,html[data-view="loh"] #about,html[data-view="loh"] #range{display:none!important}
 html[data-view="tcg"] #hero,html[data-view="tcg"] #glance,html[data-view="tcg"] #wheel,html[data-view="tcg"] #gateway,html[data-view="tcg"] #series,html[data-view="tcg"] #farm,html[data-view="tcg"] #process,html[data-view="tcg"] #danial,html[data-view="tcg"] #ship,html[data-view="tcg"] #about,html[data-view="tcg"] #range{display:none!important}
 html[data-view="oeru"] #hero,html[data-view="oeru"] #glance,html[data-view="oeru"] #wheel,html[data-view="oeru"] #gateway,html[data-view="oeru"] #series,html[data-view="oeru"] #farm,html[data-view="oeru"] #process,html[data-view="oeru"] #gacha,html[data-view="oeru"] #films,html[data-view="oeru"] #about,html[data-view="oeru"] #range{display:none!important}
-html[data-view="about"] #hero,html[data-view="about"] #glance,html[data-view="about"] #wheel,html[data-view="about"] #gateway,html[data-view="about"] #series,html[data-view="about"] #farm,html[data-view="about"] #process,html[data-view="about"] #gacha,html[data-view="about"] #films,html[data-view="about"] #danial,html[data-view="about"] #ship{display:none!important}
+html[data-view="about"] #hero,html[data-view="about"] #glance,html[data-view="about"] #wheel,html[data-view="about"] #gateway,html[data-view="about"] #series,html[data-view="about"] #farm,html[data-view="about"] #process,html[data-view="about"] #gacha,html[data-view="about"] #films,html[data-view="about"] #danial,html[data-view="about"] #ship,html[data-view="about"] #range{display:none!important}
 html[data-view="home"] [data-skip]{display:none}
+/* Structure: skills on the landing page, next-project chain on project pages */
+#skills,#next,#tbhome,#oeru-more{display:none}
+html[data-view="home"]:not([data-hl="a"]) #skills{display:block}
+html[data-view="home"][data-hl="a"] #tbhome{display:block}
+html[data-view="loh"] #next,html[data-view="tcg"] #next,html[data-view="oeru"] #next{display:block}
+html[data-view="oeru"] #oeru-more{display:block}
+#next [data-nx]{display:none}
+html[data-view="loh"] #next [data-nx="loh"],html[data-view="tcg"] #next [data-nx="tcg"],html[data-view="oeru"] #next [data-nx="oeru"]{display:flex}
+html:not([data-hl="b"]) .sk-exp{display:none}
+.sk{position:relative;background:#0a0a0a;color:#d9d6ce;padding:clamp(56px,8vw,120px) 0}
+.sk-wrap{max-width:1200px;margin:0 auto;padding:0 clamp(16px,4vw,56px)}
+.sk-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:18px}
+.sk h2{margin-top:18px;font-size:clamp(36px,4.6vw,64px);line-height:1;font-weight:700;letter-spacing:-.03em;color:#fff;text-wrap:balance}
+.sk-lede{max-width:430px;font-size:15.5px;line-height:1.6;color:#a9a59c}
+.sk-grid{list-style:none;margin:clamp(28px,3.6vw,48px) 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.sk-grid a{position:relative;display:flex;flex-direction:column;height:100%;min-height:188px;padding:22px 22px 20px;border:1px solid rgba(255,255,255,.07);border-radius:20px;background:rgba(255,255,255,.012);color:#fff;transition:transform .35s cubic-bezier(.32,.72,0,1),border-color .35s,background .35s}
+.sk-grid a:hover{color:#fff;transform:translateY(-2px);border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.035)}
+.sk-n{font-size:11px;font-weight:700;letter-spacing:.3em;color:#7d796f}
+.sk-grid b{display:block;margin-top:14px;font-size:20px;font-weight:650;letter-spacing:-.01em;line-height:1.2}
+.sk-grid p{margin-top:8px;font-size:14.5px;line-height:1.55;color:#a9a59c}
+.sk-tools{margin-top:auto;padding-top:18px;display:flex;flex-wrap:wrap;gap:6px}
+.sk-tools span{font-size:11px;font-weight:700;letter-spacing:.08em;color:#cfcbc2;border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:4px 10px}
+.sk-ar{position:absolute;top:20px;right:20px;color:#8f8b82;transition:transform .35s cubic-bezier(.32,.72,0,1),color .35s}
+.sk-grid a:hover .sk-ar{color:#fff;transform:translate(2px,-2px)}
+.sk-exp{margin-top:clamp(36px,4.6vw,64px);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:end;border-top:1px solid rgba(255,255,255,.08);padding-top:clamp(24px,3vw,36px)}
+.sk-exp ol{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.sk-exp li{border-left:1px solid rgba(255,255,255,.12);padding:2px 0 2px 16px}
+.sk-exp time{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#7d796f}
+.sk-exp li b{display:block;margin-top:6px;font-size:15.5px;font-weight:650;color:#fff;line-height:1.3}
+.sk-exp li span{display:block;margin-top:2px;font-size:13.5px;color:#8f8b82}
+.sk-more{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 20px;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:#f1efe9;font-size:13px;font-weight:700;white-space:nowrap}
+.sk-more:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+.sk :focus-visible,.nx :focus-visible{outline:2px solid currentColor;outline-offset:3px}
+@media (max-width:900px){.sk-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sk-exp{grid-template-columns:minmax(0,1fr)}.sk-exp ol{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:560px){.sk-grid{grid-template-columns:minmax(0,1fr)}.sk-grid a{min-height:0}}
+html[data-hl="b"] #skills{padding-bottom:clamp(120px,14vw,200px);background:linear-gradient(180deg,#0a0a0a calc(100% - clamp(90px,10vw,150px)),#f5f4f0)}
+html[data-hl="c"] #skills{padding:0 0 clamp(40px,6vw,90px)}
+html[data-view="home"] #range{background:#f5f4f0}
+#tbhome .tb-band{margin:0;padding-top:clamp(56px,8vw,120px);background:#0a0a0a}
+#tbhome .tb-band::before{display:none}
+#tbhome .tb-band::after{background:linear-gradient(180deg,#0a0a0a,#f5f4f0)}
+#tbhome .tb-head{position:relative;margin:18px 0 clamp(24px,3vw,40px);font-size:clamp(36px,4.6vw,64px);line-height:1;font-weight:700;letter-spacing:-.03em;color:#fff}
+.nx{position:relative;padding:clamp(4rem,7vw,6.5rem) 0 0;background:#f5f4f0}
+.nx-wrap{max-width:1200px;margin:0 auto;padding:0 clamp(22px,4vw,56px)}
+.nx-card{display:flex;flex-wrap:wrap;gap:clamp(20px,3.4vw,48px);align-items:center;border:1px solid rgba(17,17,16,.12);border-radius:26px;padding:clamp(14px,2vw,22px);background:rgba(17,17,16,.035);color:#111110;transition:border-color .5s cubic-bezier(.32,.72,0,1),background .5s}
+.nx-card:hover{color:#111110;border-color:rgba(17,17,16,.28);background:rgba(17,17,16,.06)}
+.nx-im{flex:1 1 min(340px,100%);min-width:0;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#0a0a0a}
+.nx-im img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.2s cubic-bezier(.16,1,.3,1)}
+.nx-card:hover .nx-im img{transform:scale(1.04)}
+.nx-tx{flex:1 1 min(320px,100%);min-width:0;padding:clamp(6px,1.4vw,18px)}
+.nx-eye{display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(17,17,16,.22);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#57564f}
+.nx-eye i{width:6px;height:6px;border-radius:50%;background:#111110}
+.nx-tx b{display:block;margin-top:18px;font-weight:800;font-size:clamp(34px,4.6vw,60px);letter-spacing:-.02em;line-height:1}
+.nx-tx p{margin-top:12px;max-width:440px;color:#57564f;font-size:15.5px;font-weight:300;line-height:1.6}
+.nx-go{display:inline-flex;align-items:center;gap:12px;margin-top:22px;font-weight:700;font-size:14px}
+.nx-go span{width:34px;height:34px;border-radius:50%;background:#111110;color:#f5f4f0;display:grid;place-items:center}
+.nx-all{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:14px;color:#57564f;font-size:14px;font-weight:600}
+.nx-all:hover{color:#111110}
+.om{position:relative;background:#0a0a0a;padding:0 0 clamp(56px,8vw,110px)}
+.om-wrap{max-width:1200px;margin:0 auto;padding:0 clamp(16px,4vw,56px)}
+.om-kick{font-size:11px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:#7d796f}
+.om-grid{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.om-grid a{display:flex;flex-direction:column;height:100%;border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;color:#fff;background:rgba(255,255,255,.015);transition:border-color .35s,transform .35s cubic-bezier(.32,.72,0,1)}
+.om-grid a:hover{color:#fff;border-color:rgba(255,255,255,.2);transform:translateY(-2px)}
+.om-im{aspect-ratio:16/10;overflow:hidden;background:#141414}
+.om-im img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
+.om-tx{padding:16px 18px 18px}
+.om-tx b{font-size:18px;font-weight:650}
+.om-tx p{margin-top:6px;font-size:14px;line-height:1.55;color:#a9a59c}
+@media (max-width:900px){.om-grid{grid-template-columns:minmax(0,1fr)}}
+
 html[data-view="loh"] [data-film="tcg"],html[data-view="tcg"] [data-film="loh"]{display:none!important}
 .rg-bg{position:absolute;inset:0;z-index:0;pointer-events:none;background:#0a0a0a}
 .rg-bgl{position:absolute;inset:0;opacity:0;overflow:hidden;will-change:opacity}
@@ -662,6 +733,29 @@ html[data-view="oeru"] .dn::before{display:none}
   </div>
 </section>
 
+
+<section id="skills" data-screen-label="Skills" class="sk" aria-labelledby="h-skills">
+  <div class="sk-wrap">
+    <div class="sk-head">
+      <div><span class="gl-pill">Skills</span><h2 id="h-skills">What I bring to a team.</h2></div>
+      <p class="sk-lede">Six things I do end to end. Each card opens the work that proves it.</p>
+    </div>
+    <ul class="sk-grid"><li><a href="/land-of-hope"><span class="sk-n">01</span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>AI Production</b><p>Concept to finished episode, directed shot by shot.</p><span class="sk-tools"><span>Claude</span><span>Higgsfield</span></span></a></li><li><a href="/the-chill-gallery#films"><span class="sk-n">02</span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Video &amp; Editing</b><p>Story, edit and voice-over on every film.</p><span class="sk-tools"><span>CapCut</span></span></a></li><li><a href="/land-of-hope#farm"><span class="sk-n">03</span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Voice &amp; Sound</b><p>Twelve character voices, cast and directed.</p><span class="sk-tools"><span>ElevenLabs</span></span></a></li><li><a href="/the-chill-gallery"><span class="sk-n">04</span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>UI/UX Design</b><p>Game screens and flows, prototyped in code and adopted by engineering.</p><span class="sk-tools"><span>Claude Code</span><span>Claude Design</span></span></a></li><li><a href="/oeru"><span class="sk-n">05</span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Web &amp; AI Builds</b><p>AI products designed and built solo, shipped on Vercel.</p><span class="sk-tools"><span>Claude Code</span><span>Vercel</span><span>Neon</span></span></a></li><li><a href="/about"><span class="sk-n">06</span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Brand &amp; Growth</b><p>Sole marketer and creative for a four-brand Web3 ecosystem.</p><span class="sk-tools"><span>Four brands</span></span></a></li></ul>
+    <div class="sk-exp">
+      <div>
+        <p class="gl-kick">Experience</p>
+        <ol>
+          <li><time>2025 — Now</time><b>Social Media Manager</b><span>OwnershipCoin · sole marketer &amp; creative</span></li>
+          <li><time>2023 — 2024</time><b>Designer &amp; Production Assistant</b><span>Joe Chia · Phyn Studio</span></li>
+          <li><time>2019 — 2022</time><b>Fashion &amp; Apparel Design</b><span>SML Academy</span></li>
+        </ol>
+      </div>
+      <a class="sk-more" href="/about">Full story <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
+    </div>
+  </div>
+</section>
+<section id="tbhome" data-screen-label="Toolbox" aria-label="Skills and tools"></section>
+
 <section id="gateway" data-screen-label="Work gateway" style="position:relative;min-height:100dvh;display:flex;align-items:center;justify-content:center;text-align:center;padding:0;overflow:hidden;background:#050505">
   <section-video src="assets/workintro-720-346fa23aea.mp4" src-webm="assets/workintro-720-4ed4dd7243.webm" src-portrait="assets/workintro-portrait-b5a452f285.mp4" src-portrait-webm="assets/workintro-portrait-8c59664fc6.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/gateway-poster-674668924e.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55"></video></section-video>
   <div style="position:absolute;inset:0;background:linear-gradient(180deg,#050505 0%,transparent 22%,transparent 72%,#f5f4f0 100%),radial-gradient(90% 70% at 50% 50%,transparent 40%,rgba(0,0,0,.6) 100%)"></div>
@@ -793,7 +887,7 @@ html[data-view="oeru"] .dn::before{display:none}
   <div style="position:relative;z-index:2;padding-bottom:clamp(330px,36vh,410px)">
     <div style="position:absolute;left:0;right:0;top:0;height:calc(100% - 260px);pointer-events:none;z-index:1;background:#f5f4f0"></div>
     <div style="max-width:1200px;margin:0 auto;padding:9rem clamp(22px,4vw,56px) 0;position:relative;z-index:2">
-      <span data-reveal="" style="display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(17,17,16,.22);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#57564f"><span style="width:6px;height:6px;border-radius:50%;background:#111110;flex:0 0 6px"></span>The Chill Farm — World &amp; Voices</span>
+      <span data-reveal="" style="display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(17,17,16,.22);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#57564f"><span style="width:6px;height:6px;border-radius:50%;background:#111110;flex:0 0 6px"></span>Land of Hope — the cast</span>
       <h2 data-reveal="" style="font-weight:200;font-size:clamp(42px,6.2vw,84px);letter-spacing:-.02em;line-height:1;margin:22px 0 0;color:#111110">A world that <b style="font-weight:800">speaks.</b></h2>
       <p data-reveal="" data-d="1" style="max-width:640px;margin-top:24px;color:#57564f;font-size:16.5px;font-weight:300;text-wrap:pretty">Ten collectible originals, wrapped around a live camera flythrough. Scroll or drag to fly through the world — then meet their voices below.</p>
     </div>
@@ -862,6 +956,17 @@ html[data-view="oeru"] .dn::before{display:none}
       <div class="dvc-hero"><section-video class="dvc-vid" src="assets/danial-cast-fddc1cf695.mp4" src-webm="assets/danial-cast-abff50f069.webm" style="display:block"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/danial-cast-poster-2d51545639.webp" aria-label="Danial" width="360" height="896"></video></section-video><span class="dvc-name"><b>Danial</b>24/7 customer service</span></div>
       <ul class="dvc-grid" aria-label="Channels Danial replies on"><li class="dvc-t" style="--i:0"><span class="dvc-ic" role="img" aria-label="WhatsApp"><img src="assets/builds/whatsapp-0c528e3aa2.webp" width="48" height="48" alt=""></span><span class="dvc-type" aria-hidden="true"><i></i><i></i><i></i></span><span class="dvc-ok" aria-hidden="true"><svg viewBox="0 0 12 12" width="12" height="12"><path d="m2.5 6.2 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li><li class="dvc-t" style="--i:1"><span class="dvc-ic" role="img" aria-label="Instagram"><img src="assets/builds/instagram-0e8c256945.webp" width="48" height="48" alt="" loading="lazy" decoding="async"></span><span class="dvc-type" aria-hidden="true"><i></i><i></i><i></i></span><span class="dvc-ok" aria-hidden="true"><svg viewBox="0 0 12 12" width="12" height="12"><path d="m2.5 6.2 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li><li class="dvc-t" style="--i:2"><span class="dvc-ic" role="img" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11.2" fill="#fff"/><path fill="#0866FF" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg></span><span class="dvc-type" aria-hidden="true"><i></i><i></i><i></i></span><span class="dvc-ok" aria-hidden="true"><svg viewBox="0 0 12 12" width="12" height="12"><path d="m2.5 6.2 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li><li class="dvc-t" style="--i:3"><span class="dvc-ic" role="img" aria-label="Google reviews"><svg viewBox="0 0 48 48" aria-hidden="true"><g transform="translate(.5 0)"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/> </g></svg></span><span class="dvc-type" aria-hidden="true"><i></i><i></i><i></i></span><span class="dvc-ok" aria-hidden="true"><svg viewBox="0 0 12 12" width="12" height="12"><path d="m2.5 6.2 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li><li class="dvc-t" style="--i:4"><span class="dvc-ic dk" role="img" aria-label="TikTok"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x=".75" y=".75" width="46.5" height="46.5" rx="11" fill="#000"/><path fill="#fff" transform="translate(9.6 9.6) scale(1.2)" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></span><span class="dvc-type" aria-hidden="true"><i></i><i></i><i></i></span><span class="dvc-ok" aria-hidden="true"><svg viewBox="0 0 12 12" width="12" height="12"><path d="m2.5 6.2 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li><li class="dvc-t" style="--i:5"><span class="dvc-ic dk" role="img" aria-label="X"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x=".75" y=".75" width="46.5" height="46.5" rx="11" fill="#000"/><path fill="#fff" transform="translate(9.6 9.6) scale(1.2)" d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></span><span class="dvc-type" aria-hidden="true"><i></i><i></i><i></i></span><span class="dvc-ok" aria-hidden="true"><svg viewBox="0 0 12 12" width="12" height="12"><path d="m2.5 6.2 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li><li class="dvc-t" style="--i:6"><span class="dvc-ic dk" role="img" aria-label="Threads"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x=".75" y=".75" width="46.5" height="46.5" rx="11" fill="#000"/><path fill="#fff" transform="translate(9.6 9.6) scale(1.2)" d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 0 1 3.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 0 0-2.215-.221z"/></svg></span><span class="dvc-type" aria-hidden="true"><i></i><i></i><i></i></span><span class="dvc-ok" aria-hidden="true"><svg viewBox="0 0 12 12" width="12" height="12"><path d="m2.5 6.2 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li><li class="dvc-t dvc-zt"><img class="dv-z" src="assets/tools/zernio-5cb3fd5be5.webp" alt="Zernio" width="40" height="40" loading="lazy" decoding="async"><small>linked by Zernio</small></li></ul>
     </div>
+  </div>
+</section>
+
+<section id="oeru-more" class="om" aria-label="More I built at oeru">
+  <div class="om-wrap">
+    <p class="om-kick">Also built at oeru</p>
+    <ul class="om-grid">
+      <li><a href="/projects#danial"><span class="om-im"><img src="assets/builds/danial-b6e0939428.webp" alt="" loading="lazy" decoding="async"></span><span class="om-tx"><b>Danial</b><p>AI customer service that replies on every channel a shop uses.</p></span></a></li>
+      <li><a href="/projects#finn"><span class="om-im"><img src="assets/builds/finn-9300da3394.webp" alt="" loading="lazy" decoding="async"></span><span class="om-tx"><b>Finn</b><p>An AI marketing colleague. A poster in one tap, a short film in one more.</p></span></a></li>
+      <li><a href="/projects#tools"><span class="om-im"><img src="assets/builds/tools-bench-dec85cd2da.webp" alt="" loading="lazy" decoding="async"></span><span class="om-tx"><b>In-house tools</b><p>The team’s bench for testing AI image and video models.</p></span></a></li>
+    </ul>
   </div>
 </section>
 <section id="ship" data-screen-label="How it ships" class="sf" aria-labelledby="h-ship">
@@ -1000,6 +1105,16 @@ html[data-view="oeru"] .dn::before{display:none}
   </div>
 </section>
 
+
+<section id="next" class="nx" aria-label="Next project">
+  <div class="nx-wrap">
+      <a class="nx-card" data-nx="loh" href="/the-chill-gallery"><span class="nx-tx"><span class="nx-eye"><i></i>Next project</span><b>The Chill Gallery</b><p>Gacha, screen by screen: the game UI I designed and prototyped in code.</p><span class="nx-go">Open the project <span><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span></span><span class="nx-im"><img src="assets/gameui/signin-hd-8c2dd66151.webp" alt="" loading="lazy" decoding="async"></span></a>
+      <a class="nx-card" data-nx="tcg" href="/oeru"><span class="nx-tx"><span class="nx-eye"><i></i>Next project</span><b>oeru</b><p>Danial, an AI that answers your customers. Built solo.</p><span class="nx-go">Open the project <span><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span></span><span class="nx-im"><img src="assets/danial-poster-42d5782cff.webp" alt="" loading="lazy" decoding="async"></span></a>
+      <a class="nx-card" data-nx="oeru" href="/projects#mrm"><span class="nx-tx"><span class="nx-eye"><i></i>Next project</span><b>Autopilotclaim</b><p>An AI that reads accident photos and files the insurance claim by itself.</p><span class="nx-go">Open the project <span><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></span></span><span class="nx-im"><img src="assets/autopilotclaim-7d43e50b2f.webp" alt="" loading="lazy" decoding="async"></span></a>
+    <a class="nx-all" href="/#wheel">← All projects</a>
+  </div>
+</section>
+
 <section id="contact" data-screen-label="Contact" style="position:relative;padding:clamp(5rem,9vw,8.5rem) 0 clamp(5rem,8vw,7rem)">
   <div style="max-width:1200px;margin:0 auto;padding:0 clamp(22px,4vw,56px);position:relative;z-index:2">
     <span data-reveal="" style="display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(17,17,16,.22);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#57564f"><span style="width:6px;height:6px;border-radius:50%;background:#111110;flex:0 0 6px"></span>Contact</span>
@@ -1013,6 +1128,8 @@ html[data-view="oeru"] .dn::before{display:none}
   </div>
 </section>
 </main>
+<script>(function(){function go(){var d=document.documentElement,v=d.getAttribute('data-view'),h=d.getAttribute('data-hl');if(v!=='home')return;if(h==='a'){var t=document.querySelector('#about .tb-band'),w=document.getElementById('tbhome');if(t&&w&&!w.contains(t)){var e=t.querySelector('.tb-eye');var hh=document.createElement('h2');hh.className='tb-head';hh.textContent='What I bring to a team.';if(e)e.after(hh);w.appendChild(t);}}if(h==='c'){var s=document.getElementById('skills'),g=document.getElementById('wheel');if(s&&g&&s.nextElementSibling!==g)g.before(s);}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();addEventListener('load',go);})();</script>
+
 <footer style="border-top:1px solid rgba(17,17,16,.12);margin-top:0;padding:28px 0 36px;position:relative;z-index:2">
     <div style="max-width:1200px;margin:0 auto;padding:0 clamp(22px,4vw,56px);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center">
       <span style="font-size:13px;color:#57564f;font-weight:400">Chun Hee Lim — Kuala Lumpur</span>
