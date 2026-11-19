@@ -348,8 +348,8 @@ nav[data-metal]{transition:opacity .45s ease,visibility .45s}
 .wk-list time{font-size:13.5px;color:#57564f;font-variant-numeric:tabular-nums;white-space:nowrap}
 .wk-list b{display:block;font-size:clamp(17px,1.5vw,20px);font-weight:700;color:#111110;line-height:1.3}
 .wk-list span{display:block;font-size:clamp(15px,1.3vw,17px);font-weight:400;color:#46453f;margin-top:3px}
-.wk-list em{position:relative;display:inline-block;width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18);margin-left:12px;vertical-align:middle;margin-top:-4px}
-.wk-list em::before{content:'';position:absolute;inset:0;border-radius:50%;background:#22c55e;animation:wkPulse 2s cubic-bezier(.32,.72,0,1) infinite}
+.wk-list em{font-style:normal;display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#57564f;background:transparent;border:1px solid rgba(17,17,16,.16);border-radius:999px;padding:3px 9px;margin-left:10px;vertical-align:3px}
+.wk-list em::before{content:'';width:5px;height:5px;border-radius:50%;background:#22c55e}
 @keyframes wkPulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.8);opacity:0}}
 @media (prefers-reduced-motion:reduce){.wk-list em::before{animation:none}}
 .wk-cards{display:block;margin-top:clamp(56px,7vw,96px)}
@@ -1191,7 +1191,7 @@ html[data-view="oeru"] .dn::before{display:none}
     <p data-reveal="" data-d="1" style="max-width:640px;margin-top:24px;color:#57564f;font-size:16.5px;font-weight:300;text-wrap:pretty">Fashion taught me <b style="color:#111110;font-weight:700">light, texture and finish</b>. Web3 taught me <b style="color:#111110;font-weight:700">speed and story</b>. AI lets one person carry a studio — without lowering the bar.</p>
     <div class="wk" data-reveal="">
       <h3 class="wk-h">Where<br>I’ve worked.</h3>
-      <ol class="wk-list"><li><time>2025 / Now</time><div><b>Product Manager <em title="Current role"><span class="vh">Current</span></em></b><span>oeru</span></div></li><li class="wk-sub"><time></time><div><b>Creative Lead</b><span>The Chill Gallery &amp; Gacha TCG</span></div></li><li class="wk-sub"><time></time><div><b>Social Media Manager</b><span>OwnershipCoin</span></div></li><li><time>2023 / 2024</time><div><b>Designer &amp; Production Assistant</b><span>Joe Chia · Phyn Studio</span></div></li><li><time>2019 / 2022</time><div><b>Fashion &amp; Apparel Design</b><span>SML Academy</span></div></li><li><time>2018 / 2019</time><div><b>Purchasing &amp; Merchandising</b><span>Bad Lab Men Care</span></div></li></ol>
+      <ol class="wk-list"><li><time>2025 / Now</time><div><b>Product Manager <em>Current</em></b><span>oeru</span></div></li><li class="wk-sub"><time></time><div><b>Creative Lead</b><span>The Chill Gallery &amp; Gacha TCG</span></div></li><li class="wk-sub"><time></time><div><b>Social Media Manager</b><span>OwnershipCoin</span></div></li><li><time>2023 / 2024</time><div><b>Designer &amp; Production Assistant</b><span>Joe Chia · Phyn Studio</span></div></li><li><time>2019 / 2022</time><div><b>Fashion &amp; Apparel Design</b><span>SML Academy</span></div></li><li><time>2018 / 2019</time><div><b>Purchasing &amp; Merchandising</b><span>Bad Lab Men Care</span></div></li></ol>
     </div>
     <div class="wk-cards">
       <div class="wk-col">
