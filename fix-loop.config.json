@@ -47,7 +47,7 @@
       "dots"
     ],
     "grok": {
-      "mode": "api",
+      "mode": "webhook",
       "model": "grok-4",
       "inputUsdPer1M": 3,
       "outputUsdPer1M": 15
