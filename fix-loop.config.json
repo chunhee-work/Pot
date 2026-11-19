@@ -35,7 +35,9 @@
     "Never change vercel.json, .vercelignore or anything under .github/ or scripts/.",
     "Do not change the homepage (Chun Hee - Portfolio.dc.html), process.dc.html or work.dc.html unless the issue names that page.",
     "Write PR descriptions and comments in Simplified Chinese, in plain words. Keep code, file names and error text in English.",
-    "Keep the change as small as the issue needs."
+    "Keep the change as small as the issue needs.",
+    "Tests: the full suite is `node tests/run-all.mjs` (needs Playwright, which you may install outside the repo). Run it when you change anything under showreel/, reel*.html or tests/ code. For a change to comments or text only, it is not needed.",
+    "If a test also fails on unchanged origin/staging (run it there to prove it), it is not caused by your change: push anyway, and list that failure and your proof under a heading 已有的失败 in the PR body."
   ],
   "timezoneOffsetHours": 8,
   "planReview": {
