@@ -76,6 +76,10 @@
       ['loadeddata', 'canplay', 'canplaythrough'].forEach((ev) =>
         this.video.addEventListener(ev, () => { if (this.wanted) this.play(); }));
       this.video.muted = true;      // the property, not just the attribute
+      /* an ambient backdrop never stops: force the loop, and restart by hand
+         if a browser still reports 'ended' */
+      this.video.loop = true;
+      this.video.addEventListener('ended', () => { this.video.currentTime = 0; if (this.wanted) this.play(); });
       this.video.load();
     }
 
