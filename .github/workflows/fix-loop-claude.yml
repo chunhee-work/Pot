@@ -63,6 +63,7 @@ jobs:
           git config user.name "${{ github.repository_owner }}-fix-loop"
           git config user.email "fix-loop@users.noreply.github.com"
       - uses: anthropics/claude-code-action@v1
+        id: claude
         if: steps.gate.outputs.run == 'true'
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -75,3 +76,9 @@ jobs:
             --disallowedTools "Bash(gh pr merge:*),Bash(gh pr ready:*),Bash(gh pr edit:*),Bash(gh issue edit:*),Bash(gh label:*),Bash(gh api:*),Bash(git push --force:*),Bash(git push -f:*),Bash(git rebase:*),Bash(git reset --hard:*)"
         env:
           GH_TOKEN: ${{ secrets.FIX_LOOP_TOKEN }}
+      - name: why Claude stopped
+        if: failure() && steps.claude.outputs.execution_file != ''
+        run: |
+          f="${{ steps.claude.outputs.execution_file }}"
+          [ -f "$f" ] || exit 0
+          jq -r '.[]? | select(.type=="assistant" or .type=="result") | (.message.content[]? | select(.type=="text") | .text), (.result // empty), (.error // empty | tostring)' "$f" | tail -c 2000
