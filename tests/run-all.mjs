@@ -1,6 +1,7 @@
 /* Runs the full reel test on every reel, one after the other (they share the
    machine's CPU, and several checks time real playback), and fails if any
-   reel fails.
+   reel fails. It currently tests three reels, in this order: /reel, /reel2,
+   /reel3 (the same list as PAGES below).
 
    node tests/run-all.mjs            (exit code 1 if any reel fails)
    SKIP_CHAPTERS=1 node tests/run-all.mjs   (skip the per-chapter gates) */
