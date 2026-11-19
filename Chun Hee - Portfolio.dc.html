@@ -347,7 +347,7 @@ nav[data-metal]{transition:opacity .45s ease,visibility .45s}
 .rg-track::after{content:"";position:absolute;left:0;right:0;bottom:0;height:140px;background:linear-gradient(180deg,rgba(5,5,5,0),#050505);pointer-events:none}
 @media (prefers-reduced-motion:reduce){.hx-w,.hx-pill,.hx-tag{translate:none}.hx-tag,.hx-down,.gl-card,.rg-head{opacity:1}.gl-card,.rg-head{transform:none}}
 /* toolbox bento */
-.tb-band{position:relative;margin:64px calc(50% - 50vw) calc(clamp(5rem,9vw,8.5rem) * -1);padding:clamp(130px,14vw,200px) max(clamp(16px,4vw,56px),calc(50vw - 600px)) clamp(170px,18vw,250px);background:#000;color:#f1efe9}
+.tb-band{position:relative;margin:64px calc(50% - 50vw) calc(clamp(5rem,9vw,8.5rem) * -1);padding:clamp(130px,14vw,200px) calc(max(0px,50vw - 600px) + clamp(22px,4vw,56px)) clamp(170px,18vw,250px);background:#000;color:#f1efe9}
 .tb-band::after{content:"";position:absolute;inset:auto 0 0 0;height:clamp(90px,10vw,150px);background:linear-gradient(180deg,#000,#f5f4f0)}
 .tb-band::before{content:"";position:absolute;inset:0 0 auto 0;height:clamp(110px,12vw,170px);background:linear-gradient(180deg,#f5f4f0,#000)}
 .tb-eye{position:relative;display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#a3a39c}.tb-eye span{width:6px;height:6px;border-radius:50%;background:#f1efe9}
@@ -392,12 +392,15 @@ nav[data-metal]{transition:opacity .45s ease,visibility .45s}
 .tb-tile-im{width:100%;height:100%;border-radius:22px;display:block;box-shadow:0 14px 34px rgba(0,0,0,.55);transform:rotate(-2deg)}
 @keyframes tbRail{from{offset-distance:0%}to{offset-distance:100%}}
 .tb-f .tb-stage{width:600px;height:260px;margin:-110px 0 0 -300px}
+.tb-f .tb-stage{margin-top:-80px;transform:scale(.85)}
+.tb-e .tb-stage{-webkit-mask-image:linear-gradient(90deg,transparent 23%,#000 35%,#000 65%,transparent 77%);mask-image:linear-gradient(90deg,transparent 23%,#000 35%,#000 65%,transparent 77%)}
 .tb-path{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .tb-path path{fill:none;stroke:rgba(255,255,255,.28);stroke-width:1.5;stroke-dasharray:5 6}
 .tb-dot{position:absolute;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff,#d9d7d0);color:#111;font-weight:900;font-size:20px;letter-spacing:-.04em;box-shadow:0 10px 30px rgba(0,0,0,.6);offset-path:path('M-20 120 C 120 110, 200 40, 330 30 C 430 25, 470 120, 420 170 C 370 220, 250 210, 270 150 C 290 90, 470 90, 640 210');offset-rotate:0deg;offset-distance:52%;animation:tbDot 9s ease-in-out infinite alternate}
 @keyframes tbDot{from{offset-distance:8%}to{offset-distance:92%}}
 @media (max-width:1023px){.tb-a,.tb-b,.tb-cc,.tb-d,.tb-e,.tb-f{grid-column:span 6}.tb-b{grid-column:span 12}}
-@media (max-width:640px){.tb{gap:10px}.tb-a,.tb-b,.tb-cc,.tb-d,.tb-e,.tb-f{grid-column:span 12}.tb-c{min-height:280px}.tb-tile{width:76px;height:76px;margin:-38px 0 0 -38px}.tb-tile-im{border-radius:18px}.tb-stage{transform:scale(.8)}}
+@media (max-width:640px){.tb{gap:10px}.tb-a,.tb-b,.tb-cc,.tb-d,.tb-e,.tb-f{grid-column:span 12}.tb-c{min-height:280px}.tb-tile{width:76px;height:76px;margin:-38px 0 0 -38px}.tb-tile-im{border-radius:18px}.tb-stage{transform:scale(.8)}
+.tb-f .tb-stage{transform:scale(.72)}}
 /* danial: one source, seven channels, every one answered */
 .dn{position:relative;background:#000;color:#e9e7e1;padding:clamp(170px,18vw,260px) 0 clamp(90px,10vw,140px);overflow:hidden;font-family:inherit}
 .dn::before{content:"";position:absolute;inset:0 0 auto 0;height:clamp(150px,17vw,250px);background:linear-gradient(180deg,#f5f4f0 0%,#000 100%);z-index:1}
@@ -1177,7 +1180,7 @@ html[data-view="oeru"] .dn::before{display:none}
         </div>
       </div>
     </div>
-    <div class="tb-band">
+    <div class="tb-band" id="toolbox">
     <p class="tb-eye"><span></span>The Toolbox</p>
     <div class="tb" data-reveal="" data-d="1">
       <div class="tb-c tb-a"><h3>Every story starts in Claude</h3><div class="tb-grid" aria-hidden="true"><span class="tb-cell"><img class="tb-cell-im" src="assets/tools/claude-fbf6150776.webp" alt="Claude" loading="lazy" decoding="async" width="128" height="128"></span></div></div>
