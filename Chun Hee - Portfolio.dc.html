@@ -391,6 +391,21 @@ nav[data-metal]{transition:opacity .45s ease,visibility .45s}
 .nx-go span{background:#f5f5f2!important;color:#0a0a0a!important}
 #contact.ct{--ct-top:#0a0a0a!important;min-height:100svh;box-sizing:border-box;padding-top:clamp(6.5rem,15svh,10rem)!important;padding-bottom:clamp(120px,14vw,260px)!important}#contact.ct::after,#contact .ct-fg{bottom:calc(-1 * clamp(90px,15vw,260px))!important}
 .rg-lb::before{display:none!important}
+/* next project: one simple row */
+.nx{padding:clamp(3rem,6vw,5rem) 0 clamp(2rem,4vw,3rem)!important}
+.nx-card{align-items:center!important;gap:0!important;border:0!important;border-top:1px solid rgba(245,245,242,.2)!important;border-bottom:1px solid rgba(245,245,242,.2)!important;border-radius:0!important;background:transparent!important;padding:clamp(22px,3vw,34px) 6px!important}
+.nx-card:hover{background:transparent!important;border-color:rgba(245,245,242,.2)!important}
+.nx-im,.nx-tx p{display:none!important}
+.nx-tx{display:flex!important;align-items:center;flex:1 1 auto!important;gap:clamp(18px,3vw,44px);padding:0!important;min-width:0}
+.nx-tx b{order:1;margin:0!important;font-size:clamp(26px,3.4vw,48px)!important;font-weight:800;letter-spacing:-.03em;color:#bcbbb5;transition:color .4s}
+.nx-eye{order:2;border:0!important;padding:0!important;border-radius:0!important;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:clamp(11px,1.1vw,15px)!important;font-weight:500!important;letter-spacing:.2em!important;color:#6f6e68!important}
+.nx-eye i{display:none!important}
+.nx-go{order:3;margin:0 0 0 auto!important;font-size:0!important;gap:0!important}
+.nx-go span{width:clamp(58px,6vw,88px)!important;height:clamp(58px,6vw,88px)!important;background:transparent!important;color:#f5f5f2!important;border:1.5px solid rgba(245,245,242,.6);transition:background .4s,color .4s,border-color .4s}
+.nx-go svg{width:clamp(18px,1.6vw,24px);height:clamp(18px,1.6vw,24px);transform:rotate(45deg);stroke-width:1.6}
+.nx-card:hover .nx-tx b{color:#f5f5f2}
+.nx-card:hover .nx-go span{background:#f5f5f2!important;color:#0a0a0a!important;border-color:#f5f5f2}
+@media (max-width:600px){.nx-eye{display:none!important}}
 .gl-kick{font-size:11px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:#7d796f}
 .gl-note{margin-top:12px;font-size:16px;line-height:1.6;color:#dedad1}
 .gl-links{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:12px}
@@ -1015,7 +1030,7 @@ html[data-view="oeru"] .dn::before{display:none}
       <a href="https://gacha.thechillgallery.com/#/" target="_blank" rel="noopener" class="gu-cta" data-hpair="" data-hin="transform:translate(3px,-3px)" data-hout="transform:none"><span class="gu-cta-l">Open the live game</span><span class="gu-cta-m">gacha.thechillgallery.com</span><span class="gu-cta-i" aria-hidden="true" data-hchild="" style="transition:transform .45s cubic-bezier(.32,.72,0,1)">&#8599;</span></a>
     </div>
   
-  <div aria-hidden="true" style="position:relative;z-index:6;height:clamp(150px,17vw,250px);background:linear-gradient(180deg,#0a0a0a 0%,#f5f4f0 100%)"></div>
+  <div aria-hidden="true" style="position:relative;z-index:6;height:clamp(150px,17vw,250px);background:linear-gradient(180deg,#0a0a0a 0%,#0a0a0a 100%)"></div>
 </section>
 
 <section id="films" data-screen-label="Brand films" style="position:relative;padding:3rem 0 clamp(5rem,9vw,8.5rem)">
