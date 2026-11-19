@@ -348,9 +348,9 @@ nav[data-metal]{transition:opacity .45s ease,visibility .45s}
 .wk-list time{font-size:13.5px;color:#57564f;font-variant-numeric:tabular-nums;white-space:nowrap}
 .wk-list b{display:block;font-size:clamp(17px,1.5vw,20px);font-weight:700;color:#111110;line-height:1.3}
 .wk-list span{display:block;font-size:clamp(15px,1.3vw,17px);font-weight:400;color:#46453f;margin-top:3px}
-.wk-list em{position:relative;display:inline-block;width:8px;height:8px;border-radius:50%;background:#57564f;margin-left:12px;vertical-align:4px}
-.wk-list em::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(87,86,79,.45);animation:wkPulse 2.4s cubic-bezier(.32,.72,0,1) infinite}
-@keyframes wkPulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.6);opacity:0}}
+.wk-list em{position:relative;display:inline-block;width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18);margin-left:12px;vertical-align:middle;margin-top:-4px}
+.wk-list em::before{content:'';position:absolute;inset:0;border-radius:50%;background:#22c55e;animation:wkPulse 2s cubic-bezier(.32,.72,0,1) infinite}
+@keyframes wkPulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.8);opacity:0}}
 @media (prefers-reduced-motion:reduce){.wk-list em::before{animation:none}}
 .wk-cards{display:block;margin-top:clamp(56px,7vw,96px)}
 .wk-col{display:grid;grid-template-columns:1.4fr 1fr;grid-template-rows:auto 1fr;gap:20px;align-items:start}
