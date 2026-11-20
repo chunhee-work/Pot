@@ -422,6 +422,7 @@ html:not([data-apc]) .rg-bg-apc [data-apcv="4"],html[data-apc="4"] .rg-bg-apc [d
 .rg-bg-apc [data-apcv] video{opacity:.5}
 .rg-bg-apc [data-apcv="4"] video{opacity:.85}
 .rg-bg-apc::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 62% 55%,rgba(10,10,10,0) 30%,rgba(10,10,10,.75) 100%),linear-gradient(90deg,rgba(10,10,10,.55),rgba(10,10,10,0) 45%);pointer-events:none}
+@media (max-aspect-ratio:3/2){#contact.ct::after,#contact .ct-fg{height:max(clamp(340px,62.3vw,1100px),min(90svh,210vw))!important}#contact.ct{padding-top:clamp(6.5rem,19svh,16rem)!important}}
 .gl-kick{font-size:11px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:#7d796f}
 .gl-note{margin-top:12px;font-size:16px;line-height:1.6;color:#dedad1}
 .gl-links{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:12px}
