@@ -6,12 +6,36 @@
       "destination": "/Chun%20Hee%20-%20Portfolio.dc.html"
     },
     {
+      "source": "/about",
+      "destination": "/Chun%20Hee%20-%20Portfolio.dc.html"
+    },
+    {
+      "source": "/oeru",
+      "destination": "/Chun%20Hee%20-%20Portfolio.dc.html"
+    },
+    {
+      "source": "/the-chill-gallery",
+      "destination": "/Chun%20Hee%20-%20Portfolio.dc.html"
+    },
+    {
+      "source": "/land-of-hope",
+      "destination": "/Chun%20Hee%20-%20Portfolio.dc.html"
+    },
+    {
       "source": "/process",
-      "destination": "/process.dc.html"
+      "destination": "/process.html"
     },
     {
       "source": "/work",
-      "destination": "/work.dc.html"
+      "destination": "/work.html"
+    },
+    {
+      "source": "/projects",
+      "destination": "/projects.html"
+    },
+    {
+      "source": "/cv",
+      "destination": "/cv.html"
     },
     {
       "source": "/gameui-staging",

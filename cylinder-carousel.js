@@ -3,20 +3,27 @@
 (function () {
   if (customElements.get('cylinder-carousel')) return;
 
+  /* all four are served from this site; ogl is cut down to the seven classes
+     used below (52 KB rather than the full 133 KB bundle) */
   const U = {
-    ogl: 'https://esm.sh/ogl@1.0.11/es2022/ogl.bundle.mjs',
-    gsap: 'https://unpkg.com/gsap@3.13.0/dist/gsap.min.js',
-    st: 'https://unpkg.com/gsap@3.13.0/dist/ScrollTrigger.min.js',
-    ce: 'https://unpkg.com/gsap@3.13.0/dist/CustomEase.min.js'
+    ogl: '/assets/vendor/ogl-1.0.11.carousel.mjs',
+    gsap: '/assets/vendor/gsap-3.13.0.min.js',
+    st: '/assets/vendor/ScrollTrigger-3.13.0.min.js',
+    ce: '/assets/vendor/CustomEase-3.13.0.min.js'
   };
   function res(u){var m=window.__resources;return (m&&typeof m[u]==='string'&&m[u])?m[u]:u;}
-  function script(u){return new Promise(function(ok,no){var s=document.createElement('script');s.src=res(u);s.onload=ok;s.onerror=no;document.head.appendChild(s);});}
-  async function deps(){
-    if(!window.ogl) window.ogl = await import(res(U.ogl));
-    if(!window.gsap) await script(U.gsap);
-    if(!window.ScrollTrigger) await script(U.st);
-    if(!window.CustomEase) await script(U.ce);
-    return [window.ogl, {gsap:window.gsap}, {ScrollTrigger:window.ScrollTrigger}, {CustomEase:window.CustomEase}];
+  function script(u){return new Promise(function(ok,no){var s=document.createElement('script');s.src=res(u);s.async=false;s.onload=ok;s.onerror=no;document.head.appendChild(s);});}
+  let depsP = null;
+  function deps(){
+    /* fetched side by side; async=false keeps the GSAP plugins executing after GSAP itself */
+    return depsP || (depsP = Promise.all([
+      window.ogl ? window.ogl : import(res(U.ogl)).then(function(m){ return (window.ogl = m); }),
+      window.gsap ? null : script(U.gsap),
+      window.ScrollTrigger ? null : script(U.st),
+      window.CustomEase ? null : script(U.ce)
+    ]).then(function(r){
+      return [r[0], {gsap:window.gsap}, {ScrollTrigger:window.ScrollTrigger}, {CustomEase:window.CustomEase}];
+    }));
   }
   const cylinderVertex = `
   attribute vec2 uv;
@@ -37,11 +44,18 @@
 
   uniform sampler2D tMap;
   uniform float uDarkness;
+  uniform float uCount;
 
   varying vec2 vUv;
 
   void main() {
-    vec4 tex = texture2D(tMap, vUv);
+    // the wall's u runs the other way round from how it is seen from outside,
+    // so every portrait (and the name baked into it) read mirrored on the
+    // outer face: 'ZEYO' came out as 'OYƎZ'. Flipping each tile on the outer
+    // face fixes it, and the inner face, seen from behind, reads true as is
+    vec2 uv = vUv;
+    if (gl_FrontFacing) { float t = uv.x * uCount; uv.x = (floor(t) + 1.0 - fract(t)) / uCount; }
+    vec4 tex = texture2D(tMap, uv);
     tex.rgb *= (1.0 - uDarkness);
     gl_FragColor = tex;
   }
@@ -147,7 +161,13 @@
       this.dragRot = 0;
       this.dragVel = 0;
       this.bindDrag();
-      this.boot().catch((e) => console.warn('[cylinder-carousel]', e));
+      /* the libraries, the ten portraits and a WebGL context all wait until the
+         section is within two screens, instead of competing with the first paint */
+      const go = () => { if (this._started) return; this._started = true; if (this.near) this.near.disconnect();
+        this.boot().catch((e) => console.warn('[cylinder-carousel]', e)); };
+      if (!('IntersectionObserver' in window)) { go(); return; }
+      this.near = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) go(); }, { rootMargin: '200% 0px' });
+      this.near.observe(this);
     }
 
     disconnectedCallback() {
@@ -157,6 +177,7 @@
       if (this._stSync) removeEventListener('scroll', this._stSync);
       if (this.triggers) this.triggers.forEach((t) => t.kill());
       if (this.io) this.io.disconnect();
+      if (this.near) this.near.disconnect();
     }
 
     get imageList() {
@@ -289,6 +310,7 @@
         uniforms: {
           tMap: { value: texture },
           uDarkness: { value: isNaN(darkness) ? 0.3 : darkness },
+          uCount: { value: numImages },
         },
         cullFace: null,
       });
@@ -312,18 +334,23 @@
       this.onResize();
 
       this.triggers = [];
-      const tl = gsap.timeline({
-        scrollTrigger: { trigger: scroller, start: 'top top', end: 'bottom bottom', scrub: 1 },
-      });
-      this.triggers.push(tl.scrollTrigger);
+      /* with reduced motion there is no fly-through: the camera holds its
+         opening view and the cylinder turns only when dragged. The captions
+         below still change with the scroll, as fades. */
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: scroller, start: 'top top', end: 'bottom bottom', scrub: 1 },
+        });
+        this.triggers.push(tl.scrollTrigger);
 
-      tl.to(cameraAnim, { x: 0, y: 0, z: dimensions.cameraZ, duration: 1, ease: 'cinematicSilk' })
-        .to(cameraAnim, { x: 0, y: 5, z: 5, duration: 1, ease: 'cinematicFlow' })
-        .to(cameraAnim, { x: 1.5, y: 2, z: 2, duration: 2, ease: 'cinematicLinear' })
-        .to(cameraAnim, { x: 0.5, y: 0, z: 0.8, duration: 3.5, ease: 'power1.inOut' })
-        .to(cameraAnim, { x: -6, y: -1, z: dimensions.cameraZ, duration: 1, ease: 'cinematicSmooth' });
+        tl.to(cameraAnim, { x: 0, y: 0, z: dimensions.cameraZ, duration: 1, ease: 'cinematicSilk' })
+          .to(cameraAnim, { x: 0, y: 5, z: 5, duration: 1, ease: 'cinematicFlow' })
+          .to(cameraAnim, { x: 1.5, y: 2, z: 2, duration: 2, ease: 'cinematicLinear' })
+          .to(cameraAnim, { x: 0.5, y: 0, z: 0.8, duration: 3.5, ease: 'power1.inOut' })
+          .to(cameraAnim, { x: -6, y: -1, z: dimensions.cameraZ, duration: 1, ease: 'cinematicSmooth' });
 
-      tl.to(cylinder.rotation, { y: '+=28.27', duration: 8.5, ease: 'none' }, 0);
+        tl.to(cylinder.rotation, { y: '+=28.27', duration: 8.5, ease: 'none' }, 0);
+      }
 
       caps.forEach((textEl, index) => {
         const sectionDuration = 100 / caps.length;

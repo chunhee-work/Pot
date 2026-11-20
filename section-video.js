@@ -17,14 +17,27 @@
       this.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
       this.src = this.getAttribute('src');
       this.webm = this.getAttribute('src-webm');
+      this.portrait = this.getAttribute('src-portrait');
+      this.portraitWebm = this.getAttribute('src-portrait-webm');
       this.watch();
     }
 
-    disconnectedCallback() { if (this.io) this.io.disconnect(); }
+    disconnectedCallback() { if (this.io) this.io.disconnect(); if (this.near) this.near.disconnect(); }
+
+    /* the poster is a still the size of the band, so it waits for the band too */
+    poster() {
+      const p = this.video.getAttribute('data-poster');
+      if (p && !this.video.getAttribute('poster')) this.video.setAttribute('poster', p);
+    }
 
     watch() {
       if (this.io) this.io.disconnect();
-      if (!('IntersectionObserver' in window)) { this.load(); return; }
+      if (this.near) this.near.disconnect();
+      if (!('IntersectionObserver' in window)) { this.poster(); this.load(); return; }
+      this.near = new IntersectionObserver((entries) => {
+        if (entries.some((en) => en.isIntersecting)) { this.poster(); this.near.disconnect(); }
+      }, { rootMargin: '150% 0px' });
+      this.near.observe(this);
       // a wide margin loads it; a tight one decides whether it should be running
       this.io = new IntersectionObserver((entries) => {
         entries.forEach((en) => {
@@ -38,15 +51,35 @@
 
     load() {
       if (this._loaded || !this.src) return;
+      /* a band close to the top of the page would otherwise start its
+         download while the hero is still painting; the poster covers the wait */
+      if (document.readyState !== 'complete') {
+        this.poster();
+        if (!this._waiting) { this._waiting = true; addEventListener('load', () => { this.load(); if (this.wanted) this.play(); }, { once: true }); }
+        return;
+      }
       this._loaded = true;
-      /* VP9 is the smaller file wherever it decodes; H.264 covers the rest */
-      const vp9 = this.webm && this.video.canPlayType('video/webm; codecs="vp9"');
-      this.video.src = vp9 ? this.webm : this.src;
+      this.poster();
+      /* a band taller than it is wide only ever shows the middle of a 16:9
+         frame, so it gets a cut made for that shape: sharper, and half the bytes */
+      const tall = this.portrait && this.clientHeight > this.clientWidth * 1.1;
+      const mp4 = tall ? this.portrait : this.src;
+      const webm = tall ? this.portraitWebm : this.webm;
+      /* VP9 is the smaller file wherever it decodes and H.264 covers the rest —
+         except on Apple devices, where H.264 is the hardware-decoded path and
+         VP9 is often decoded in software, at the battery's expense */
+      const apple = /Apple/.test(navigator.vendor || '');
+      const vp9 = webm && !apple && this.video.canPlayType('video/webm; codecs="vp9"');
+      this.video.src = vp9 ? webm : mp4;
       /* Safari will refuse a play() issued before there are frames to show, so
          ask again the moment there are */
       ['loadeddata', 'canplay', 'canplaythrough'].forEach((ev) =>
         this.video.addEventListener(ev, () => { if (this.wanted) this.play(); }));
       this.video.muted = true;      // the property, not just the attribute
+      /* an ambient backdrop never stops: force the loop, and restart by hand
+         if a browser still reports 'ended' */
+      this.video.loop = true;
+      this.video.addEventListener('ended', () => { this.video.currentTime = 0; if (this.wanted) this.play(); });
       this.video.load();
     }
 

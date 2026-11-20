@@ -130,8 +130,10 @@
       if (this.dead) return;
       const dt = this.last ? Math.min(0.05, (t - this.last) / 1000) : 0;
       this.last = t;
-      this.size();
+      /* off screen it does nothing but wait; measuring itself every frame
+         from 16,000px away was still costing layout time */
       if (!this.visible && this.boostTo === 1) { this.raf = requestAnimationFrame(this.loop); return; }
+      this.size();
       this.boost += (this.boostTo - this.boost) * Math.min(1, dt * 2.4);
       const ctx = this.ctx, W = this.cv.width, H = this.cv.height;
       if (!W || !H) { this.raf = requestAnimationFrame(this.loop); return; }
@@ -345,6 +347,11 @@
 
         history.pushState({ arrived: true }, '', href);
         scrollTo(0, 0);
+        /* a new page in all but name: give it its title, and put focus on its
+           heading so a screen reader announces where the visitor now is */
+        document.title = doc.title;
+        const h = [...document.querySelectorAll('h1')].find((n) => !n.closest('#__home-stash'));
+        if (h) { h.tabIndex = -1; h.style.outline = 'none'; h.focus({ preventScroll: true }); }
         addEventListener('popstate', function back() {
           removeEventListener('popstate', back);
           location.href = '/';
