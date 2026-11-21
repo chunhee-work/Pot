@@ -9,7 +9,7 @@
   var EXPERIENCE = {
     roles: [
       { title: 'Product Manager', org: 'Fortifi Sdn Bhd', brand: 'oeru', when: 'Sep 2026 — now', current: true,
-        detail: 'Building Danial and Finn (in development) and the in-house AI tools, working directly with the CEO.', impact: [] },
+        detail: 'Building Danial and Finn (in development) and the in-house tools, working directly with the CEO.', impact: [] },
       { title: 'Creative Lead', org: 'Fortifi Sdn Bhd', brand: 'The Chill Gallery & Gacha', when: 'Mar 2026 — Sep 2026',
         detail: 'Land of Hope, brand films, Gacha’s screens.', impact: [] },
       { title: 'Social Media Manager', org: 'Fortifi Sdn Bhd', brand: 'OwnershipCoin', when: 'Mar 2025 — Mar 2026',

@@ -69,6 +69,29 @@ for (const w of WIDTHS) {
   await ctx.close();
 }
 
+/* 2b. Production line card is a plain link: one real mouse click on the sphere itself, nothing on the page cancels it */
+for (const w of WIDTHS) for (const spot of ['sphere', 'label']) {
+  const ctx = await ctxFor(w); const p = await ctx.newPage();
+  try {
+    await p.goto(base + '/land-of-hope', { waitUntil: 'load' }); await p.waitForTimeout(800);
+    const card = p.locator('a[data-sphere-portal]').first();
+    const target = spot === 'sphere' ? card.locator('process-sphere') : p.getByText(/Open the production line/i);
+    await target.scrollIntoViewIfNeeded(); await p.waitForTimeout(400);
+    const bb = await target.boundingBox(); const x = bb.x + bb.width / 2, y = bb.y + bb.height / 2;
+    const info = await p.evaluate(([x, y]) => {
+      const el = document.elementFromPoint(x, y), a = el && el.closest('a');
+      window.__prevented = null; addEventListener('click', (e) => { window.__prevented = e.defaultPrevented; }, { once: true });
+      return { href: a && a.getAttribute('href'), tag: el && el.tagName };
+    }, [x, y]);
+    if (w < 500) await p.touchscreen.tap(x, y); else await p.mouse.click(x, y);
+    const prevented = await p.evaluate(() => window.__prevented).catch(() => false);
+    const ms = await waitUrl(p, /^\/process$/, 4000);
+    log(info.href === '/process' && ms >= 0 && !prevented, `Production line, one click on the ${spot} @${w}`,
+      `hit ${info.tag} in <a href="${info.href}">, ${prevented ? 'click was cancelled' : 'not cancelled'}, ${ms >= 0 ? 'on /process in ' + ms + 'ms' : 'stayed on ' + new URL(p.url()).pathname}`);
+  } catch (e) { log(false, `Production line, one click on the ${spot} @${w}`, e.message.split('\n')[0]); }
+  await ctx.close();
+}
+
 /* 3. Old CV anchors */
 const ANCH = [['/#films', '/land-of-hope', 'films'], ['/#gameui', '/the-chill-gallery', 'gacha']];
 async function where(p) {

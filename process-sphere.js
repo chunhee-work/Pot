@@ -606,23 +606,12 @@
     } catch (e) {}
   }
 
-  /* the sphere sits inside a real anchor, so it still works without script */
+  /* 2026-11-21: the card is a plain <a href="/process">. Nothing intercepts the
+     click any more, so the first press always navigates (review round 6). The
+     sphere still lights on hover and warms the next page. */
   addEventListener('click', function (e) {
     const a = e.target.closest && e.target.closest('a[data-sphere-portal]');
-    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-    const sphere = a.querySelector('process-sphere');
-    if (!sphere || !sphere.launch) return;
-    e.preventDefault();
-    haptic();
-    const href = a.getAttribute('href');
-    /* the press always leaves: whatever state the sphere is in (mid-burst,
-       restored from the back/forward cache, or slow to draw), the page goes
-       to its href within 700ms */
-    const go = () => { if (window.__portalGone) return; window.__portalGone = true; location.href = href; };
-    window.__portalGone = false;
-    if (sphere.mode === 'snap' || sphere._arrived) { go(); return; }
-    try { sphere.launch(href); } catch (er) { go(); return; }
-    setTimeout(go, 700);
-  }, true);
+    if (a && !e.defaultPrevented) try { haptic(); } catch (er) {}
+  }, { passive: true });
   addEventListener('pageshow', function (e) { if (e.persisted) window.__portalGone = false; });
 })();
