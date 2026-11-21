@@ -264,3 +264,100 @@ function mountMetalRim(host, opts) {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mark); else mark();
   addEventListener('load', mark);
 })();
+
+/* Contact, from any page. On a page that has the contact block, the click lands
+   on it at once (no glide that a late layout shift can cut short) and checks
+   again for a couple of seconds while images and fonts settle. Pages without
+   the block go to /#contact, and the home page lands it the same way on load.
+   The check stops as soon as the visitor scrolls on their own. */
+(function () {
+  var SEL = 'a[href="/#contact"],a[href="#contact"],a[data-scroll="#contact"]';
+  var timers = [], user = false;
+  function stopChecks() { timers.forEach(clearTimeout); timers = []; }
+  ['wheel', 'touchstart', 'keydown'].forEach(function (ev) {
+    addEventListener(ev, function (e) { if (ev !== 'keydown' || /^(Arrow|Page|Home|End|\s)/.test(e.key)) { user = true; stopChecks(); } }, { passive: true, capture: true });
+  });
+  function shown(el) { return el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden'; }
+  function reveal(el) {
+    el.querySelectorAll('[data-reveal]').forEach(function (r) { r.setAttribute('data-rv', '1'); r.style.opacity = '1'; r.style.transform = 'none'; });
+  }
+  function place(el) {
+    var y = Math.max(0, el.getBoundingClientRect().top + scrollY);
+    try { scrollTo({ top: y, behavior: 'instant' }); } catch (e) { scrollTo(0, y); }
+  }
+  function land(el) {
+    stopChecks(); user = false;
+    reveal(el); place(el);
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+    try { el.focus({ preventScroll: true }); } catch (e) {}
+    [120, 400, 900, 1600, 2600, 4000].forEach(function (t) {
+      timers.push(setTimeout(function () {
+        if (user || !shown(el)) return;
+        if (Math.abs(el.getBoundingClientRect().top) > 2) place(el);
+      }, t));
+    });
+  }
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest && e.target.closest(SEL);
+    if (!a) return;
+    var el = document.getElementById('contact');
+    if (!shown(el)) return;            /* no contact block here: let /#contact load */
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (location.hash !== '#contact') { try { history.pushState(null, '', '#contact'); } catch (er) {} }
+    land(el);
+  }, true);
+  function fromHash() {
+    if (location.hash !== '#contact') return;
+    var el = document.getElementById('contact');
+    if (shown(el)) land(el);
+  }
+  var nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+  if (!nav || nav.type === 'navigate') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fromHash); else fromHash();
+    addEventListener('load', function () { if (!user) fromHash(); });
+  }
+})();
+
+/* The capsule stays out of the way of the content: it slides up while the
+   visitor scrolls down, and comes back on any scroll up, near the top, or when
+   it takes keyboard focus. While a lightbox or dialog is open it is hidden, so
+   the dialog's own title and Close sit on top with nothing over them. */
+(function () {
+  var root = document.documentElement;
+  if (!document.getElementById('navhide-css')) {
+    var s = document.createElement('style'); s.id = 'navhide-css';
+    s.textContent = 'nav[data-metal]{transition:transform .38s cubic-bezier(.16,1,.3,1),opacity .25s,visibility .25s}' +
+      'html.nav-off nav[data-metal]:not(:focus-within){transform:translate(-50%,calc(-100% - 30px))!important;opacity:0;visibility:hidden}' +
+      'html.lb-on nav[data-metal],html.dlg-on nav[data-metal]{opacity:0!important;visibility:hidden!important;pointer-events:none}' +
+      'html.nav-off .pmenu{opacity:0;visibility:hidden}html::before{transition:opacity .3s}html.nav-off::before{opacity:0}' +
+      '[data-lightbox],#lb{z-index:200!important}' +
+      '@media (prefers-reduced-motion:reduce){nav[data-metal]{transition:none}}';
+    document.head.appendChild(s);
+  }
+  var lastY = scrollY, acc = 0, ticking = false;
+  function menuOpen() { var m = document.getElementById('pmenu'); return m && m.classList.contains('on'); }
+  function update() {
+    ticking = false;
+    var y = scrollY, d = y - lastY; lastY = y;
+    if (y < 120) { acc = 0; root.classList.remove('nav-off'); return; }
+    if ((d > 0) !== (acc > 0)) acc = 0;
+    acc += d;
+    if (acc > 24 && !menuOpen()) root.classList.add('nav-off');
+    else if (acc < -24) root.classList.remove('nav-off');
+  }
+  addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  /* any dialog in the page marks itself open: the main page's lightbox uses
+     visibility, the other pages toggle html.lb-on themselves */
+  function watchDialogs() {
+    var box = document.querySelector('[data-lightbox]');
+    if (!box || box.__navWatch) return;
+    box.__navWatch = true;
+    var sync = function () { root.classList.toggle('dlg-on', box.style.visibility === 'visible'); };
+    new MutationObserver(sync).observe(box, { attributes: true, attributeFilter: ['style'] });
+    sync();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watchDialogs); else watchDialogs();
+  addEventListener('load', watchDialogs);
+  var n = 0; (function again() { watchDialogs(); if (++n < 40) setTimeout(again, 250); })();
+})();
