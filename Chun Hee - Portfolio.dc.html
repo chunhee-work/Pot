@@ -978,7 +978,8 @@ html[data-view="about"] #glance{display:block!important}
 html[data-view="about"] #glance{padding-top:max(104px,var(--gl-pt,0px))!important}
 .ct-open{margin-top:18px;font-size:16px;line-height:1.5;color:#a9a59c!important;opacity:1}.ct-open b{font-weight:700;color:#f4f2ec!important}
 /* the KL skyline stays behind the contact words and buttons while it slides in (QA 2026-11-21) */
-#contact .ct-in{z-index:3!important}
+#contact .ct-in{z-index:3!important;transform:none!important}#contact .ct-fg{transform:none!important}
+/* the words used to drift down while the block scrolled in, which slid them into the towers; they now scroll with the page and the skyline keeps its own slow drift below them (QA 2026-11-21) */
 /* 2026-11-21 Contact is its own page (Chun Hee): /contact shows only the contact block, nothing above it to scroll back into. */
 html[data-view="contact"] main>section:not(#contact),html[data-view="contact"] main>div,html[data-view="contact"] [data-skip]{display:none!important}
 html[data-view="contact"] #contact.ct{min-height:100svh}

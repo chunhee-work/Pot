@@ -2,6 +2,7 @@
 // Run: node tests/review-flows.mjs [baseUrl]   (default http://localhost:8080)
 //   1. Contact in the nav opens /contact (its own page, nothing above it) from every page
 //   5. footer/badge contrast, skyline behind contact, /about clear of nav, home has no script errors
+//   6. KL skyline never crosses the contact rows while scrolling (pixel check, home + /about, 5 widths)
 //   1b. Home first screen: portrait visible, capsule nav hidden, role line not covered, at 390/768/1024/1440
 //   2. "Open the production line" on /land-of-hope goes to /process (fresh, and again after Back)
 //   3. /#films and /#gameui (old CV links) land on Land of Hope films / The Chill Gallery game UI,
@@ -220,6 +221,43 @@ for (const w of [390, 768, 1024, 1280, 1440]) {
     const js = errs.filter((e) => !/Failed to load resource|youtube|ERR_/i.test(e));
     log(!js.length, `Home loads without script errors @${w}`, js.length ? js.slice(0, 2).join(' ; ') : 'none');
   } catch (e) { log(false, `Home loads without script errors @${w}`, e.message.split('\n')[0]); }
+  await ctx.close();
+}
+
+
+/* 6. The KL skyline never crosses the contact rows (email, LinkedIn, Read the CV) at any scroll position, home and /about, 5 widths.
+      Pixel check: the rows area is captured with the skyline shown and hidden; any visible difference means the towers reach it. */
+const diffPage = await (await browser.newContext()).newPage();
+async function pixelDiff(a, b) {
+  return diffPage.evaluate(async ([a, b]) => {
+    const load = (s) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.src = 'data:image/png;base64,' + s; });
+    const [ia, ib] = await Promise.all([load(a), load(b)]);
+    const c = document.createElement('canvas'); c.width = ia.width; c.height = ia.height; const x = c.getContext('2d');
+    x.drawImage(ia, 0, 0); const da = x.getImageData(0, 0, c.width, c.height).data;
+    x.clearRect(0, 0, c.width, c.height); x.drawImage(ib, 0, 0); const db = x.getImageData(0, 0, c.width, c.height).data;
+    let n = 0; for (let i = 0; i < da.length; i += 4) if (Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]) > 60) n++;
+    return n;
+  }, [a.toString('base64'), b.toString('base64')]);
+}
+for (const w of [390, 768, 1024, 1280, 1440]) for (const page of ['/', '/about']) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: w < 500 ? 844 : (w < 900 ? 1024 : 800) }, isMobile: w < 500, hasTouch: w < 500 });
+  const p = await ctx.newPage();
+  try {
+    await p.goto(base + page, { waitUntil: 'load' }); await p.waitForTimeout(800);
+    const worst = [];
+    for (const back of [600, 450, 300, 200, 100, 0]) {
+      await p.evaluate((b) => scrollTo(0, document.documentElement.scrollHeight - innerHeight - b), back); await p.waitForTimeout(1500); // let the fade-in finish so only the skyline differs
+      const box = await p.evaluate(() => { const r = document.querySelector('#contact .ct-acts').getBoundingClientRect();
+        const t = Math.max(0, r.top - 4), btm = Math.min(innerHeight, r.bottom + 4); return btm - t > 4 ? { x: Math.max(0, r.left - 4), y: t, width: Math.min(innerWidth, r.right + 4) - Math.max(0, r.left - 4), height: btm - t } : null; });
+      if (!box) continue;
+      const shown = await p.screenshot({ clip: box });
+      await p.evaluate(() => { document.querySelector('#contact .ct-fg').style.visibility = 'hidden'; });
+      const hidden = await p.screenshot({ clip: box });
+      await p.evaluate(() => { document.querySelector('#contact .ct-fg').style.visibility = ''; });
+      const n = await pixelDiff(shown, hidden); if (n > 20) worst.push(`${n}px at ${back}px from the end`);
+    }
+    log(!worst.length, `Skyline clear of contact rows on ${page} @${w}`, worst.length ? 'towers cross the rows: ' + worst.join(', ') : 'clear at 6 scroll positions');
+  } catch (e) { log(false, `Skyline clear of contact rows on ${page} @${w}`, e.message.split('\n')[0]); }
   await ctx.close();
 }
 
