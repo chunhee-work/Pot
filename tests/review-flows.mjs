@@ -1,6 +1,7 @@
 // Review flows that must hold on every build. Clicks like a visitor, in a full browser.
 // Run: node tests/review-flows.mjs [baseUrl]   (default http://localhost:8080)
 //   1. Contact in the nav opens /contact (its own page, nothing above it) from every page
+//   5. footer/badge contrast, skyline behind contact, /about clear of nav, home has no script errors
 //   1b. Home first screen: portrait visible, capsule nav hidden, role line not covered, at 390/768/1024/1440
 //   2. "Open the production line" on /land-of-hope goes to /process (fresh, and again after Back)
 //   3. /#films and /#gameui (old CV links) land on Land of Hope films / The Chill Gallery game UI,
@@ -167,6 +168,58 @@ for (const w of WIDTHS) for (const [name, page, trigger, box] of DIALOGS) for (c
     const still = await isOpen(p, box);
     log(!still, `Esc closes ${name} (${how}) @${w}`, `focus was on ${focus}, ${still ? 'still open' : 'closed'} 300ms after Esc`);
   } catch (e) { log(false, `Esc closes ${name} (${how}) @${w}`, e.message.split('\n')[0]); }
+  await ctx.close();
+}
+
+
+/* 5. QA round (2026-11-21): readable footer + badge, skyline behind contact, About clear of the nav, no console errors on home */
+const CONTRAST = () => {
+  const lum = (c) => { const m = c.match(/[\d.]+/g).map(Number); const [r, g, b] = m.slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const bgOf = (e) => { for (let n = e; n; n = n.parentElement) { const c = getComputedStyle(n).backgroundColor; const a = c.match(/[\d.]+/g); if (a && (a.length < 4 || +a[3] > 0.5)) return c; } return 'rgb(255,255,255)'; };
+  window.__ratio = (e) => { const f = lum(getComputedStyle(e).color), b = lum(bgOf(e)); return (Math.max(f, b) + 0.05) / (Math.min(f, b) + 0.05); };
+};
+for (const w of [390, 1280]) for (const page of ['/projects', '/process']) {
+  const ctx = await ctxFor(w); const p = await ctx.newPage();
+  try {
+    await p.goto(base + page, { waitUntil: 'load' }); await p.waitForTimeout(600); await p.evaluate(CONTRAST);
+    const r = await p.evaluate(() => [...document.querySelectorAll('#contact .mono b, #contact .mail')].map((e) => [e.textContent.trim().slice(0, 28), +window.__ratio(e).toFixed(1)]));
+    const low = r.filter((x) => x[1] < 4.5);
+    log(r.length >= 4 && !low.length, `${page} footer text readable @${w}`, low.length ? 'low contrast: ' + low.map((x) => `${x[0]} ${x[1]}:1`).join(', ') : `${r.length} items, lowest ${Math.min(...r.map((x) => x[1]))}:1`);
+    if (page === '/projects') {
+      const f = await p.evaluate(() => { const b = [...document.querySelectorAll('.mp b')].find((e) => /fixed/i.test(e.textContent)); return b ? +window.__ratio(b).toFixed(1) : null; });
+      log(f !== null && f >= 4.5, `/projects 'Fixed' badge readable @${w}`, f === null ? 'badge not found' : `${f}:1`);
+    }
+  } catch (e) { log(false, `${page} footer @${w}`, e.message.split('\n')[0]); }
+  await ctx.close();
+}
+for (const w of [390, 768, 1024, 1440]) for (const page of ['/', '/about']) {
+  const ctx = await ctxFor(w); const p = await ctx.newPage();
+  try {
+    await p.goto(base + page, { waitUntil: 'load' }); await p.waitForTimeout(600);
+    await p.evaluate(() => scrollTo(0, document.documentElement.scrollHeight - innerHeight - 150)); await p.waitForTimeout(500);
+    const r = await p.evaluate(() => { const z = (s) => +getComputedStyle(document.querySelector(s)).zIndex || 0; return { fg: z('#contact .ct-fg'), words: z('#contact .ct-in') }; });
+    log(r.words > r.fg, `Skyline behind contact on ${page} @${w}`, `contact words layer ${r.words}, skyline layer ${r.fg}`);
+  } catch (e) { log(false, `Skyline behind contact on ${page} @${w}`, e.message.split('\n')[0]); }
+  await ctx.close();
+}
+for (const w of [390, 768, 1024, 1440]) {
+  const ctx = await ctxFor(w); const p = await ctx.newPage();
+  try {
+    await p.goto(base + '/about', { waitUntil: 'load' }); await p.waitForTimeout(1000);
+    const r = await p.evaluate(() => ({ nav: Math.round(document.querySelector('nav[data-metal]').getBoundingClientRect().bottom), card: Math.round(document.querySelector('#glance .gl-card').getBoundingClientRect().top) }));
+    log(r.card >= r.nav + 8, `/about first card clear of the nav @${w}`, `nav ends ${r.nav}px, card starts ${r.card}px`);
+  } catch (e) { log(false, `/about first card clear of the nav @${w}`, e.message.split('\n')[0]); }
+  await ctx.close();
+}
+for (const w of [390, 768, 1024, 1280, 1440]) {
+  const ctx = await ctxFor(w); const p = await ctx.newPage(); const errs = [];
+  p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  try {
+    await p.goto(base + '/', { waitUntil: 'load' }); await p.waitForTimeout(1500);
+    await p.evaluate(() => scrollTo(0, 2500)); await p.waitForTimeout(500); await p.evaluate(() => scrollTo(0, 0)); await p.waitForTimeout(500);
+    const js = errs.filter((e) => !/Failed to load resource|youtube|ERR_/i.test(e));
+    log(!js.length, `Home loads without script errors @${w}`, js.length ? js.slice(0, 2).join(' ; ') : 'none');
+  } catch (e) { log(false, `Home loads without script errors @${w}`, e.message.split('\n')[0]); }
   await ctx.close();
 }
 

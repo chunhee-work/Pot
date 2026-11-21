@@ -461,6 +461,9 @@ html.dk .btn:hover,html.dk .btn.solid{background:#f4f2ec;color:#0a0a0a;border-co
 html.dk .tags li{background:#141413}
 html.dk main{padding-top:84px}
 html.dk .contact{background:#0a0a0a;color:#f4f2ec}
+/* dark pages: the footer's light text was var(--paper), which is the dark background here (QA 2026-11-21) */
+html.dk .contact .mono b,html.dk .mail{color:#f4f2ec}
+html.dk .mp b.ru{background:#0a0a0a;color:#f4f2ec}
 
 /* the site's pill nav, same as the main pages */
 .pnav{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:90;border-radius:999px;background:#111110;box-shadow:0 12px 30px rgba(0,0,0,.35);max-width:94vw;isolation:isolate}
