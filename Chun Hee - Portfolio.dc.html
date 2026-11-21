@@ -1129,7 +1129,7 @@ html::after{content:"";position:fixed;left:0;right:0;top:0;height:100px;z-index:
     <div style="position:sticky;top:0;height:100svh;overflow:hidden;background:#000">
       <x-import component-from-global-scope="cylinder-carousel" images="assets/char-zeyo-307d498ac3.webp,assets/char-fot-9e1e5d15f4.webp,assets/char-sket-eaf8d7751b.webp,assets/char-ccats-9d2b35a2df.webp,assets/char-ketdonut-28d255ef70.webp,assets/char-gst-63a0644f86.webp,assets/char-hearta-86a414bf25.webp,assets/char-ecox-9b9d2ccaa2.webp,assets/char-froak-af20a9ef55.webp,assets/char-lychee-baad7b0436.webp" darkness="0.3" style="position:absolute;inset:0;z-index:1" hint-size="100%,100%"></x-import>
       <div data-cyl-caps="" style="position:absolute;inset:0;z-index:10;pointer-events:none;color:#f5f5f2">
-        <div data-cap="" style="position:absolute;top:clamp(6.5rem,11vh,7.5rem);left:50%;transform:translateX(-50%);opacity:0;width:min(90vw,860px);padding:0 22px;text-align:center;will-change:opacity">
+        <div data-cap="" style="position:absolute;top:max(112px,clamp(6.5rem,11vh,7.5rem));left:50%;transform:translateX(-50%);opacity:0;width:min(90vw,860px);padding:0 22px;text-align:center;will-change:opacity">
           <h3 style="font-weight:300;font-size:clamp(34px,5.6vw,84px);line-height:.86;letter-spacing:-.02em;color:#f5f5f2;text-shadow:0 2px 24px rgba(0,0,0,.7)">Ten Originals</h3>
           <p style="margin-top:12px;font-weight:400;font-size:clamp(14px,1.5vw,22px);color:#f5f5f2;text-wrap:pretty;text-shadow:0 1px 14px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.6)">OG10 — collectible characters born from The Chill Gallery</p>
         </div>
@@ -1138,7 +1138,7 @@ html::after{content:"";position:fixed;left:0;right:0;top:0;height:100px;z-index:
           <p style="margin-top:12px;font-weight:400;font-size:clamp(14px,1.5vw,22px);color:#f5f5f2;text-wrap:pretty;text-shadow:0 1px 14px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.6)">Stats, rarity and combat power, ready for Gacha</p>
         </div>
       </div>
-      <div style="position:absolute;left:0;right:0;bottom:26px;z-index:11;text-align:center;font-size:10px;font-weight:700;letter-spacing:.2em;color:rgba(245,245,242,.78);text-shadow:0 1px 10px rgba(0,0,0,.8);pointer-events:none">DRAG TO FLY THROUGH <span aria-hidden="true">↔</span></div>
+      <div data-fly-hint="" style="position:absolute;left:0;right:0;bottom:calc(26px + env(safe-area-inset-bottom,0px));z-index:11;text-align:center;font-size:10px;font-weight:700;letter-spacing:.2em;color:rgba(245,245,242,.78);text-shadow:0 1px 10px rgba(0,0,0,.8);pointer-events:none">DRAG TO FLY THROUGH <span aria-hidden="true">↔</span></div>
     </div>
   </div>
 
