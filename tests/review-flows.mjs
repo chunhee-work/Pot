@@ -4,6 +4,8 @@
 //   2. "Open the production line" on /land-of-hope goes to /process (fresh, and again after Back)
 //   3. /#films and /#gameui (old CV links) land on Land of Hope films / The Chill Gallery game UI,
 //      on a fresh load and on a same-page hash change
+//   4. Escape closes every dialog: The Chill Gallery before/after, Land of Hope episode player,
+//      /projects film player, including after a click inside the YouTube player
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 let pw; try { pw = require('playwright'); } catch (e) { pw = require('/opt/node-tools/node_modules/playwright'); }
@@ -79,6 +81,35 @@ for (const w of WIDTHS) for (const [from, page, id] of ANCH) for (const how of [
     const ok = r.at === page + '#' + id && r.top !== null && r.top >= 0 && r.top < r.vh * 0.5;
     log(ok, `${from} (${how}) @${w}`, `${r.at}, section top ${r.top}px`);
   } catch (e) { log(false, `${from} (${how}) @${w}`, e.message.split('\n')[0]); }
+  await ctx.close();
+}
+
+/* 4. Escape closes every dialog */
+const DIALOGS = [
+  ['The Chill Gallery before/after', '/the-chill-gallery', '[data-lb-no="BEFORE"]', '[data-lightbox]'],
+  ['Land of Hope episode player', '/land-of-hope', '[data-lb-yt]', '[data-lightbox]'],
+  ['/projects film player', '/projects', '[data-yt]', '#lb'],
+];
+const isOpen = (p, box) => p.evaluate((sel) => { const d = document.querySelector(sel); if (!d) return false;
+  return !d.hidden && getComputedStyle(d).visibility !== 'hidden' && getComputedStyle(d).display !== 'none'; }, box);
+for (const w of WIDTHS) for (const [name, page, trigger, box] of DIALOGS) for (const how of ['as opened', 'after clicking inside it']) {
+  const ctx = await ctxFor(w); const p = await ctx.newPage();
+  try {
+    await p.goto(base + page, { waitUntil: 'load' }); await p.waitForTimeout(800);
+    const t = p.locator(trigger).first(); await t.scrollIntoViewIfNeeded(); await p.waitForTimeout(200);
+    await press(p, w, t); await p.waitForTimeout(1200);
+    if (!(await isOpen(p, box))) { log(false, `Esc closes ${name} (${how}) @${w}`, 'dialog did not open'); await ctx.close(); continue; }
+    if (how !== 'as opened') {
+      const inner = p.locator(box + ' iframe[src], ' + box + ' img[src]').first();
+      const bb = await inner.boundingBox().catch(() => null);
+      if (bb) await p.mouse.click(bb.x + bb.width / 2, bb.y + bb.height / 2); else await p.mouse.click(w / 2, 300);
+      await p.waitForTimeout(1200);
+    }
+    const focus = await p.evaluate(() => document.activeElement.tagName);
+    await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+    const still = await isOpen(p, box);
+    log(!still, `Esc closes ${name} (${how}) @${w}`, `focus was on ${focus}, ${still ? 'still open' : 'closed'} 300ms after Esc`);
+  } catch (e) { log(false, `Esc closes ${name} (${how}) @${w}`, e.message.split('\n')[0]); }
   await ctx.close();
 }
 

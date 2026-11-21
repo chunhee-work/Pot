@@ -1432,7 +1432,7 @@ class Component extends DCLogic {
       if (e.key === 'Escape' || e.key === 'Esc') { if (lbOpen) { e.preventDefault(); e.stopPropagation(); } this.closeLb(); return; }
       // focus trap: Tab and Shift+Tab cycle inside the open dialog only
       if (e.key === 'Tab' && lbOpen) {
-        const f = [...lb.querySelectorAll('button,a[href],iframe[src],[tabindex]:not([tabindex="-1"])')].filter((n) => n.offsetParent !== null);
+        const f = [...lb.querySelectorAll('button,a[href],[tabindex]:not([tabindex="-1"])')].filter((n) => n.offsetParent !== null);
         if (!f.length) return;
         e.preventDefault();
         const i = f.indexOf(document.activeElement);
@@ -1721,7 +1721,9 @@ class Component extends DCLogic {
     const frame = box.querySelector('[data-lb-frame]');
     if (frame) frame.removeAttribute('src');
     const wasOpen = box.style.visibility === 'visible';
-    box.style.transition = 'opacity .5s cubic-bezier(.32,.72,0,1),visibility .5s';
+    /* hidden at once (only the opacity fades), so a closed dialog is closed
+       the moment Escape or CLOSE is pressed, not half a second later */
+    box.style.transition = 'opacity .25s cubic-bezier(.32,.72,0,1)';
     box.style.opacity = '0'; box.style.visibility = 'hidden';
     const w = box.querySelector('[data-lb-wrap]');
     if (w) w.style.transform = 'translateY(24px) scale(.98)';

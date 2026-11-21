@@ -361,3 +361,58 @@ function mountMetalRim(host, opts) {
   addEventListener('load', watchDialogs);
   var n = 0; (function again() { watchDialogs(); if (++n < 40) setTimeout(again, 250); })();
 })();
+
+/* Every dialog closes on Escape, wherever focus is. A YouTube player is another
+   document: once it has focus, no key reaches this page. So the dialog itself
+   holds focus (tabindex=-1), and when a click hands focus to the player the
+   dialog takes it straight back. The click still reaches the player (pointer
+   events follow the pointer, not focus), and Escape keeps working. */
+(function () {
+  function openDialogs() {
+    var out = [];
+    document.querySelectorAll('[data-lightbox]').forEach(function (d) { if (d.style.visibility === 'visible') out.push(d); });
+    var lb = document.getElementById('lb'); if (lb && !lb.hidden) out.push(lb);
+    document.querySelectorAll('dialog[open],[role="dialog"][aria-modal="true"]').forEach(function (d) {
+      if (out.indexOf(d) < 0 && d.getClientRects().length && getComputedStyle(d).visibility !== 'hidden' && !d.hidden &&
+          (d.tagName === 'DIALOG' || d.id === 'pmenu')) out.push(d);
+    });
+    return out;
+  }
+  function closeBtn(d) { return d.querySelector('[data-lb-close],#lb-close,[data-close],button[aria-label^="Close" i]'); }
+  function hold(d) {
+    if (!d.hasAttribute('tabindex')) d.setAttribute('tabindex', '-1');
+    d.style.outline = 'none';
+    try { d.focus({ preventScroll: true }); } catch (e) {}
+  }
+  addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' && e.key !== 'Esc') return;
+    var ds = openDialogs(); if (!ds.length) return;
+    var d = ds[ds.length - 1], b = closeBtn(d);
+    if (b) { e.preventDefault(); b.click(); }
+  }, true);
+  /* focus left this page's document: if it went into a player inside an open
+     dialog, take it back to the dialog */
+  addEventListener('blur', function () {
+    setTimeout(function () {
+      var a = document.activeElement;
+      if (!a || a.tagName !== 'IFRAME') return;
+      var d = a.closest('[data-lightbox],#lb,[role="dialog"]');
+      if (d && openDialogs().indexOf(d) >= 0) hold(d);
+    }, 0);
+  });
+  /* on open, focus sits on the dialog (or its Close), never in the player */
+  function watch() {
+    document.querySelectorAll('[data-lightbox],#lb').forEach(function (d) {
+      if (d.__escWatch) return; d.__escWatch = true;
+      var was = false;
+      new MutationObserver(function () {
+        var now = openDialogs().indexOf(d) >= 0;
+        if (now && !was) setTimeout(function () { var a = document.activeElement; if (!d.contains(a) || a.tagName === 'IFRAME') hold(d); }, 30);
+        was = now;
+      }).observe(d, { attributes: true, attributeFilter: ['style', 'hidden'] });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch); else watch();
+  addEventListener('load', watch);
+  var n = 0; (function again() { watch(); if (++n < 40) setTimeout(again, 250); })();
+})();
