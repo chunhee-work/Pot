@@ -1,6 +1,7 @@
 // Review flows that must hold on every build. Clicks like a visitor, in a full browser.
 // Run: node tests/review-flows.mjs [baseUrl]   (default http://localhost:8080)
-//   1. Contact in the nav lands on "Let's build something next." from every page
+//   1. Contact in the nav opens /contact (its own page, nothing above it) from every page
+//   1b. Home first screen: portrait visible, capsule nav hidden, role line not covered, at 390/768/1024/1440
 //   2. "Open the production line" on /land-of-hope goes to /process (fresh, and again after Back)
 //   3. /#films and /#gameui (old CV links) land on Land of Hope films / The Chill Gallery game UI,
 //      on a fresh load and on a same-page hash change
@@ -27,7 +28,8 @@ async function waitUrl(p, re, ms = 5000) {
   return -1;
 }
 
-/* 1. Contact */
+/* 1. Contact is its own page (Chun Hee, 2026-11-21): Contact in the nav opens /contact, the heading is on screen,
+      and there is nothing above it to scroll back into */
 for (const w of WIDTHS) for (const path of ['/', '/about', '/land-of-hope', '/the-chill-gallery', '/oeru', '/projects', '/process', '/cv', '/no-such-page']) {
   const ctx = await ctxFor(w); const p = await ctx.newPage();
   try {
@@ -37,13 +39,41 @@ for (const w of WIDTHS) for (const path of ['/', '/about', '/land-of-hope', '/th
       await p.evaluate(() => scrollBy(0, -120)); await p.waitForTimeout(700);
     }
     await press(p, w, p.locator('nav[data-metal] a:has-text("Contact"), header.bar a:has-text("Contact")').first());
-    await p.waitForTimeout(2500);
+    await waitUrl(p, /^\/contact$/); await p.waitForTimeout(1500);
+    await p.mouse.wheel(0, -800); await p.waitForTimeout(400);
     const r = await p.evaluate(() => {
       const h = [...document.querySelectorAll('h2,h3')].find((e) => /build something next/i.test(e.textContent) && e.getClientRects().length);
-      if (!h) return null; const b = h.getBoundingClientRect(); return { top: Math.round(b.top), bottom: Math.round(b.bottom), vh: innerHeight };
+      const b = h && h.getBoundingClientRect();
+      return { at: location.pathname, top: b ? Math.round(b.top) : null, bottom: b ? Math.round(b.bottom) : null, vh: innerHeight,
+        above: [...document.querySelectorAll('main>section')].filter((s) => s.id !== 'contact' && s.getClientRects().length).map((s) => s.id), y: scrollY };
     });
-    log(!!r && r.top >= 0 && r.bottom <= r.vh, `Contact from ${path} @${w}`, r ? `heading at ${r.top}px, ${new URL(p.url()).pathname}${new URL(p.url()).hash}` : 'heading not found');
+    const ok = r.at === '/contact' && r.top !== null && r.top >= 0 && r.bottom <= r.vh && r.above.length === 0 && r.y === 0;
+    log(ok, `Contact from ${path} @${w}`, `${r.at}, heading at ${r.top}px, ${r.above.length ? 'sections above: ' + r.above.join(',') : 'nothing above it'}`);
   } catch (e) { log(false, `Contact from ${path} @${w}`, e.message.split('\n')[0]); }
+  await ctx.close();
+}
+
+/* 1b. Home first screen (Chun Hee's restored hero): the round portrait is visible between CHUN and HEE,
+       the capsule nav is hidden, and the role line at the top is not covered. Checked right after first paint and once settled. */
+for (const w of [390, 768, 1024, 1440]) for (const when of ['first paint', 'settled']) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: w < 500 ? 844 : (w < 900 ? 1024 : 800) }, isMobile: w < 500, hasTouch: w < 500 });
+  const p = await ctx.newPage();
+  try {
+    await p.goto(base + '/', { waitUntil: when === 'first paint' ? 'domcontentloaded' : 'load' });
+    await p.waitForTimeout(when === 'first paint' ? 150 : 2000);
+    const r = await p.evaluate(() => {
+      const pill = document.querySelector('.hx-pill'), img = pill && pill.querySelector('img'), nav = document.querySelector('nav[data-metal]');
+      const pb = pill && pill.getBoundingClientRect(), ps = pill && getComputedStyle(pill);
+      const tag = [...document.querySelectorAll('#hero *')].find((e) => /product\s*&\s*creative lead/i.test(e.textContent) && !e.children.length);
+      const tb = tag && tag.getBoundingClientRect();
+      const ns = nav && getComputedStyle(nav), nb = nav && nav.getBoundingClientRect();
+      const navShown = !!nav && ns.display !== 'none' && ns.visibility !== 'hidden' && +ns.opacity > 0.05 && nb.height > 0;
+      const covered = navShown && tb && !(tb.bottom <= nb.top || tb.top >= nb.bottom || tb.right <= nb.left || tb.left >= nb.right);
+      return { pill: !!pill && pb.width > 20 && pb.height > 20 && pb.top >= 0 && pb.bottom <= innerHeight && +ps.opacity > 0.9 && ps.visibility !== 'hidden' && !!img && img.complete !== undefined,
+        pillBox: pb ? `${Math.round(pb.width)}x${Math.round(pb.height)} at ${Math.round(pb.top)}px` : 'missing', navShown, covered: !!covered };
+    });
+    log(r.pill && !r.navShown && !r.covered, `Home hero @${w} (${when})`, `portrait ${r.pill ? 'visible' : 'NOT visible'} (${r.pillBox}), capsule ${r.navShown ? 'SHOWING' : 'hidden'}${r.covered ? ', role line covered' : ''}`);
+  } catch (e) { log(false, `Home hero @${w} (${when})`, e.message.split('\n')[0]); }
   await ctx.close();
 }
 
