@@ -968,6 +968,12 @@ html:not([data-skl="2"]):not([data-skl="3"]) .sb-item.is-on .sb-s{max-height:40p
   html[data-skl="3"]:not([data-skv="b"]):not([data-skv="c"]) .sb-item.is-on .sb-tab{box-shadow:inset 0 -2px 0 #f4f2ec!important}
 }
 
+
+/* 2026-11-21 lighter home (Chun Hee): home = hero, work, what I bring, where I've worked, contact.
+   "At a glance" moves to the top of About; the skills / tools / languages / open-to cards live on About only. */
+html[data-view="home"] #glance,html[data-view="home"] #about .wk-cards{display:none!important}
+html[data-view="about"] #glance{display:block!important}
+.ct-open{margin-top:18px;font-size:16px;line-height:1.5;color:#a9a59c!important;opacity:1}.ct-open b{font-weight:700;color:#f4f2ec!important}
 /* no connecting line between the numbers (Chun Hee) */
 .sb .sb-tab::before{display:none!important}
 /* panel without a box (Chun Hee): ?skp=1 open (default), 2 picture melts into the page, 3 picture beside the words */
@@ -1448,6 +1454,7 @@ if(k==='ArrowDown'||k==='ArrowRight')j=(i+1)%items.length;else if(k==='ArrowUp'|
   <div class="ct-in">
     <div class="ct-l">
       <h2 data-reveal="" data-d="1" class="ct-h"><b>Let’s build something next.</b></h2>
+      <p data-reveal="" data-d="1" class="ct-open"><b>Open to</b> full-time Product &amp; Creative Lead roles · Kuala Lumpur or remote.</p>
       <div data-reveal="" data-d="2" class="ct-acts">
         <a class="ct-mail" href="mailto:chunheework@gmail.com"><svg class="ct-ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="ct-k">Email</span><span class="ct-v">chunheework@gmail.com</span><svg class="ct-go" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
         <div class="ct-links"><a href="https://www.linkedin.com/in/chun-hee-lim" target="_blank" rel="noopener"><svg class="ct-ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10.5V16M8 7.6v.1M11.5 16v-5.5M11.5 13c0-1.6 1-2.6 2.4-2.6S16 11.3 16 13v3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="ct-k">LinkedIn</span><span class="ct-v">LinkedIn</span><svg class="ct-go" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a href="/cv"><svg class="ct-ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 3h7l4 4v14H7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v4h4M10 12h5M10 15.5h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="ct-k">CV</span><span class="ct-v">Read the CV</span><svg class="ct-go" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
