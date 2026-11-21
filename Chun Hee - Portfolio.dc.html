@@ -1062,13 +1062,12 @@ html.hx-on::before{opacity:0!important}
 </section>
 <script>/* skills list: one focus area open at a time; ?skv=a|b|c picks the layout */
 (function(){var q=/[?&]skv=([abc])/.exec(location.search);if(q)document.documentElement.setAttribute('data-skv',q[1]);
-function init(){var root=document.querySelector('[data-sb]');if(!root||root.__sb)return;root.__sb=1;
-var items=[].slice.call(root.querySelectorAll('.sb-item'));
-function open(it,focus){items.forEach(function(x){var on=x===it;x.classList.toggle('is-on',on);x.querySelector('.sb-tab').setAttribute('aria-expanded',on?'true':'false');});
+/* delegated: the page runtime may re-render this section, so listen on the document */
+function open(it,focus){var root=it.closest('[data-sb]');[].forEach.call(root.querySelectorAll('.sb-item'),function(x){var on=x===it;x.classList.toggle('is-on',on);x.querySelector('.sb-tab').setAttribute('aria-expanded',on?'true':'false');});
 if(focus&&innerWidth<=820){var t=it.querySelector('.sb-tab').getBoundingClientRect().top;if(t<70)scrollBy({top:t-90,behavior:'smooth'});}}
-items.forEach(function(it,i){var b=it.querySelector('.sb-tab');b.addEventListener('click',function(){open(it,true);});
-b.addEventListener('keydown',function(e){var k=e.key,j=-1;if(k==='ArrowDown'||k==='ArrowRight')j=(i+1)%items.length;else if(k==='ArrowUp'||k==='ArrowLeft')j=(i-1+items.length)%items.length;if(j<0)return;e.preventDefault();open(items[j]);items[j].querySelector('.sb-tab').focus();});});}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();</script>
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-sb] .sb-tab');if(b)open(b.closest('.sb-item'),true);});
+document.addEventListener('keydown',function(e){var b=e.target.closest&&e.target.closest('[data-sb] .sb-tab');if(!b)return;var items=[].slice.call(b.closest('[data-sb]').querySelectorAll('.sb-item')),i=items.indexOf(b.closest('.sb-item')),k=e.key,j=-1;
+if(k==='ArrowDown'||k==='ArrowRight')j=(i+1)%items.length;else if(k==='ArrowUp'||k==='ArrowLeft')j=(i-1+items.length)%items.length;if(j<0)return;e.preventDefault();open(items[j]);items[j].querySelector('.sb-tab').focus();});})();</script>
 
 <section id="tbhome" data-screen-label="Toolbox" aria-label="Skills and tools"></section>
 
