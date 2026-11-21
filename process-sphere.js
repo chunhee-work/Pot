@@ -313,7 +313,7 @@
       const href = this.href;
       /* 2026-11-21: /process is its own page now (no #stages to pull in), so
          hand over with a plain navigation instead of a fetch that always fails */
-      if (!/process\.dc/.test(href)) { location.href = href; return; }
+      if (!/process\.dc/.test(href)) { window.__portalGone = true; location.href = href; return; }
       try {
         const res = await fetch(href, { credentials: 'same-origin' });
         if (!res.ok) throw new Error(res.status);
@@ -384,6 +384,9 @@
       this.canvas.style.cssText = this.baseCss;
       this.rot = 0; this.last = 0; this.snapT = 0;
       this.mode = 'idle'; this.blast = false; this.done = false;
+      /* back from /process through the back/forward cache: the sphere must be
+         able to leave again, or the next press plays the burst and stays put */
+      this._arrived = false;
       this.mouse = { x: -1e4, y: -1e4 };
       this.pts = [];
       const ga = Math.PI * (3 - Math.sqrt(5));
@@ -611,6 +614,15 @@
     if (!sphere || !sphere.launch) return;
     e.preventDefault();
     haptic();
-    sphere.launch(a.getAttribute('href'));
+    const href = a.getAttribute('href');
+    /* the press always leaves: whatever state the sphere is in (mid-burst,
+       restored from the back/forward cache, or slow to draw), the page goes
+       to its href within 700ms */
+    const go = () => { if (window.__portalGone) return; window.__portalGone = true; location.href = href; };
+    window.__portalGone = false;
+    if (sphere.mode === 'snap' || sphere._arrived) { go(); return; }
+    try { sphere.launch(href); } catch (er) { go(); return; }
+    setTimeout(go, 700);
   }, true);
+  addEventListener('pageshow', function (e) { if (e.persisted) window.__portalGone = false; });
 })();
