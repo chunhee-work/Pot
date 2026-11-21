@@ -311,6 +311,9 @@
       if (this._arrived) return;
       this._arrived = true;
       const href = this.href;
+      /* 2026-11-21: /process is its own page now (no #stages to pull in), so
+         hand over with a plain navigation instead of a fetch that always fails */
+      if (!/process\.dc/.test(href)) { location.href = href; return; }
       try {
         const res = await fetch(href, { credentials: 'same-origin' });
         if (!res.ok) throw new Error(res.status);

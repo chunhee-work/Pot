@@ -203,3 +203,64 @@ function mountMetalRim(host, opts) {
   (function poll() { watch(); if (++tries < 90) requestAnimationFrame(poll); })();
 })();
 })();
+
+/* Phones: the pill only has room for Projects / About / CV / Contact, so a tap on
+   Projects opens a small sheet with the three case studies and the full list.
+   Wider screens keep the plain link (the case studies sit in the pill there). */
+(function () {
+  var MQ = '(max-width:520px)', sheet = null, from = null;
+  var LINKS = [['/land-of-hope', 'Land of Hope'], ['/the-chill-gallery', 'The Chill Gallery'], ['/oeru', 'oeru'], ['/projects', 'All projects']];
+  function css() {
+    if (document.getElementById('pmenu-css')) return;
+    var s = document.createElement('style'); s.id = 'pmenu-css';
+    s.textContent = '.pmenu{position:fixed;top:84px;left:50%;transform:translate(-50%,-6px);z-index:95;width:min(320px,calc(100vw - 32px));padding:8px;border-radius:22px;background:#141413;border:1px solid rgba(244,242,236,.12);box-shadow:0 18px 40px rgba(0,0,0,.55);opacity:0;visibility:hidden;transition:opacity .25s,transform .3s cubic-bezier(.16,1,.3,1),visibility .25s;font-family:inherit}' +
+      '.pmenu.on{opacity:1;visibility:visible;transform:translate(-50%,0)}' +
+      '.pmenu a{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 16px;border-radius:14px;color:#f4f2ec;text-decoration:none;font-size:15px;font-weight:600;letter-spacing:.01em}' +
+      '.pmenu a+a{border-top:1px solid rgba(244,242,236,.07)}.pmenu a:last-child{color:#a8a69e;font-size:13.5px}' +
+      '.pmenu a:focus-visible,.pmenu a:hover{background:rgba(244,242,236,.06);outline:none}' +
+      '.pmenu a::after{content:"\\2197";color:#8a887f;font-size:14px}' +
+      '@media (prefers-reduced-motion:reduce){.pmenu{transition:none}}';
+    document.head.appendChild(s);
+  }
+  function build() {
+    if (sheet) return sheet;
+    css();
+    sheet = document.createElement('div'); sheet.className = 'pmenu'; sheet.id = 'pmenu';
+    sheet.setAttribute('role', 'menu'); sheet.setAttribute('aria-label', 'Projects');
+    sheet.innerHTML = LINKS.map(function (l) { return '<a role="menuitem" href="' + l[0] + '">' + l[1] + '</a>'; }).join('');
+    document.body.appendChild(sheet);
+    return sheet;
+  }
+  function isTrigger(a) {
+    return a && a.closest && a.closest('nav[data-metal]') && /^\/(#wheel)?$|^\/projects$/.test(a.getAttribute('href') || '') && /Projects/.test(a.textContent);
+  }
+  function show(a) {
+    build(); from = a; sheet.classList.add('on'); a.setAttribute('aria-expanded', 'true');
+    var f = sheet.querySelector('a'); if (f) f.focus({ preventScroll: true });
+  }
+  function hide(back) {
+    if (!sheet || !sheet.classList.contains('on')) return;
+    sheet.classList.remove('on');
+    if (from) { from.setAttribute('aria-expanded', 'false'); if (back) from.focus({ preventScroll: true }); }
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a');
+    if (sheet && sheet.contains(e.target)) { hide(false); return; }
+    if (isTrigger(a) && matchMedia(MQ).matches) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (sheet && sheet.classList.contains('on')) hide(true); else show(a);
+      return;
+    }
+    hide(false);
+  }, true);
+  addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(true); });
+  addEventListener('scroll', function () { hide(false); }, { passive: true });
+  addEventListener('resize', function () { if (!matchMedia(MQ).matches) hide(false); });
+  function mark() {
+    document.querySelectorAll('nav[data-metal] a').forEach(function (a) {
+      if (isTrigger(a) && !a.hasAttribute('aria-haspopup')) { a.setAttribute('aria-haspopup', 'true'); a.setAttribute('aria-controls', 'pmenu'); a.setAttribute('aria-expanded', 'false'); }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mark); else mark();
+  addEventListener('load', mark);
+})();
