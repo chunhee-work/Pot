@@ -854,24 +854,37 @@ html[data-view="oeru"] .dn::before{display:none}
 .wk-imp b{display:block;font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#f4f2ec;margin-bottom:2px}
 /* 2026-11-21 anchors clear the fixed pill; sections whose own padding already does keep 0 */
 main [id]{scroll-margin-top:96px}main #hero,main #gateway,main #farm,main #contact,main #process{scroll-margin-top:0}
-/* 2026-11-21 mobile hero: one nav (the pill), name + role + two actions, no parallax */
-.hx-mob{display:none}
-@media (max-width:760px){
+/* 2026-11-21 hero (all widths): the pill is the only nav; the name is static and
+   crisp at rest (no blur intro, no scroll parallax); the portrait sits between the
+   words and never over a letter; role line and two actions under the name */
 .hx-top{display:none}
 html.hx-on nav[data-metal]{opacity:1;visibility:visible}
-.hx{justify-content:center;padding:96px 0 40px}
+.hx{justify-content:center;padding:clamp(110px,14vh,150px) 0 clamp(56px,9vh,96px)}
 .hx-stage{flex:0 0 auto}
-.hx-name{font-size:25vw}
-.hx-scroll,.hx-down{display:none!important}
+.hx-name{display:flex;align-items:center;justify-content:center;gap:.2em;font-size:clamp(64px,11.2vw,184px);line-height:.8;white-space:nowrap}
+.hx-w{display:block}
+.hx-w:first-child{order:0}.hx-pill{order:1}.hx-w+.hx-w{order:2}
+.hx-ch,.hx-wd{animation:none!important;filter:none!important;opacity:1!important;transform:none!important}
+.hx-pill{position:relative;left:auto;top:auto;margin:0;flex:none;width:.6em;height:.84em;animation:none!important;opacity:1!important;transform:none}
+.hx-pill img{top:2%}
 .hx-w,.hx-w:first-child,.hx-w+.hx-w,.hx-pill{translate:none!important}
-.hx-mob{display:flex;flex-direction:column;align-items:center;gap:26px;position:relative;z-index:5;padding:40px 20px 0;text-align:center}
-.hx-role{margin:0;display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;letter-spacing:.18em;line-height:1.4;text-transform:uppercase;color:#e8e6df}.hx-role span+span{font-size:11px;letter-spacing:.24em;color:#8a887f}
-html::after{content:"";position:fixed;left:0;right:0;top:0;height:100px;z-index:89;pointer-events:none;background:linear-gradient(180deg,#0a0a0a 50%,rgba(10,10,10,0))}
-.hx-acts{display:flex;gap:12px;width:100%;max-width:360px}
-.hx-btn{flex:1;min-height:52px;display:flex;align-items:center;justify-content:center;border-radius:999px;font-size:15px;font-weight:700;text-decoration:none;transition:transform .3s}
+.hx-scroll,.hx-down{display:none!important}
+.hx-mob{display:flex;flex-direction:column;align-items:center;gap:clamp(24px,3.4vh,36px);position:relative;z-index:5;padding:clamp(32px,5vh,56px) 20px 0;text-align:center}
+.hx-role{margin:0;display:flex;flex-direction:column;gap:8px;font-size:clamp(12px,1vw,15px);font-weight:700;letter-spacing:.2em;line-height:1.4;text-transform:uppercase;color:#f4f2ec}
+.hx-role span+span{font-size:.9em;letter-spacing:.26em;color:#9a988f}
+.hx-acts{display:flex;gap:12px;width:100%;max-width:400px}
+.hx-btn{flex:1;min-height:52px;display:flex;align-items:center;justify-content:center;border-radius:999px;font-size:15px;font-weight:700;text-decoration:none;transition:transform .3s,background .3s,color .3s}
 .hx-btn:active{transform:scale(.97)}
 .hx-btn-p{background:#f4f2ec;color:#0a0a0a}
 .hx-btn-s{color:#f4f2ec;box-shadow:inset 0 0 0 1.5px rgba(244,242,236,.35)}
+.hx-btn-s:hover{background:#f4f2ec;color:#0a0a0a}
+@media (max-width:760px){
+.hx{padding:100px 0 40px}
+.hx-name{flex-direction:column;gap:.04em;font-size:min(24vw,150px)}
+.hx-pill{order:-1!important;width:112px;height:140px;margin-bottom:22px}
+.hx-pill:hover{transform:none}
+.hx-mob{padding-top:30px;gap:24px}
+html::after{content:"";position:fixed;left:0;right:0;top:0;height:100px;z-index:89;pointer-events:none;background:linear-gradient(180deg,#0a0a0a 50%,rgba(10,10,10,0))}
 }
 </style>
 </helmet>
