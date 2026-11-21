@@ -440,3 +440,50 @@ html.lb-on{overflow:hidden}
 .try .fine{color:#b9b4a8}
 @media (max-width:820px){.try-body{grid-template-columns:1fr}.drop,.try-out{min-height:220px}}
 @media (prefers-reduced-motion:reduce){.try-state.busy::after{animation:none}}
+
+/* ===== 2026-11-21: main dark system for /projects and /process (html.dk) ===== */
+html.dk{
+  --paper:#0a0a0a;--paper-2:#161615;--card:#141413;
+  --ink:#f4f2ec;--body:#c9c7bf;--muted:#8a887f;
+  --rule:rgba(244,242,236,.12);--rule-strong:rgba(244,242,236,.28);
+  --accent:#f4f2ec;--accent-ink:#f4f2ec;
+  --mono:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:#0a0a0a;scroll-padding-top:104px;color-scheme:dark
+}
+html.dk body{background:#0a0a0a;color:var(--body)}
+html.dk .mono{font-weight:700;font-size:11.5px;letter-spacing:.22em}
+html.dk .mono b{font-weight:800}
+html.dk ::selection{background:#f4f2ec;color:#0a0a0a}
+html.dk .shot,html.dk .shot.real{border-color:rgba(244,242,236,.14);background:#141413;box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 30px 60px -24px rgba(0,0,0,.9);border-radius:16px}
+html.dk .shot-body div.d{background:#232321}
+html.dk .btn{border-color:rgba(244,242,236,.35);color:#f4f2ec}
+html.dk .btn:hover,html.dk .btn.solid{background:#f4f2ec;color:#0a0a0a;border-color:#f4f2ec}
+html.dk .tags li{background:#141413}
+html.dk main{padding-top:84px}
+html.dk .contact{background:#0a0a0a;color:#f4f2ec}
+/* dark pages: the footer's light text was var(--paper), which is the dark background here (QA 2026-11-21) */
+html.dk .contact .mono b,html.dk .mail{color:#f4f2ec}
+html.dk .mp b.ru{background:#0a0a0a;color:#f4f2ec}
+
+/* the site's pill nav, same as the main pages */
+.pnav{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:90;border-radius:999px;background:#111110;box-shadow:0 12px 30px rgba(0,0,0,.35);max-width:94vw;isolation:isolate}
+.pnav-plate{position:absolute;inset:3px;border-radius:999px;background:linear-gradient(180deg,#1d1d1b 0%,#0a0a09 100%);z-index:1;pointer-events:none}
+.pnav-row{position:relative;z-index:2;display:flex;align-items:center;gap:2px;padding:8px 6px;overflow-x:auto;scrollbar-width:none;border-radius:999px}
+.pnav-row::-webkit-scrollbar{display:none}
+.pnav a{position:relative;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:#a19f97;padding:14px;min-height:44px;display:flex;align-items:center;border-radius:999px;white-space:nowrap;text-decoration:none;transition:color .35s cubic-bezier(.32,.72,0,1)}
+.pnav a::after{content:"";position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;background:#f5f5f0;transform:scaleX(0);transform-origin:left;transition:transform .38s cubic-bezier(.32,.72,0,1)}
+.pnav a:hover,.pnav a[aria-current]{color:#f5f5f0}
+.pnav a:hover::after,.pnav a[aria-current]::after{transform:scaleX(1)}
+.pnav a[data-nav-wide]{display:none}
+
+/* product status: Live / In development */
+.st{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#c9c7bf;padding:5px 11px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(244,242,236,.18);white-space:nowrap;vertical-align:middle}
+.st::before{content:"";width:7px;height:7px;border-radius:50%;background:#8a887f}
+.st.live::before{background:#f4f2ec;box-shadow:0 0 8px rgba(244,242,236,.6)}
+.case-st{grid-column:1/-1;margin-top:10px}
+.toc .name .st{margin-left:10px;font-size:10px;padding:4px 9px;transform:translateY(-.3em)}
+@media (max-width:760px){.toc .name .st{display:table;margin:8px 0 0}}
+.case-head .case-st{grid-column:3/9;margin-top:0}@media (max-width:760px){.case-head .case-st{grid-column:1/-1}}
+/* r2: copy fades out under a band behind the pill */
+html.dk::before{content:"";position:fixed;left:0;right:0;top:0;height:96px;z-index:89;pointer-events:none;background:linear-gradient(180deg,#0a0a0a 45%,rgba(10,10,10,0))}
+html.dk [id]{scroll-margin-top:104px}

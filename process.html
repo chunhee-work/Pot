@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dk">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -21,20 +21,15 @@
 </head>
 <body>
 <a class="skip" href="#steps">Skip to the steps</a>
-<header class="mast">
-  <div class="wrap">
-    <a class="brand" href="/">Chun Hee Lim<span>How it's made</span></a>
-    <nav class="nav" aria-label="Main">
-      <a href="/projects">Builds</a>
-      <a href="/about#toolbox">Toolbox</a>
-      <a href="/the-chill-gallery">Game UI</a>
-      <a href="/land-of-hope#films">Films</a>
-      <a href="/about">About</a>
-      <a class="cv" href="/cv">CV</a>
-      <a href="/#contact">Contact</a>
-    </nav>
-  </div>
-</header>
+<nav class="pnav" data-metal="" aria-label="Sections"><div class="pnav-plate"></div><div class="pnav-row" data-navscroll="">
+  <a href="/#wheel">Projects</a>
+  <a href="/land-of-hope" data-nav-wide="">Land of Hope</a>
+  <a href="/the-chill-gallery" data-nav-wide="">The Chill Gallery</a>
+  <a href="/oeru" data-nav-wide="">oeru</a>
+  <a href="/about">About</a>
+  <a href="/cv">CV</a>
+  <a href="/contact">Contact</a>
+</div></nav>
 <main id="top">
 <section class="sec case-top" aria-labelledby="h-top">
   <div class="wrap">
@@ -167,7 +162,7 @@
       <p class="mono"><span class="dot"></span><b>Open to full-time roles</b></p>
       <p class="mono">Kuala Lumpur, on-site or hybrid, or remote</p>
     </div>
-    <h2>Let's talk.</h2>
+    <h2>Let’s build something next.</h2>
     <a class="mail" href="mailto:chunheework@gmail.com">chunheework@gmail.com</a>
     <div class="btns">
       <a class="btn" href="/cv">CV <i aria-hidden="true">↗</i></a>
@@ -177,16 +172,18 @@
     </div>
     <div class="foot">
       <p class="mono">© 2026 Chun Hee Lim</p>
-      <p class="mono"><b>This site: designed &amp; built by me with Claude Code</b></p>
+      <p class="mono"><b>This site: designed &amp; built by me</b></p>
     </div>
   </div>
 </footer>
 
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-labelledby="lb-name" hidden>
   <div class="lb-top"><p class="mono"><b id="lb-no"></b> <span id="lb-name"></span></p><button type="button" class="lb-close" id="lb-close">Close ✕</button></div>
-  <div class="lb-frame"><iframe id="lb-if" title="" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+  <div class="lb-frame"><iframe id="lb-if" title="" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe></div>
 </div>
 
 <script src="/site.js" defer></script>
+<script src="/nav-metal.js" defer></script>
+<script>addEventListener('load',function(){var n=document.querySelector('nav.pnav');if(!n||!window.mountMetalRim)return;var r=mountMetalRim(n);if(!r)return;(function f(t){r.frame(t);requestAnimationFrame(f)})(0)});</script>
 </body>
 </html>

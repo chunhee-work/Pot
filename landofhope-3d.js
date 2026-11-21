@@ -30,11 +30,21 @@
      at once. The 2.5MB of bundle and model wait until the page has finished
      loading and the main thread has a gap, so they never compete with the
      hero's first paint; the still covers the wait. */
+  /* 2026-11-21: the still is the model's own first frame, so nothing is lost by
+     waiting: the 2.5MB and the WebGL loop start on the visitor's first move
+     (scroll, touch, pointer, key), never during the first load. */
+  var ACT = ['scroll', 'wheel', 'pointerdown', 'pointermove', 'touchstart', 'keydown'];
   function afterLoad(fn) {
     var idle = window.requestIdleCallback || function (f) { return setTimeout(f, 250); };
-    var run = function () { idle(fn, { timeout: 2000 }); };
-    if (document.readyState === 'complete') run();
-    else addEventListener('load', run, { once: true });
+    var fired = false;
+    var go = function () {
+      if (fired) return; fired = true;
+      ACT.forEach(function (e) { removeEventListener(e, go, true); });
+      idle(fn, { timeout: 2000 });
+    };
+    var arm = function () { ACT.forEach(function (e) { addEventListener(e, go, { capture: true, passive: true }); }); };
+    if (document.readyState === 'complete') arm();
+    else addEventListener('load', arm, { once: true });
   }
 
   function load(cb) {
@@ -93,7 +103,7 @@
       var r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
       this.renderer = r;
       r.setClearColor(0x000000, 0);
-      r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      r.setPixelRatio(Math.min(window.devicePixelRatio || 1, innerWidth < 760 ? 1.5 : 2));
       r.toneMapping = T.ACESFilmicToneMapping;
       r.toneMappingExposure = 1.05;
 
@@ -185,6 +195,9 @@
       function loop() {
         raf = 0;
         if (self.dead || !live || !seen) return;
+        var now = performance.now();
+        if (!drag && self._last && now - self._last < 31) { raf = requestAnimationFrame(loop); return; }
+        self._last = now;
         ticks++;
         if (!drag && !reduced && spinT0 !== null)
           spin = base + Math.sin((performance.now() - spinT0) * SPIN_SPEED) * SPIN_RANGE;

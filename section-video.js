@@ -85,7 +85,8 @@
 
     play() {
       /* a still frame is the whole experience under reduced motion */
-      if (this.reduced || !this._loaded || !this.video.paused) return;
+      /* offstage: a page (the work wheel) can hold a backdrop that is fully faded out */
+      if (this.reduced || this.offstage || !this._loaded || !this.video.paused) return;
       const p = this.video.play();
       if (p && p.catch) p.catch(function () {});
     }
