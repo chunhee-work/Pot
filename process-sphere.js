@@ -77,7 +77,7 @@
   /* ── starfield ────────────────────────────────────────────────────── */
   class ProcessStars extends HTMLElement {
     connectedCallback() {
-      if (this._booted) { this.dead = false; requestAnimationFrame(this.loop); return; }
+      if (this._booted) { this.dead = false; if (!this.raf) this.raf = requestAnimationFrame(this.loop); return; }
       this.cv = this.querySelector('canvas');
       if (!this.cv) {
         if ((this._tries = (this._tries || 0) + 1) < 120) requestAnimationFrame(() => this.connectedCallback());
@@ -97,13 +97,13 @@
       this.visible = true;
       if ('IntersectionObserver' in window) {
         this.visible = false;
-        this.io = new IntersectionObserver((es) => es.forEach((en) => { this.visible = en.isIntersecting; }),
+        this.io = new IntersectionObserver((es) => es.forEach((en) => { this.visible = en.isIntersecting; if (this.visible && !this.raf && !this.dead) this.raf = requestAnimationFrame(this.loop); }),
           { rootMargin: '200px 0px' });
         this.io.observe(this);
       }
       this.loop = this.loop.bind(this);
       this.size();          /* never leave the backing store at its 300x150 default */
-      requestAnimationFrame(this.loop);
+      this.raf = requestAnimationFrame(this.loop);
     }
 
     disconnectedCallback() { this.dead = true; cancelAnimationFrame(this.raf); }
@@ -132,7 +132,7 @@
       this.last = t;
       /* off screen it does nothing but wait; measuring itself every frame
          from 16,000px away was still costing layout time */
-      if (!this.visible && this.boostTo === 1) { this.raf = requestAnimationFrame(this.loop); return; }
+      if (!this.visible && this.boostTo === 1) { this.raf = 0; this.last = 0; return; }
       this.size();
       this.boost += (this.boostTo - this.boost) * Math.min(1, dt * 2.4);
       const ctx = this.ctx, W = this.cv.width, H = this.cv.height;
@@ -206,7 +206,7 @@
   class ProcessSphere extends HTMLElement {
     connectedCallback() {
       if (this._booted) {
-        if (this.mode !== 'snap') { this.done = false; requestAnimationFrame(this.frame); }
+        if (this.mode !== 'snap') { this.done = false; cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(this.frame); }
         addEventListener('pageshow', this.onShow);
         return;
       }
@@ -269,7 +269,7 @@
 
       /* coming back through the history cache restores the page mid-scatter —
          the sphere has to be rebuilt or the visitor lands on an empty screen */
-      this.onShow = (e) => { if (e.persisted) { this.reset(); requestAnimationFrame(this.frame); } };
+      this.onShow = (e) => { if (e.persisted) { this.reset(); cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(this.frame); } };
       addEventListener('pageshow', this.onShow);
 
       this.visible = true;
@@ -277,7 +277,7 @@
         this.visible = false;
         this.io = new IntersectionObserver((es) => es.forEach((en) => {
           this.visible = en.isIntersecting;
-          if (en.isIntersecting) this.warmDestination();
+          if (en.isIntersecting) { this.warmDestination(); if (!this.raf && !this.done) this.raf = requestAnimationFrame(this.frame); }
         }), { rootMargin: '200px 0px' });
         this.io.observe(this);
       } else {
@@ -286,7 +286,7 @@
       this.addEventListener('pointerenter', () => this.warmDestination());
       this.frame = this.frame.bind(this);
       this.size();          /* never leave the backing store at its 300x150 default */
-      requestAnimationFrame(this.frame);
+      this.raf = requestAnimationFrame(this.frame);
     }
 
     disconnectedCallback() {
@@ -470,8 +470,8 @@
       if (this.done) return;
       const dt = this.last ? Math.min(0.05, (now - this.last) / 1000) : 0;
       this.last = now;
+      if (!this.visible && this.mode !== 'snap') { this.raf = 0; this.last = 0; return; }
       this.size();
-      if (!this.visible && this.mode !== 'snap') { this.raf = requestAnimationFrame(this.frame); return; }
       const ctx = this.ctx, cv = this.canvas, DPR = this.DPR;
       if (!cv.width) { this.raf = requestAnimationFrame(this.frame); return; }
       if (!this.reduced && this.mode !== 'snap') this.rot += dt * 0.22;

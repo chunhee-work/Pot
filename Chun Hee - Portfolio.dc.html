@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta charset="utf-8">
 <script>(function(){var m=location.search.match(/[?&]apc=([1234])/);if(m)document.documentElement.setAttribute("data-apc",m[1])})()</script>
-<script>(function(){var m={'/land-of-hope':'loh','/the-chill-gallery':'tcg','/oeru':'oeru','/about':'about'},p=location.pathname.replace(/\/+$/,'')||'/',q=/[?&]v=([a-z]+)/.exec(location.search),v=q?q[1]:(m[p]||'home');document.documentElement.setAttribute('data-view',v);var dv=/[?&]dn=([abc])/.exec(location.search);document.documentElement.setAttribute('data-dv',dv?dv[1]:'b');var hl=/[?&]hl=([abc])/.exec(location.search);document.documentElement.setAttribute('data-hl',hl?hl[1]:'b');var oc=/[?&]oc=([123])/.exec(location.search);document.documentElement.setAttribute('data-oc',oc?oc[1]:'2');var sv=/[?&]sv=([123])/.exec(location.search);document.documentElement.setAttribute('data-sv',sv?sv[1]:'3');var tl=/[?&]tl=([123])/.exec(location.search);document.documentElement.setAttribute('data-tl',tl?tl[1]:'3');if(v==='home'&&!q&&location.hash){var t={'gateway':'/land-of-hope','series':'/land-of-hope','farm':'/land-of-hope','process':'/land-of-hope','gacha':'/the-chill-gallery','films':'/the-chill-gallery','danial':'/oeru','ship':'/oeru','about':'/about','range':'/about'}[location.hash.slice(1)];if(t)location.replace(t+location.hash);}})();</script>
+<script>(function(){var m={'/land-of-hope':'loh','/the-chill-gallery':'tcg','/oeru':'oeru','/about':'about'},p=location.pathname.replace(/\/+$/,'')||'/',q=/[?&]v=([a-z]+)/.exec(location.search),v=q?q[1]:(m[p]||'home');document.documentElement.setAttribute('data-view',v);var dv=/[?&]dn=([abc])/.exec(location.search);document.documentElement.setAttribute('data-dv',dv?dv[1]:'b');var hl=/[?&]hl=([abc])/.exec(location.search);document.documentElement.setAttribute('data-hl',hl?hl[1]:'b');var oc=/[?&]oc=([123])/.exec(location.search);document.documentElement.setAttribute('data-oc',oc?oc[1]:'2');var sv=/[?&]sv=([123])/.exec(location.search);document.documentElement.setAttribute('data-sv',sv?sv[1]:'3');var tl=/[?&]tl=([123])/.exec(location.search);document.documentElement.setAttribute('data-tl',tl?tl[1]:'3');if(!q&&location.hash){var id=location.hash.slice(1),al={gameui:'gacha',toolbox:'toolbox'}[id],R={hero:'/',glance:'/',wheel:'/',skills:'/',gateway:'/land-of-hope',series:'/land-of-hope',farm:'/land-of-hope',process:'/land-of-hope',gacha:'/the-chill-gallery',danial:'/oeru',ship:'/oeru','oeru-more':'/oeru',about:'/about',toolbox:'/about',range:'/projects',films:(v==='loh'||v==='tcg')?p:'/land-of-hope'},k=al||id,t=R[k];if(t&&t!==p)location.replace(t+'#'+k);else if(al)history.replaceState(null,'','#'+al);}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chun Hee Lim — Product &amp; Creative Lead · Original IP, AI film &amp; product UI · Kuala Lumpur</title>
 <meta name="description" content="Chun Hee Lim, product &amp; creative lead in Kuala Lumpur: an original animated series, four brand films, twelve cast voices and the screens of a live game — written, directed, cut and prototyped by one person. Open to full-time roles.">
@@ -265,6 +265,7 @@ landofhope-3d canvas{background:transparent}
 <script src="landofhope-3d.js"></script>
 <script src="cylinder-carousel.js"></script>
 <script src="nav-metal.js"></script>
+<script src="experience.js" defer></script>
 <script src="process-sphere.js"></script>
 <script src="section-video.js?v=2"></script>
 <script src="gacha-hero.js"></script>
@@ -778,7 +779,7 @@ html[data-view="loh"] [data-film="tcg"],html[data-view="tcg"] [data-film="loh"]{
 .rg-out{display:grid;place-items:center;width:44px;height:44px;margin-left:.15em;color:#fff;transition:transform .3s cubic-bezier(.2,.7,.2,1),color .25s}.rg-out svg{width:30px;height:30px}
 .rg-out:hover,.rg-out:focus-visible{transform:translate(4px,-4px);color:#4f6dff}
 .rg-lb:not(.on) .rg-out{visibility:hidden}
-@media (max-width:767px){.rg-out{width:36px;height:36px}.rg-out svg{width:22px;height:22px}.rg-labels{left:0}.rg-lb{left:16px;transform:translateY(calc(var(--ch) * .5 + 56px + var(--s,0) * 50px))!important;font-size:22px}.rg-lb small{display:none}}
+@media (max-width:767px){.rg-out{width:44px;height:44px}.rg-out svg{width:22px;height:22px}.rg-labels{left:0}.rg-lb{left:16px;transform:translateY(calc(var(--ch) * .5 + 56px + var(--s,0) * 50px))!important;font-size:22px}.rg-lb small{display:none}}
 
 .dn h2{font-size:clamp(34px,4.2vw,62px)!important;max-width:16ch}
 html[data-dv="a"] [data-dvx]:not([data-dvx="a"]),html[data-dv="b"] [data-dvx]:not([data-dvx="b"]),html[data-dv="c"] [data-dvx]:not([data-dvx="c"]){display:none}
@@ -847,6 +848,12 @@ html[data-view="oeru"] .dn::before{display:none}
 
 @media (max-width:767px){.rg{--cx:-780px;--r:900px;--r2:445px;--cw:200px;--ch:113px;--step:20;--lf:16px}.rg-card{border-radius:14px}.rg-lb small{display:none}.rg-track{height:calc(100vh + 1500px)}}
 .gl-stats dd.gl-sub{margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:none;color:#8a887f}
+.sk-exp li.exp-edu{border-left-style:dashed}.sk-exp li.exp-edu span{letter-spacing:.02em}
+.wk-imp{margin:12px 0 0;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.45;color:#a8a69e}
+.wk-imp.imp-todo{border:1px dashed rgba(244,242,236,.28);background:rgba(244,242,236,.03)}
+.wk-imp b{display:block;font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#f4f2ec;margin-bottom:2px}
+/* 2026-11-21 anchors clear the fixed pill; sections whose own padding already does keep 0 */
+main [id]{scroll-margin-top:96px}main #hero,main #gateway,main #farm,main #contact,main #process{scroll-margin-top:0}
 /* 2026-11-21 mobile hero: one nav (the pill), name + role + two actions, no parallax */
 .hx-mob{display:none}
 @media (max-width:760px){
@@ -880,14 +887,14 @@ html::after{content:"";position:fixed;left:0;right:0;top:0;height:100px;z-index:
   <a href="/oeru" data-nav-wide="" data-nav="" data-hpair="" data-hin="transform:scaleX(1)" data-hout="transform:scaleX(0)" style="position:relative;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:#a19f97;padding:14px;min-height:44px;display:flex;align-items:center;border-radius:999px;transition:color .35s cubic-bezier(.32,.72,0,1);white-space:nowrap" style-hover="color:#f5f5f0">oeru<span data-hchild="" style="position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;background:#f5f5f0;transform:scaleX(0);transform-origin:left;transition:transform .38s cubic-bezier(.32,.72,0,1)"></span></a>
   <a href="/about" data-nav="" data-hpair="" data-hin="transform:scaleX(1)" data-hout="transform:scaleX(0)" style="position:relative;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:#a19f97;padding:14px;min-height:44px;display:flex;align-items:center;border-radius:999px;transition:color .35s cubic-bezier(.32,.72,0,1);white-space:nowrap" style-hover="color:#f5f5f0">About<span data-hchild="" style="position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;background:#f5f5f0;transform:scaleX(0);transform-origin:left;transition:transform .38s cubic-bezier(.32,.72,0,1)"></span></a>
   <a href="/cv" data-nav="" data-hpair="" data-hin="transform:scaleX(1)" data-hout="transform:scaleX(0)" style="position:relative;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:#a19f97;padding:14px;min-height:44px;display:flex;align-items:center;border-radius:999px;transition:color .35s cubic-bezier(.32,.72,0,1);white-space:nowrap" style-hover="color:#f5f5f0">CV<span data-hchild="" style="position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;background:#f5f5f0;transform:scaleX(0);transform-origin:left;transition:transform .38s cubic-bezier(.32,.72,0,1)"></span></a>
-  <a href="#contact" data-nav="" data-hpair="" data-hin="transform:scaleX(1)" data-hout="transform:scaleX(0)" style="position:relative;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:#a19f97;padding:14px;min-height:44px;display:flex;align-items:center;border-radius:999px;transition:color .35s cubic-bezier(.32,.72,0,1);white-space:nowrap" style-hover="color:#f5f5f0">Contact<span data-hchild="" style="position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;background:#f5f5f0;transform:scaleX(0);transform-origin:left;transition:transform .38s cubic-bezier(.32,.72,0,1)"></span></a>
+  <a href="/#contact" data-scroll="#contact" data-nav="" data-hpair="" data-hin="transform:scaleX(1)" data-hout="transform:scaleX(0)" style="position:relative;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:#a19f97;padding:14px;min-height:44px;display:flex;align-items:center;border-radius:999px;transition:color .35s cubic-bezier(.32,.72,0,1);white-space:nowrap" style-hover="color:#f5f5f0">Contact<span data-hchild="" style="position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;background:#f5f5f0;transform:scaleX(0);transform-origin:left;transition:transform .38s cubic-bezier(.32,.72,0,1)"></span></a>
 </div>
 </nav>
 
 <main id="main">
 <section id="hero" data-screen-label="Hero" class="hx" aria-label="Introduction">
   <div class="hx-top">
-    <details class="hx-menu"><summary aria-label="Open menu"><svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg></summary><nav aria-label="Menu" class="hx-list"><a href="/land-of-hope#series">Land of Hope</a><a href="/the-chill-gallery#gacha">Game UI</a><a href="/the-chill-gallery#films">Films</a><a href="/land-of-hope#farm">Voices</a><a href="/process">Process</a><a href="/projects#side">Side work</a><a href="/about#about">About</a><a href="/cv">CV</a><a href="#contact" data-scroll="#contact">Contact</a></nav></details>
+    <details class="hx-menu"><summary aria-label="Open menu"><svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg></summary><nav aria-label="Menu" class="hx-list"><a href="/land-of-hope#series">Land of Hope</a><a href="/the-chill-gallery#gacha">Game UI</a><a href="/the-chill-gallery#films">Films</a><a href="/land-of-hope#farm">Voices</a><a href="/process">Process</a><a href="/projects#side">Side work</a><a href="/about#about">About</a><a href="/cv">CV</a><a href="/#contact" data-scroll="#contact">Contact</a></nav></details>
     <span class="hx-sig">Product &amp; Creative Lead</span>
     <a class="hx-cv" href="/cv">CV</a>
   </div>
@@ -972,11 +979,7 @@ html::after{content:"";position:fixed;left:0;right:0;top:0;height:100px;z-index:
     <div class="sk-exp">
       <div>
         <p class="gl-kick">Experience</p>
-        <ol>
-          <li><time>Sep 2026 — Now</time><b>Product Manager · Fortifi Sdn Bhd</b><span>Promoted twice since Mar 2025: Social Media Manager → Creative Lead → Product Manager</span></li>
-          <li><time>2023 — 2024</time><b>Designer &amp; Production Assistant</b><span>Joe Chia · Phyn Studio</span></li>
-          <li><time>2019 — 2022</time><b>Fashion &amp; Apparel Design</b><span>SML Academy</span></li>
-        </ol>
+        <ol><li><time>Sep 2026 — now</time><b>Product Manager · Fortifi Sdn Bhd</b><span>Social Media Manager (Mar 2025) → Creative Lead (Mar 2026) → Product Manager (Sep 2026)</span></li><li><time>2023 — 2024</time><b>Designer &amp; Production Assistant</b><span>Joe Chia · Phyn Studio</span></li><li><time>2018 — 2019</time><b>Purchasing &amp; Merchandising</b><span>Citychemo Manufacturing Sdn Bhd</span></li><li class="exp-edu"><time>2019 — 2022</time><b>Fashion &amp; Apparel Design</b><span>Education · SML Academy</span></li></ol>
       </div>
       <a class="sk-more" href="/about">Full story <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
     </div>
@@ -1250,8 +1253,8 @@ html::after{content:"";position:fixed;left:0;right:0;top:0;height:100px;z-index:
   <div style="position:absolute;left:0;right:0;top:0;height:22vh;pointer-events:none;z-index:1;background:linear-gradient(180deg,#0a0a0a 0%,transparent 100%)"></div>
   <div style="max-width:1200px;margin:0 auto;padding:0 clamp(22px,4vw,56px);position:relative;z-index:2">
     <div class="wk" data-reveal="">
-      <h3 class="wk-h">Where<br>I’ve worked.</h3>
-      <ol class="wk-list"><li><time>Sep 2026</time><div><b>Product Manager</b><span>Fortifi Sdn Bhd · oeru</span></div></li><li class="wk-sub"><time>Mar 2026</time><div><b>Creative Lead</b><span>Fortifi Sdn Bhd · The Chill Gallery &amp; Gacha</span></div></li><li class="wk-sub"><time>Mar 2025</time><div><b>Social Media Manager</b><span>Fortifi Sdn Bhd · OwnershipCoin</span></div></li><li><time>2023 / 2024</time><div><b>Designer &amp; Production Assistant</b><span>Joe Chia · Phyn Studio</span></div></li><li><time>2018 / 2019</time><div><b>Purchasing &amp; Merchandising</b><span>Citychemo Manufacturing Sdn Bhd · Bad Lab Men Care &amp; Good Virtues Co. (GVC)</span></div></li><li class="wk-edu"><time>2019 / 2022</time><div><b>Fashion &amp; Apparel Design</b><span>SML Academy · Education</span></div></li></ol>
+      <h3 class="wk-h">Where <br>I’ve worked.</h3>
+      <ol class="wk-list"><li><time>Sep 2026 — now</time><div><b>Product Manager</b><span>Fortifi Sdn Bhd · oeru</span></div></li><li class="wk-sub"><time>Mar 2026</time><div><b>Creative Lead</b><span>Fortifi Sdn Bhd · The Chill Gallery &amp; Gacha</span></div></li><li class="wk-sub"><time>Mar 2025</time><div><b>Social Media Manager</b><span>Fortifi Sdn Bhd · OwnershipCoin</span></div></li><li><time>2023 — 2024</time><div><b>Designer &amp; Production Assistant</b><span>Joe Chia · Phyn Studio</span></div></li><li><time>2018 — 2019</time><div><b>Purchasing &amp; Merchandising</b><span>Citychemo Manufacturing Sdn Bhd · Bad Lab Men Care &amp; Good Virtues Co. (GVC)</span></div></li><li class="wk-edu"><time>2019 — 2022</time><div><b>Fashion &amp; Apparel Design</b><span>Education · SML Academy</span></div></li></ol>
     </div>
     <div class="wk-cards">
       <div class="wk-col">
@@ -1332,7 +1335,7 @@ html::after{content:"";position:fixed;left:0;right:0;top:0;height:100px;z-index:
       <div style="font-weight:300;font-size:17px;color:#f5f5f2"><b data-lb-no="" style="font-size:9.5px;font-weight:800;letter-spacing:.22em;color:#a3a39c;display:block;margin-bottom:4px"></b><span data-lb-name="" id="lb-title"></span></div>
       <button data-lb-close="" style="background:none;border:1px solid rgba(245,245,242,.24);color:#f5f5f2;border-radius:999px;min-height:44px;padding:0 20px;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.18em;cursor:pointer;transition:border-color .35s" style-hover="border-color:#f5f5f2">CLOSE ✕</button>
     </div>
-    <img data-lb-img="" alt="" style="width:100%;border-radius:14px;box-shadow:0 40px 110px rgba(0,0,0,.75);background:#000;max-height:76vh;object-fit:contain"><div data-lb-video="" style="display:none;position:relative;width:100%;margin:0 auto;aspect-ratio:16/9;border-radius:14px;overflow:hidden;box-shadow:0 40px 110px rgba(0,0,0,.75);background:#000"><iframe data-lb-frame="" src="" title="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>
+    <img data-lb-img="" alt="" style="width:100%;border-radius:14px;box-shadow:0 40px 110px rgba(0,0,0,.75);background:#000;max-height:76vh;object-fit:contain"><div data-lb-video="" style="display:none;position:relative;width:100%;margin:0 auto;aspect-ratio:16/9;border-radius:14px;overflow:hidden;box-shadow:0 40px 110px rgba(0,0,0,.75);background:#000"><iframe data-lb-frame="" src="" title="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="allowfullscreen" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>
   </div>
 </div>
 
@@ -1365,7 +1368,7 @@ class Component extends DCLogic {
       let id = '';
       try { id = location.hash ? decodeURIComponent(location.hash.slice(1)) : ''; } catch (e) { return; }
       const t = id && document.getElementById(id);
-      if (!t || t.tagName !== 'SECTION') return;
+      if (!t || !t.getClientRects().length) return;
       if (again && (scrollY !== this._hashY || Math.abs(t.getBoundingClientRect().top) <= 1)) return;
       this.jump(t, true);
       this._hashY = scrollY;
@@ -1519,8 +1522,10 @@ class Component extends DCLogic {
     if (t.closest('[data-lb-close]') || t.hasAttribute('data-lightbox')) { this.closeLb(); return; }
     const sc = t.closest('[data-scroll]');
     if (sc) {
+      const st = document.querySelector(sc.getAttribute('data-scroll'));
+      if (!st || !st.getClientRects().length) return;
       e.preventDefault();
-      this.jump(document.querySelector(sc.getAttribute('data-scroll')));
+      this.jump(st);
       return;
     }
     const nav = t.closest('nav a[href^="#"]');
@@ -1555,7 +1560,8 @@ class Component extends DCLogic {
   jump(el, instant) {
     if (!el) return;
     this.revealIn(el);
-    scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: instant || this.reduced ? 'auto' : 'smooth' });
+    const off = el.id === 'hero' || el.id === 'contact' ? 0 : (parseFloat(getComputedStyle(el).scrollMarginTop) || 0);
+    scrollTo({ top: el.getBoundingClientRect().top + scrollY - off, behavior: instant || this.reduced ? 'auto' : 'smooth' });
     if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
     el.focus({ preventScroll: true });
   }
