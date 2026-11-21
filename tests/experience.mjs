@@ -6,7 +6,8 @@ let pw; try { pw = require('playwright'); } catch (e) { pw = require('/opt/node-
 const { chromium } = pw;
 const base = process.argv[2] || 'http://localhost:8080';
 const pick = {
-  '/': () => [...document.querySelectorAll('[data-exp="home"] li')].map(l => l.innerText.replace(/\s+/g, ' ').trim()),
+  // home now shows the About timeline itself (Chun Hee, 2026-11-21); only count rows a visitor can see
+  '/': () => [...document.querySelectorAll('[data-exp="about"] li')].filter(l => l.getClientRects().length).map(l => l.innerText.replace(/\s+/g, ' ').trim()),
   '/about': () => [...document.querySelectorAll('[data-exp="about"] li')].map(l => l.innerText.replace(/\s+/g, ' ').trim()),
   '/cv': () => [...document.querySelectorAll('[data-exp="cv"] .item')].map(l => l.innerText.replace(/\s+/g, ' ').trim()),
 };
@@ -14,7 +15,7 @@ const pick = {
 const roles = [['Sep 2026 — now', 'Product Manager', 'oeru'], ['Mar 2026 — Sep 2026', 'Creative Lead', 'The Chill Gallery & Gacha'],
   ['Mar 2025 — Mar 2026', 'Social Media Manager', 'OwnershipCoin'], ['2023 — 2024', 'Designer & Production Assistant', 'Phyn Studio'],
   ['2018 — 2019', 'Purchasing & Merchandising', 'Citychemo Manufacturing Sdn Bhd']];
-const eduSel = { '/': '[data-exp="home-edu"]', '/about': '[data-exp="about-edu"]', '/cv': '[data-exp="cv-edu"]' };
+const eduSel = { '/': '[data-exp="about-edu"]', '/about': '[data-exp="about-edu"]', '/cv': '[data-exp="cv-edu"]' };
 const b = await chromium.launch();
 let fail = 0;
 for (const [path, fn] of Object.entries(pick)) {

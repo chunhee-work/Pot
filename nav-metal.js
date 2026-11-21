@@ -151,7 +151,8 @@ function mountMetalRim(host, opts) {
     // Driven by the page's existing rAF loop rather than starting a second one.
     frame(now) {
       if (dead || reduced || document.hidden) return;
-      resize();
+      /* size changes come from the ResizeObserver; reading clientWidth here forced a layout every frame */
+      if (!ro) resize();
       draw(now);
     },
     setSpeed(v) { speed = v; },
@@ -204,17 +205,17 @@ function mountMetalRim(host, opts) {
 })();
 })();
 
-/* Phones: the pill only has room for Projects / About / CV / Contact, so a tap on
-   Projects opens a small sheet with the three case studies and the full list.
-   Wider screens keep the plain link (the case studies sit in the pill there). */
+/* The pill shows Projects / About / CV / Contact at every width; a press on
+   Projects opens a small sheet under it with the three case studies and the
+   full list (Chun Hee, 2026-11-21: the case studies live inside Projects). */
 (function () {
-  var MQ = '(max-width:520px)', sheet = null, from = null;
+  var MQ = 'all', sheet = null, from = null;
   var LINKS = [['/land-of-hope', 'Land of Hope'], ['/the-chill-gallery', 'The Chill Gallery'], ['/oeru', 'oeru'], ['/projects', 'All projects']];
   function css() {
     if (document.getElementById('pmenu-css')) return;
     var s = document.createElement('style'); s.id = 'pmenu-css';
     s.textContent = '.pmenu{position:fixed;top:84px;left:50%;transform:translate(-50%,-6px);z-index:95;width:min(320px,calc(100vw - 32px));padding:8px;border-radius:22px;background:#141413;border:1px solid rgba(244,242,236,.12);box-shadow:0 18px 40px rgba(0,0,0,.55);opacity:0;visibility:hidden;transition:opacity .25s,transform .3s cubic-bezier(.16,1,.3,1),visibility .25s;font-family:inherit}' +
-      '.pmenu.on{opacity:1;visibility:visible;transform:translate(-50%,0)}' +
+      '.pmenu.on{opacity:1;visibility:visible;transform:translate(-50%,0)}nav[data-metal] a[data-nav-wide]{display:none!important}' +
       '.pmenu a{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 16px;border-radius:14px;color:#f4f2ec;text-decoration:none;font-size:15px;font-weight:600;letter-spacing:.01em}' +
       '.pmenu a+a{border-top:1px solid rgba(244,242,236,.07)}.pmenu a:last-child{color:#a8a69e;font-size:13.5px}' +
       '.pmenu a:focus-visible,.pmenu a:hover{background:rgba(244,242,236,.06);outline:none}' +
@@ -231,11 +232,16 @@ function mountMetalRim(host, opts) {
     document.body.appendChild(sheet);
     return sheet;
   }
+  function place(a) {
+    var r = a.getBoundingClientRect(), w = sheet.offsetWidth || 320;
+    var x = Math.max(16 + w / 2, Math.min(innerWidth - 16 - w / 2, r.left + r.width / 2));
+    sheet.style.left = x + 'px'; sheet.style.top = Math.round(r.bottom + 14) + 'px';
+  }
   function isTrigger(a) {
     return a && a.closest && a.closest('nav[data-metal]') && /^\/(#wheel)?$|^\/projects$/.test(a.getAttribute('href') || '') && /Projects/.test(a.textContent);
   }
   function show(a) {
-    build(); from = a; sheet.classList.add('on'); a.setAttribute('aria-expanded', 'true');
+    build(); from = a; place(a); sheet.classList.add('on'); a.setAttribute('aria-expanded', 'true');
     var f = sheet.querySelector('a'); if (f) f.focus({ preventScroll: true });
   }
   function hide(back) {
@@ -255,8 +261,9 @@ function mountMetalRim(host, opts) {
   }, true);
   addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(true); });
   addEventListener('scroll', function () { hide(false); }, { passive: true });
-  addEventListener('resize', function () { if (!matchMedia(MQ).matches) hide(false); });
+  addEventListener('resize', function () { hide(false); });
   function mark() {
+    css();
     document.querySelectorAll('nav[data-metal] a').forEach(function (a) {
       if (isTrigger(a) && !a.hasAttribute('aria-haspopup')) { a.setAttribute('aria-haspopup', 'true'); a.setAttribute('aria-controls', 'pmenu'); a.setAttribute('aria-expanded', 'false'); }
     });

@@ -32,6 +32,10 @@ for (const w of WIDTHS) for (const path of ['/', '/about', '/land-of-hope', '/th
   const ctx = await ctxFor(w); const p = await ctx.newPage();
   try {
     await p.goto(base + path, { waitUntil: 'load' }); await p.waitForTimeout(800);
+    if (path === '/') { // home: the capsule nav stays hidden over the first screen, so scroll past it (then nudge up so the nav shows)
+      await p.mouse.wheel(0, 0); await p.evaluate(() => scrollTo(0, innerHeight * 1.6)); await p.waitForTimeout(500);
+      await p.evaluate(() => scrollBy(0, -120)); await p.waitForTimeout(700);
+    }
     await press(p, w, p.locator('nav[data-metal] a:has-text("Contact"), header.bar a:has-text("Contact")').first());
     await p.waitForTimeout(2500);
     const r = await p.evaluate(() => {

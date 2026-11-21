@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta charset="utf-8">
 <script>(function(){var m=location.search.match(/[?&]apc=([1234])/);if(m)document.documentElement.setAttribute("data-apc",m[1])})()</script>
-<script>(function(){var m={'/land-of-hope':'loh','/the-chill-gallery':'tcg','/oeru':'oeru','/about':'about'},p=location.pathname.replace(/\/+$/,'')||'/',q=/[?&]v=([a-z]+)/.exec(location.search),v=q?q[1]:(m[p]||'home');document.documentElement.setAttribute('data-view',v);var dv=/[?&]dn=([abc])/.exec(location.search);document.documentElement.setAttribute('data-dv',dv?dv[1]:'b');var hl=/[?&]hl=([abc])/.exec(location.search);document.documentElement.setAttribute('data-hl',hl?hl[1]:'b');var oc=/[?&]oc=([123])/.exec(location.search);document.documentElement.setAttribute('data-oc',oc?oc[1]:'2');var sv=/[?&]sv=([123])/.exec(location.search);document.documentElement.setAttribute('data-sv',sv?sv[1]:'3');var tl=/[?&]tl=([123])/.exec(location.search);document.documentElement.setAttribute('data-tl',tl?tl[1]:'3');function go(live){if(q||!location.hash)return;var id=location.hash.slice(1),al={gameui:'gacha',toolbox:'toolbox'}[id],R={hero:'/',glance:'/',wheel:'/',skills:'/',gateway:'/land-of-hope',series:'/land-of-hope',farm:'/land-of-hope',process:'/land-of-hope',gacha:'/the-chill-gallery',danial:'/oeru',ship:'/oeru','oeru-more':'/oeru',about:'/about',toolbox:'/about',range:'/projects',films:(v==='loh'||v==='tcg')?p:'/land-of-hope'},k=al||id,t=R[k];if(t&&t!==p){if(live)location.assign(t+'#'+k);else location.replace(t+'#'+k);}else if(al){history.replaceState(null,'','#'+al);if(live)setTimeout(function(){dispatchEvent(new HashChangeEvent('hashchange'));},0);}}go(false);addEventListener('hashchange',function(){go(true);});})();</script>
+<script>(function(){var m={'/land-of-hope':'loh','/the-chill-gallery':'tcg','/oeru':'oeru','/about':'about'},p=location.pathname.replace(/\/+$/,'')||'/',q=/[?&]v=([a-z]+)/.exec(location.search),v=q?q[1]:(m[p]||'home');document.documentElement.setAttribute('data-view',v);var dv=/[?&]dn=([abc])/.exec(location.search);document.documentElement.setAttribute('data-dv',dv?dv[1]:'b');var hl=/[?&]hl=([abc])/.exec(location.search);document.documentElement.setAttribute('data-hl',hl?hl[1]:'b');var oc=/[?&]oc=([123])/.exec(location.search);document.documentElement.setAttribute('data-oc',oc?oc[1]:'2');var sv=/[?&]sv=([123])/.exec(location.search);document.documentElement.setAttribute('data-sv',sv?sv[1]:'3');var tl=/[?&]tl=([123])/.exec(location.search);document.documentElement.setAttribute('data-tl',tl?tl[1]:'3');function go(live){if(q||!location.hash)return;var id=location.hash.slice(1),al={gameui:'gacha',toolbox:'about'}[id],R={hero:'/',glance:'/',wheel:'/',skills:'/',gateway:'/land-of-hope',series:'/land-of-hope',farm:'/land-of-hope',process:'/land-of-hope',gacha:'/the-chill-gallery',danial:'/oeru',ship:'/oeru','oeru-more':'/oeru',about:'/about',toolbox:'/about',range:'/projects',films:(v==='loh'||v==='tcg')?p:'/land-of-hope'},k=al||id,t=R[k];if(t&&t!==p){if(live)location.assign(t+'#'+k);else location.replace(t+'#'+k);}else if(al){history.replaceState(null,'','#'+al);if(live)setTimeout(function(){dispatchEvent(new HashChangeEvent('hashchange'));},0);}}go(false);addEventListener('hashchange',function(){go(true);});})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chun Hee Lim — Product &amp; Creative Lead · Original IP, AI film &amp; product UI · Kuala Lumpur</title>
 <meta name="description" content="Chun Hee Lim, product &amp; creative lead in Kuala Lumpur: an original animated series, four brand films, twelve cast voices and the screens of a live game — written, directed, cut and prototyped by one person. Open to full-time roles.">
@@ -240,7 +240,7 @@ gacha-hero>span{right:50% !important;top:30% !important;width:86vw !important;he
 /* one line on a phone: the pill loses some tracking rather than wrapping */
 @media (max-width:480px){#hero span:has(>[data-avail]){font-size:9.5px !important;letter-spacing:.12em !important;padding:6px 12px 6px 11px !important;gap:8px !important;white-space:nowrap}}
 /* on a phone the pill keeps the five stops that fit, so Contact never scrolls out of reach */
-@media (max-width:520px){nav[data-metal] a[data-nav-wide]{display:none !important}}
+nav[data-metal] a[data-nav-wide]{display:none !important}
 /* twelve voice cards stacked one per row made three phone screens; two across halves it */
 @media (max-width:560px){
 [data-voices]{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:12px !important}
@@ -549,7 +549,7 @@ html:not([data-apc]) .rg-bg-apc [data-apcv="4"],html[data-apc="4"] .rg-bg-apc [d
 .sf-spin{transform-box:fill-box;transform-origin:center;animation:sfSpin 6s linear infinite}.sf-spin.rev{animation-duration:8s}
 @keyframes sfSpin{to{transform:rotate(360deg)}}
 @media (max-width:860px){.sf-wrap{grid-template-columns:minmax(0,1fr)}.sf-copy{position:static}.sf-logos{grid-template-columns:repeat(8,minmax(0,44px));gap:8px}.sf-svg{max-width:460px;margin:0 auto}.sf-logos img{width:44px;height:44px;border-radius:11px}}
-html[data-view="home"] #gateway,html[data-view="home"] #series,html[data-view="home"] #farm,html[data-view="home"] #process,html[data-view="home"] #gacha,html[data-view="home"] #films,html[data-view="home"] #danial,html[data-view="home"] #ship,html[data-view="home"] #about{display:none!important}
+html[data-view="home"] #gateway,html[data-view="home"] #series,html[data-view="home"] #farm,html[data-view="home"] #process,html[data-view="home"] #gacha,html[data-view="home"] #films,html[data-view="home"] #danial,html[data-view="home"] #ship{display:none!important}
 html[data-view="loh"] #hero,html[data-view="loh"] #glance,html[data-view="loh"] #wheel,html[data-view="loh"] #gacha,html[data-view="loh"] #danial,html[data-view="loh"] #ship,html[data-view="loh"] #about,html[data-view="loh"] #range{display:none!important}
 html[data-view="tcg"] #hero,html[data-view="tcg"] #glance,html[data-view="tcg"] #wheel,html[data-view="tcg"] #gateway,html[data-view="tcg"] #series,html[data-view="tcg"] #farm,html[data-view="tcg"] #process,html[data-view="tcg"] #danial,html[data-view="tcg"] #ship,html[data-view="tcg"] #about,html[data-view="tcg"] #range{display:none!important}
 html[data-view="oeru"] #hero,html[data-view="oeru"] #glance,html[data-view="oeru"] #wheel,html[data-view="oeru"] #gateway,html[data-view="oeru"] #series,html[data-view="oeru"] #farm,html[data-view="oeru"] #process,html[data-view="oeru"] #gacha,html[data-view="oeru"] #films,html[data-view="oeru"] #about,html[data-view="oeru"] #range{display:none!important}
@@ -860,37 +860,29 @@ main [id]{scroll-margin-top:104px}main #hero{scroll-margin-top:0}
 html::before{content:"";position:fixed;left:0;right:0;top:0;height:96px;z-index:89;pointer-events:none;background:linear-gradient(180deg,#0a0a0a 45%,rgba(10,10,10,0))}
 /* the flythrough stage starts below the pill, so the ring and its captions are never under it */
 [data-cyl-scroll]>div{top:88px!important;height:calc(100svh - 88px)!important}
-/* 2026-11-21 hero (all widths): the pill is the only nav; the name is static and
-   crisp at rest (no blur intro, no scroll parallax); the portrait sits between the
-   words and never over a letter; role line and two actions under the name */
-.hx-top{display:none}
-html.hx-on nav[data-metal]{opacity:1;visibility:visible}
-.hx{justify-content:center;padding:clamp(110px,14vh,150px) 0 clamp(56px,9vh,96px)}
-.hx-stage{flex:0 0 auto}
-.hx-name{display:flex;align-items:center;justify-content:center;gap:.2em;font-size:clamp(64px,11.2vw,184px);line-height:.8;white-space:nowrap}
-.hx-w{display:block}
-.hx-w:first-child{order:0}.hx-pill{order:1}.hx-w+.hx-w{order:2}
+/* 2026-11-21 hero: the original first screen (menu, role, CV, CHUN / HEE with the
+   portrait between, SCROLL), with the name crisp at rest: no blur intro */
 .hx-ch,.hx-wd{animation:none!important;filter:none!important;opacity:1!important;transform:none!important}
-.hx-pill{position:relative;left:auto;top:auto;margin:0;flex:none;width:.6em;height:.84em;animation:none!important;opacity:1!important;transform:none}
-.hx-pill img{top:2%}
-.hx-w,.hx-w:first-child,.hx-w+.hx-w,.hx-pill{translate:none!important}
-.hx-scroll,.hx-down{display:none!important}
-.hx-mob{display:flex;flex-direction:column;align-items:center;gap:clamp(24px,3.4vh,36px);position:relative;z-index:5;padding:clamp(32px,5vh,56px) 20px 0;text-align:center}
-.hx-role{margin:0;display:flex;flex-direction:column;gap:8px;font-size:clamp(12px,1vw,15px);font-weight:700;letter-spacing:.2em;line-height:1.4;text-transform:uppercase;color:#f4f2ec}
-.hx-role span+span{font-size:.9em;letter-spacing:.26em;color:#9a988f}
-.hx-acts{display:flex;gap:12px;width:100%;max-width:400px}
-.hx-btn{flex:1;min-height:52px;display:flex;align-items:center;justify-content:center;border-radius:999px;font-size:15px;font-weight:700;text-decoration:none;transition:transform .3s,background .3s,color .3s}
-.hx-btn:active{transform:scale(.97)}
-.hx-btn-p{background:#f4f2ec;color:#0a0a0a}
-.hx-btn-s{color:#f4f2ec;box-shadow:inset 0 0 0 1.5px rgba(244,242,236,.35)}
-.hx-btn-s:hover{background:#f4f2ec;color:#0a0a0a}
-@media (max-width:760px){
-.hx{padding:100px 0 40px}
-.hx-name{flex-direction:column;gap:.04em;font-size:min(24vw,150px)}
-.hx-pill{order:-1!important;width:112px;height:140px;margin-bottom:22px}
-.hx-pill:hover{transform:none}
-.hx-mob{padding-top:30px;gap:24px}
-}
+/* tool logos: no ring and no light backing, so dark logos show no pale edge */
+.tc,#about .tc{background:transparent!important;box-shadow:none!important;border:0!important}.tc-i{border-radius:11px}
+.tb-tile::after{display:none!important}
+/* the toolbox bento on About repeated the skill cards and the tool icons (Chun Hee, 2026-11-21): hidden */
+#about .tb-band,#tbhome{display:none!important}
+/* HR reads the work history on the landing page (Chun Hee, 2026-11-21): the About
+   section (timeline, skills, tools, languages, open to) shows on Home after the skill cards,
+   and the short experience strip there is dropped so nothing repeats */
+html[data-view="home"] #skills .sk-exp{display:none!important}
+/* wheel: the cards off to the side dim, but no longer blur. A blur that changes
+   every frame re-paints every card on every frame, which is what made the wheel
+   stutter between Land of Hope and Autopilotclaim */
+.rg-card{filter:none!important;opacity:calc(1 - var(--d) * .55)!important}
+html[data-view="home"] #about{padding-top:0!important}html[data-view="home"] #about .wk{margin-top:clamp(24px,3vw,40px)}
+/* brand card chips never run past the card: they shrink, then stack, as the card narrows */
+.sv-brand{container-type:inline-size}.sv-chips{grid-template-columns:repeat(2,minmax(0,1fr))}.sv-chips em{min-width:0;overflow:hidden}
+@container (max-width:300px){.sv-chips em{font-size:9.5px;letter-spacing:.02em;padding:3px 7px;gap:5px}}
+@container (max-width:240px){.sv-chips{grid-template-columns:minmax(0,1fr)}}
+/* the hero has its own top bar and no pill, so the fade under the pill stays off there */
+html.hx-on::before{opacity:0!important}
 </style>
 </helmet>
 
@@ -919,7 +911,6 @@ html.hx-on nav[data-metal]{opacity:1;visibility:visible}
   <div class="hx-stage">
     <h1 class="hx-name" aria-label="Chun Hee Lim"><span class="hx-w" aria-hidden="true"><span class="hx-ch" style="animation-delay:0ms">C</span><span class="hx-ch" style="animation-delay:100ms">H</span><span class="hx-ch" style="animation-delay:200ms">U</span><span class="hx-ch" style="animation-delay:300ms">N</span></span><span class="hx-w" aria-hidden="true"><span class="hx-ch" style="animation-delay:400ms">H</span><span class="hx-ch" style="animation-delay:500ms">E</span><span class="hx-ch" style="animation-delay:600ms">E</span></span><span class="hx-pill" aria-hidden="true"><img src="assets/portrait-ae911719ff.webp" srcset="assets/portrait-480-7b0657d451.webp 480w, assets/portrait-ae911719ff.webp 720w" sizes="(max-width: 760px) 213px, 13vw" alt="" width="720" height="900" fetchpriority="high" decoding="async"></span></h1>
   </div>
-  <div class="hx-mob"><p class="hx-role"><span>Product &amp; Creative Lead</span><span>Kuala Lumpur</span></p><div class="hx-acts"><a class="hx-btn hx-btn-p" href="/#wheel" data-scroll="#wheel">View work</a><a class="hx-btn hx-btn-s" href="/Chun-Hee-Lim-CV.pdf" download="">Download CV</a></div></div>
   <p class="hx-tag hx-scroll" aria-hidden="true"><span class="hx-wd" style="animation-delay:900ms"><i class="hx-ln"></i>scroll<i class="hx-ln"></i></span></p>
   <a class="hx-down" href="#glance" data-scroll="#glance" aria-label="Scroll down"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
 </section>
@@ -993,7 +984,7 @@ html.hx-on nav[data-metal]{opacity:1;visibility:visible}
       <div><h2 id="h-skills">What I bring to a team.</h2></div>
       <p class="sk-lede">Six things I do end to end. Each card opens the work that proves it.</p>
     </div>
-    <ul class="sk-grid"><li><a href="/land-of-hope"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/claude-fbf6150776.webp" alt="" loading="lazy" decoding="async" width="64" height="64"><img src="assets/tools/higgsfield-d705892b10.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/ep1-a133e9fe19.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-strip"><span><img src="assets/ep1-a133e9fe19.webp" alt="" loading="lazy"><img src="assets/ep2-8f1e43ea47.webp" alt="" loading="lazy"><img src="assets/ep3-1b2050e1b2.webp" alt="" loading="lazy"><img src="assets/ep4-b108cbc00f.webp" alt="" loading="lazy"><img src="assets/ep1-a133e9fe19.webp" alt="" loading="lazy"><img src="assets/ep2-8f1e43ea47.webp" alt="" loading="lazy"></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>AI Production</b><p>Concept to finished episode, directed shot by shot.</p></a></li><li><a href="/the-chill-gallery#films"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/capcut-0e144f0efb.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/skill-edit-76ba0151d1.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-tl"><span class="sv-prev"><img src="assets/skill-edit-76ba0151d1.webp" alt="" loading="lazy"></span><span class="sv-tracks"><b style="--l:0;--w:34%;--im:url(assets/skill-edit-76ba0151d1.webp)"></b><b style="--l:35%;--w:24%;--im:url(assets/sket-9e3cef5ab3.webp)"></b><b style="--l:60%;--w:40%;--im:url(assets/bounty-board-4bccd72139.webp)"></b><u style="--l:0;--w:59%"></u><u style="--l:60%;--w:40%"></u><em><span>00:42</span></em></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Video &amp; Editing</b><p>Story, edit and voice-over on every film.</p></a></li><li><a href="/land-of-hope#farm"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/elevenlabs-e06def6150.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/skill-mic-be1ef1349c.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-voice"><img src="assets/skill-mic-be1ef1349c.webp" alt="" loading="lazy"><span class="sv-wave"><i style="--d:0.0s;--h:20%"></i><i style="--d:0.4s;--h:73%"></i><i style="--d:0.8s;--h:56%"></i><i style="--d:0.1s;--h:39%"></i><i style="--d:0.5s;--h:22%"></i><i style="--d:0.9s;--h:75%"></i><i style="--d:0.2s;--h:58%"></i><i style="--d:0.6s;--h:41%"></i><i style="--d:1.0s;--h:24%"></i><i style="--d:0.3s;--h:77%"></i><i style="--d:0.7s;--h:60%"></i><i style="--d:0.0s;--h:43%"></i><i style="--d:0.4s;--h:26%"></i><i style="--d:0.8s;--h:79%"></i><i style="--d:0.1s;--h:62%"></i><i style="--d:0.5s;--h:45%"></i><i style="--d:0.9s;--h:28%"></i><i style="--d:0.2s;--h:81%"></i><i style="--d:0.6s;--h:64%"></i><i style="--d:1.0s;--h:47%"></i><i style="--d:0.3s;--h:30%"></i><i style="--d:0.7s;--h:83%"></i><i style="--d:0.0s;--h:66%"></i><i style="--d:0.4s;--h:49%"></i><i style="--d:0.8s;--h:32%"></i><i style="--d:0.1s;--h:85%"></i><i style="--d:0.5s;--h:68%"></i><i style="--d:0.9s;--h:51%"></i></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Voice &amp; Sound</b><p>Twelve character voices, cast and directed.</p></a></li><li><a href="/the-chill-gallery"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/claude-fbf6150776.webp" alt="" loading="lazy" decoding="async" width="64" height="64"><img src="assets/tools/claude-design-3584343cba.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/gameui/packs-after-210a9a6933.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-mac"><span class="sv-scr"><img src="assets/gameui/signin2-6b77dc11.webp" alt="" loading="lazy"><img class="sv-x" src="assets/gameui/pack2-f7d2ed7b.webp" alt="" loading="lazy"><i class="sv-tap"></i></span><span class="sv-base"></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>UI/UX Design</b><p>Game screens and flows, prototyped in code and adopted by engineering.</p></a></li><li><a href="/oeru"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/claude-fbf6150776.webp" alt="" loading="lazy" decoding="async" width="64" height="64"><img src="assets/tools/vercel-14a95a2700.webp" alt="" loading="lazy" decoding="async" width="64" height="64"><img src="assets/tools/neon-e7881309ae.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/builds/danial-b6e0939428.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-code"><span class="sv-bar"><i></i><i></i><i></i></span><code><b class="k">git</b> push origin staging<br><b class="c">✓ checks passed</b><br><b class="k">vercel</b> ▲ <b class="s">Ready</b><i class="sv-cur"></i></code></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Web &amp; AI Builds</b><p>AI products designed and built solo, deployed on Vercel.</p></a></li><li><a href="/about"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/zernio-5cb3fd5be5.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/og10-054d40f57d.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-brand"><span class="sv-bars"><i style="--h:28%"></i><i style="--h:42%"></i><i style="--h:38%"></i><i style="--h:57%"></i><i style="--h:66%"></i><i style="--h:84%"></i></span><span class="sv-chips"><em><img src="assets/brands/oeru-icon-1fe215b31d.webp" alt="" loading="lazy">oeru</em><em><img src="assets/brands/oc-mark-baf4e2854e.webp" alt="" loading="lazy">OwnershipCoin</em><em><img class="sv-fit" src="assets/brands/tcg-mark-551d7b2d00.webp" alt="" loading="lazy">The Chill Gallery</em><em><img class="sv-ark" src="assets/brands/ark-mark-38e64df3d5.webp" alt="" loading="lazy">Ark.tg</em></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Brand &amp; Growth</b><p>Sole marketer and creative for a four-brand Web3 ecosystem.</p></a></li></ul>
+    <ul class="sk-grid"><li><a href="/land-of-hope"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/claude-fbf6150776.webp" alt="" loading="lazy" decoding="async" width="64" height="64"><img src="assets/tools/higgsfield-d705892b10.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/ep1-a133e9fe19.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-strip"><span><img src="assets/ep1-a133e9fe19.webp" alt="" loading="lazy"><img src="assets/ep2-8f1e43ea47.webp" alt="" loading="lazy"><img src="assets/ep3-1b2050e1b2.webp" alt="" loading="lazy"><img src="assets/ep4-b108cbc00f.webp" alt="" loading="lazy"><img src="assets/ep1-a133e9fe19.webp" alt="" loading="lazy"><img src="assets/ep2-8f1e43ea47.webp" alt="" loading="lazy"></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Animated Series</b><p>Concept to finished episode, directed shot by shot.</p></a></li><li><a href="/the-chill-gallery#films"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/capcut-0e144f0efb.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/skill-edit-76ba0151d1.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-tl"><span class="sv-prev"><img src="assets/skill-edit-76ba0151d1.webp" alt="" loading="lazy"></span><span class="sv-tracks"><b style="--l:0;--w:34%;--im:url(assets/skill-edit-76ba0151d1.webp)"></b><b style="--l:35%;--w:24%;--im:url(assets/sket-9e3cef5ab3.webp)"></b><b style="--l:60%;--w:40%;--im:url(assets/bounty-board-4bccd72139.webp)"></b><u style="--l:0;--w:59%"></u><u style="--l:60%;--w:40%"></u><em><span>00:42</span></em></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Video &amp; Editing</b><p>Story, edit and voice-over on every film.</p></a></li><li><a href="/land-of-hope#farm"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/elevenlabs-e06def6150.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/skill-mic-be1ef1349c.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-voice"><img src="assets/skill-mic-be1ef1349c.webp" alt="" loading="lazy"><span class="sv-wave"><i style="--d:0.0s;--h:20%"></i><i style="--d:0.4s;--h:73%"></i><i style="--d:0.8s;--h:56%"></i><i style="--d:0.1s;--h:39%"></i><i style="--d:0.5s;--h:22%"></i><i style="--d:0.9s;--h:75%"></i><i style="--d:0.2s;--h:58%"></i><i style="--d:0.6s;--h:41%"></i><i style="--d:1.0s;--h:24%"></i><i style="--d:0.3s;--h:77%"></i><i style="--d:0.7s;--h:60%"></i><i style="--d:0.0s;--h:43%"></i><i style="--d:0.4s;--h:26%"></i><i style="--d:0.8s;--h:79%"></i><i style="--d:0.1s;--h:62%"></i><i style="--d:0.5s;--h:45%"></i><i style="--d:0.9s;--h:28%"></i><i style="--d:0.2s;--h:81%"></i><i style="--d:0.6s;--h:64%"></i><i style="--d:1.0s;--h:47%"></i><i style="--d:0.3s;--h:30%"></i><i style="--d:0.7s;--h:83%"></i><i style="--d:0.0s;--h:66%"></i><i style="--d:0.4s;--h:49%"></i><i style="--d:0.8s;--h:32%"></i><i style="--d:0.1s;--h:85%"></i><i style="--d:0.5s;--h:68%"></i><i style="--d:0.9s;--h:51%"></i></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Voice &amp; Sound</b><p>Twelve character voices, cast and directed.</p></a></li><li><a href="/the-chill-gallery"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/claude-fbf6150776.webp" alt="" loading="lazy" decoding="async" width="64" height="64"><img src="assets/tools/claude-design-3584343cba.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/gameui/packs-after-210a9a6933.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-mac"><span class="sv-scr"><img src="assets/gameui/signin2-6b77dc11.webp" alt="" loading="lazy"><img class="sv-x" src="assets/gameui/pack2-f7d2ed7b.webp" alt="" loading="lazy"><i class="sv-tap"></i></span><span class="sv-base"></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>UI/UX Design</b><p>Game screens and flows, prototyped in code and adopted by engineering.</p></a></li><li><a href="/oeru"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/claude-fbf6150776.webp" alt="" loading="lazy" decoding="async" width="64" height="64"><img src="assets/tools/vercel-14a95a2700.webp" alt="" loading="lazy" decoding="async" width="64" height="64"><img src="assets/tools/neon-e7881309ae.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/builds/danial-b6e0939428.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-code"><span class="sv-bar"><i></i><i></i><i></i></span><code><b class="k">git</b> push origin staging<br><b class="c">✓ checks passed</b><br><b class="k">vercel</b> ▲ <b class="s">Ready</b><i class="sv-cur"></i></code></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Web &amp; Product Builds</b><p>Products designed and built solo, deployed on Vercel.</p></a></li><li><a href="/about"><span class="sk-vis" aria-hidden="true"><span class="sv1"><img src="assets/tools/zernio-5cb3fd5be5.webp" alt="" loading="lazy" decoding="async" width="64" height="64"></span><span class="sv2"><img src="assets/og10-054d40f57d.webp" alt="" loading="lazy" decoding="async"></span><span class="sv3"><span class="sv-brand"><span class="sv-bars"><i style="--h:28%"></i><i style="--h:42%"></i><i style="--h:38%"></i><i style="--h:57%"></i><i style="--h:66%"></i><i style="--h:84%"></i></span><span class="sv-chips"><em><img src="assets/brands/oeru-icon-1fe215b31d.webp" alt="" loading="lazy">oeru</em><em><img src="assets/brands/oc-mark-baf4e2854e.webp" alt="" loading="lazy">OwnershipCoin</em><em><img class="sv-fit" src="assets/brands/tcg-mark-551d7b2d00.webp" alt="" loading="lazy">The Chill Gallery</em><em><img class="sv-ark" src="assets/brands/ark-mark-38e64df3d5.webp" alt="" loading="lazy">Ark.tg</em></span></span></span></span><span class="sk-ar"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><b>Brand &amp; Growth</b><p>Sole marketer and creative for a four-brand Web3 ecosystem.</p></a></li></ul>
     <div class="sk-exp">
       <div>
         <p class="gl-kick">Experience</p>
@@ -1281,7 +1272,7 @@ html.hx-on nav[data-metal]{opacity:1;visibility:visible}
     <div class="wk-cards">
       <div class="wk-col">
         <div data-reveal="" data-d="1" style="border:1px solid rgba(17,17,16,.12);border-radius:18px;padding:26px;background:rgba(17,17,16,.035);margin-bottom:20px">
-          <h4 style="font-size:10px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#6b6a63;margin-bottom:14px">Skills</h4><ul style="list-style:none;display:flex;flex-wrap:wrap;gap:7px"><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Product management</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">UI/UX &amp; prototyping</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">AI product building</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Creative direction</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">AI film &amp; voice</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Custom vision models</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Workflow automation</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Social media &amp; growth</li></ul>
+          <h4 style="font-size:10px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#6b6a63;margin-bottom:14px">Skills</h4><ul style="list-style:none;display:flex;flex-wrap:wrap;gap:7px"><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Product management</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">UI/UX &amp; prototyping</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Product building</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Creative direction</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Film &amp; voice</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Custom vision models</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Workflow automation</li><li style="list-style:none;font-size:13px;line-height:1;padding:7px 11px;border:1px solid rgba(17,17,16,.16);border-radius:999px;color:#111110;background:#f5f4f0">Social media &amp; growth</li></ul>
           <h4 style="font-size:10px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#6b6a63;margin:26px 0 0;padding-top:22px;border-top:1px solid rgba(17,17,16,.12)">Tools &amp; software</h4><p style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#8f8e86;margin:16px 0 8px">Build</p><ul style="list-style:none;display:flex;flex-wrap:wrap;gap:10px"><li class="tc" title="Claude Code"><img class="tc-i" src="assets/tools/claude-fbf6150776.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">Claude Code</span></li><li class="tc" title="ChatGPT Codex"><img class="tc-i" src="assets/tools/chatgpt-0c5aa3bee4.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">ChatGPT Codex</span></li><li class="tc" title="TypeSafe Jev"><img class="tc-i" src="assets/tools/typesafe-b00a05a5f7.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">TypeSafe Jev</span></li><li class="tc" title="Vercel"><img class="tc-i" src="assets/tools/vercel-14a95a2700.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">Vercel</span></li><li class="tc" title="Neon"><img class="tc-i" src="assets/tools/neon-e7881309ae.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">Neon</span></li><li class="tc" title="GitHub"><img class="tc-i" src="assets/tools/github-9b8fcd4bdc.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">GitHub</span></li><li class="tc" title="Tailscale"><img class="tc-i" src="assets/tools/tailscale-dd85fd308d.webp" alt="" loading="lazy" decoding="async" width="40" height="40"><span class="vh">Tailscale</span></li><li class="tc" title="Resend"><img class="tc-i" src="assets/tools/resend-8c14436655.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">Resend</span></li><li class="tc" title="Stripe"><img class="tc-i" src="assets/tools/stripe-75554b911b.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">Stripe</span></li></ul><p style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#8f8e86;margin:16px 0 8px">Create</p><ul style="list-style:none;display:flex;flex-wrap:wrap;gap:10px"><li class="tc" title="Higgsfield"><img class="tc-i" src="assets/tools/higgsfield-d705892b10.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">Higgsfield</span></li><li class="tc" title="Seedance"><img class="tc-i" src="assets/tools/seedance-99a4132a71.webp" alt="" loading="lazy" decoding="async" width="40" height="40"><span class="vh">Seedance</span></li><li class="tc" title="ElevenLabs"><img class="tc-i" src="assets/tools/elevenlabs-mark-1bbe468d60.webp" alt="" loading="lazy" decoding="async" width="40" height="40"><span class="vh">ElevenLabs</span></li><li class="tc" title="CapCut"><img class="tc-i" src="assets/tools/capcut-0e144f0efb.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">CapCut</span></li></ul><p style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#8f8e86;margin:16px 0 8px">Grow</p><ul style="list-style:none;display:flex;flex-wrap:wrap;gap:10px"><li class="tc" title="Zernio"><img class="tc-i" src="assets/tools/zernio-5cb3fd5be5.webp" alt="" loading="lazy" decoding="async" width="18" height="18"><span class="vh">Zernio</span></li></ul>
         </div>
         <div data-reveal="" data-d="2" style="border:1px solid rgba(17,17,16,.12);border-radius:18px;padding:26px;background:rgba(17,17,16,.035);margin-bottom:20px">
@@ -1802,20 +1793,43 @@ class Component extends DCLogic {
   var root = document.documentElement;
   function $(s){ return document.querySelector(s); }
 
-  /* nav: hidden while the hero fills the screen */
+  /* Page positions are measured once and again only when the layout changes
+     (resize, images and fonts arriving), never inside a scroll or animation
+     frame: reading layout right after the wheel writes its styles forced a full
+     layout on every frame, which is what made the wheel stutter. */
+  var geo = null, geoTimer = 0;
+  function absTop(el){ return el ? el.getBoundingClientRect().top + scrollY : null; }
+  function measure(){
+    var w = wheelEls(), h = $('#hero');
+    geo = {
+      heroTop: absTop(h), heroH: h ? h.offsetHeight : 0,
+      glanceTop: absTop($('#glance')), danialTop: absTop($('#danial')), wheelTop: absTop($('#wheel')),
+      trackTop: absTop(w.track), trackH: w.track ? w.track.offsetHeight : 0,
+      step: w.wheel ? (parseFloat(getComputedStyle(w.wheel).getPropertyValue('--step')) || 30) : 30,
+      vh: innerHeight
+    };
+  }
+  function remeasure(){ clearTimeout(geoTimer); geoTimer = setTimeout(function(){ geo = null; navState(); kick(); }, 60); }
+  if (typeof ResizeObserver === 'function') {
+    var ro = new ResizeObserver(remeasure);
+    (function watchBody(){ if (document.body) ro.observe(document.body); else setTimeout(watchBody, 50); })();
+  }
+  var navQueued = false;
   function navState(){
-    var h = $('#hero'); if (!h) return;
-    var hr = h.getBoundingClientRect();
-    root.classList.toggle('hx-on', hr.bottom > innerHeight * 0.35);
+    if (!geo) measure();
+    var h = $('#hero'); if (!h || geo.heroTop === null) return;
+    var y = scrollY, vh = innerHeight;
+    var bottom = geo.heroTop + geo.heroH - y;
+    root.classList.toggle('hx-on', bottom > vh * 0.35);
     if (reduce) return;
     var cl = function(v){ return Math.min(1, Math.max(0, v)).toFixed(3); };
     /* one continuous move: the name lifts away as the glance card rises into its place, then the wheel title follows */
-    h.style.setProperty('--hp', cl(-hr.top / hr.height));
-    var g = $('#glance'); if (g) g.style.setProperty('--gp', cl((innerHeight - g.getBoundingClientRect().top) / (innerHeight * 0.75)));
-    if (reduce) { var sd = $('.sf-dot'); if (sd) sd.remove(); }
-    var dn = $('#danial'); if (dn && dn.getBoundingClientRect().top < innerHeight * 0.7) dn.classList.add('in');
-    var w = $('#wheel'); if (w) w.style.setProperty('--wp', cl((innerHeight - w.getBoundingClientRect().top) / (innerHeight * 0.6)));
+    h.style.setProperty('--hp', cl((y - geo.heroTop) / (geo.heroH || 1)));
+    var g = $('#glance'); if (g && geo.glanceTop !== null) g.style.setProperty('--gp', cl((vh - (geo.glanceTop - y)) / (vh * 0.75)));
+    var dn = $('#danial'); if (dn && geo.danialTop !== null && geo.danialTop - y < vh * 0.7) dn.classList.add('in');
+    var w = $('#wheel'); if (w && geo.wheelTop !== null) w.style.setProperty('--wp', cl((vh - (geo.wheelTop - y)) / (vh * 0.6)));
   }
+  function navSoon(){ if (navQueued) return; navQueued = true; requestAnimationFrame(function(){ navQueued = false; navState(); }); }
 
   /* menu closes after a pick, on Escape and on a click outside */
   document.addEventListener('click', function(e){
@@ -1837,30 +1851,42 @@ class Component extends DCLogic {
   /* wheel: pictures and titles turn together round a centre off the left edge; scrolling down brings the next piece up */
   var cur = 0, target = 0, running = false;
   function wheelEls(){ return {track: $('[data-rg-track]'), wheel: $('[data-rg-wheel]'), labels: $('[data-rg-labels]')}; }
-  function progress(track){
-    var r = track.getBoundingClientRect(), span = track.offsetHeight - innerHeight;
-    return span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 0;
+  function progress(){
+    var span = geo.trackH - innerHeight;
+    return span > 0 ? Math.min(1, Math.max(0, (scrollY - geo.trackTop) / span)) : 0;
   }
-  function stepOf(w){ return parseFloat(getComputedStyle(w.wheel).getPropertyValue('--step')) || 30; }
+  var lastCur = null, lastCards = null;
   function tick(){
     var w = wheelEls(); if (!w.wheel) { running = false; return; }
-    var cards = w.wheel.querySelectorAll('.rg-it'), labs = w.labels ? w.labels.querySelectorAll('.rg-lb') : [], bgs = w.track.querySelectorAll('[data-rg-bg]'), k = cards.length, step = stepOf(w);
+    if (!geo || geo.trackTop === null) measure();
+    var cards = w.wheel.querySelectorAll('.rg-it'), labs = w.labels ? w.labels.querySelectorAll('.rg-lb') : [], bgs = w.track.querySelectorAll('[data-rg-bg]'), k = cards.length, step = geo.step;
     if (!reduce || target === cur) {
-      var seg = Math.min(k - 1, progress(w.track) * (k - 0.6)), i0 = Math.floor(seg), fr = seg - i0;
+      var seg = Math.min(k - 1, progress() * (k - 0.6)), i0 = Math.floor(seg), fr = seg - i0;
       fr = Math.min(1, Math.max(0, (fr - 0.25) / 0.5)); fr = fr * fr * (3 - 2 * fr);   /* hold on each piece, then glide to the next */
       target = Math.min(k - 1, i0 + fr);
     }
     cur += (target - cur) * (reduce ? 1 : 0.12);
     if (Math.abs(target - cur) < 0.001) cur = target;
-    for (var j = 0; j < k; j++) {
+    var same = cur === lastCur && cards[0] === lastCards; lastCur = cur; lastCards = cards[0];
+    for (var j = 0; j < k && !same; j++) {
       var t = (j - cur) * step, d = Math.min(1, Math.abs(j - cur) / 2).toFixed(3);
       cards[j].style.setProperty('--t', t.toFixed(2) + 'deg');
       cards[j].firstElementChild.style.setProperty('--d', d);
       if (labs[j]) { var sj = j - cur; labs[j].style.setProperty('--s', sj.toFixed(3)); labs[j].style.setProperty('--o', Math.max(0, 1 - Math.abs(sj) * 1.6).toFixed(3)); labs[j].classList.toggle('on', Math.abs(sj) < 0.5); }
-      if (bgs[j]) bgs[j].style.opacity = Math.max(0, 1 - Math.abs(j - cur) * 1.25).toFixed(3);
+      if (bgs[j]) {
+        var bo = Math.max(0, 1 - Math.abs(j - cur) * 1.25);
+        bgs[j].style.opacity = bo.toFixed(3);
+        /* only the backdrops that can be seen keep playing */
+        var on = bo > 0.01;
+        if (bgs[j].__on !== on) {
+          bgs[j].__on = on;
+          bgs[j].querySelectorAll('section-video').forEach(function (v) { v.offstage = !on; if (on) { if (v.play && v.wanted !== false) v.play(); } else if (v.pause) v.pause(); });
+        }
+      }
     }
-    var r = w.track.getBoundingClientRect();
-    if (cur !== target || (r.bottom > 0 && r.top < innerHeight)) requestAnimationFrame(tick); else running = false;
+    var top = geo.trackTop - scrollY;
+    if (cur !== target) requestAnimationFrame(tick); else running = false;   /* scrolling kicks it again */
+    void top;
   }
   /* the project backdrops loop: each pass fades in, and fades out before the cut */
   document.addEventListener('timeupdate', function (e) {
@@ -1892,9 +1918,11 @@ class Component extends DCLogic {
   });
   document.addEventListener('focusout', function(e){ var a = e.target.closest && e.target.closest('.rg-card'); if (a) hot(a, false); });
 
-  addEventListener('scroll', function(){ navState(); kick(); }, {passive: true});
-  addEventListener('resize', function(){ navState(); kick(); });
-  var tries = 0, boot = setInterval(function(){ navState(); if ($('[data-rg-wheel]') || ++tries > 100) { clearInterval(boot); kick(); } }, 50);
+  addEventListener('scroll', function(){ navSoon(); kick(); }, {passive: true});
+  addEventListener('resize', function(){ geo = null; navState(); kick(); });
+  addEventListener('load', function(){ geo = null; navState(); kick(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ geo = null; navState(); kick(); });
+  var tries = 0, boot = setInterval(function(){ geo = null; navState(); if ($('[data-rg-wheel]') || ++tries > 100) { clearInterval(boot); kick(); } }, 50);
 })();
 </script>
 
