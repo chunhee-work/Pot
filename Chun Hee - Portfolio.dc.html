@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
+<script>(function(){var m=/[?&]pc=([0abc])/.exec(location.search);document.documentElement.setAttribute("data-pc",m?m[1]:"c")})()</script>
+<link rel="stylesheet" href="project-hero.css">
 <script>(function(){var m=location.search.match(/[?&]apc=([1234])/);if(m)document.documentElement.setAttribute("data-apc",m[1])})()</script>
 <script>(function(){var m={'/land-of-hope':'loh','/the-chill-gallery':'tcg','/oeru':'oeru','/about':'about','/contact':'contact'},p=location.pathname.replace(/\/+$/,'')||'/',q=/[?&]v=([a-z]+)/.exec(location.search),v=q?q[1]:(m[p]||'home');if(location.hash==='#contact'&&!q){v='contact';try{history.replaceState(null,'','/contact')}catch(e){}}document.documentElement.setAttribute('data-view',v);if(v==='home'&&!location.hash)document.documentElement.classList.add('hx-on');var dv=/[?&]dn=([abc])/.exec(location.search);document.documentElement.setAttribute('data-dv',dv?dv[1]:'b');var hl=/[?&]hl=([abc])/.exec(location.search);document.documentElement.setAttribute('data-hl',hl?hl[1]:'b');var oc=/[?&]oc=([123])/.exec(location.search);document.documentElement.setAttribute('data-oc',oc?oc[1]:'2');var sv=/[?&]sv=([123])/.exec(location.search);document.documentElement.setAttribute('data-sv',sv?sv[1]:'3');var tl=/[?&]tl=([123])/.exec(location.search);document.documentElement.setAttribute('data-tl',tl?tl[1]:'3');function go(live){if(q||!location.hash)return;var id=location.hash.slice(1),al={gameui:'gacha',toolbox:'about'}[id],R={hero:'/',glance:'/',wheel:'/',skills:'/',gateway:'/land-of-hope',series:'/land-of-hope',farm:'/land-of-hope',process:'/land-of-hope',gacha:'/the-chill-gallery',danial:'/oeru',ship:'/oeru','oeru-more':'/oeru',about:'/about',toolbox:'/about',range:'/projects',films:(v==='loh'||v==='tcg')?p:'/land-of-hope'},k=al||id,t=R[k];if(t&&t!==p){if(live)location.assign(t+'#'+k);else location.replace(t+'#'+k);}else if(al){history.replaceState(null,'','#'+al);if(live)setTimeout(function(){dispatchEvent(new HashChangeEvent('hashchange'));},0);}}go(false);addEventListener('hashchange',function(){go(true);});})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -268,6 +270,7 @@ landofhope-3d canvas{background:transparent}
 <script src="experience.js" defer></script>
 <script src="process-sphere.js"></script>
 <script src="section-video.js?v=2"></script>
+<script src="project-hero.js" defer></script>
 <script src="gacha-hero.js"></script>
 <script src="gacha-clips.js"></script>
 <style>
@@ -1077,6 +1080,95 @@ html.hx-on::before{opacity:0!important}
 </section>
 
 <section id="wheel" data-screen-label="Work wheel" class="rg" aria-labelledby="h-wheel">
+  <div class="ph" data-ph="">
+    <div class="ph-head"><p class="rg-eye">Portfolio</p><h2 class="ph-h">Projects</h2></div>
+    <div class="ph-track" data-ph-track="">
+    <div class="ph-stage">
+      <article class="ph-it is-on" data-ph-i="0" data-ph-next="The Chill Gallery" aria-labelledby="ph-t0">
+        <div class="ph-vis" aria-hidden="true"><section-video data-seamless src="assets/wi1080-dae4c86e33.mp4" src-webm="assets/wi1080-a60cd8d216.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/gateway-poster-674668924e.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:70% 50%"></video></section-video></div>
+        <div class="ph-shade" aria-hidden="true"></div>
+        <div class="ph-body">
+          <span class="ph-tag">Flagship series</span>
+          <p class="ph-maker">An original series</p>
+          <h3 class="ph-t" id="ph-t0">Land of Hope</h3>
+          <p class="ph-meta"><span class="ph-box">Series</span><span class="ph-box">4 EP</span><span class="ph-box">HD</span></p>
+          <p class="ph-line">2026 <i>·</i> Creative Lead <i>·</i> Fantasy, Film</p>
+          <p class="ph-ep">Season 1 · Four episodes, one month</p>
+          <p class="ph-d">A world, its story and its voices — written, voiced and cut by me.</p>
+          <div class="ph-bar"><span class="ph-trk"><span class="ph-fill" style="--p:1"></span></span><small data-ph-stage="4 of 4 episodes">4 of 4 episodes</small></div>
+          <div class="ph-act">
+            <a class="ph-play" href="/land-of-hope"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"></path></svg>Watch</a>
+            <a class="ph-ic" href="/land-of-hope#series" aria-label="Episodes" title="Episodes"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect><path d="M7 5v14M17 5v14M3 9.5h4M3 14.5h4M17 9.5h4M17 14.5h4" stroke="currentColor" stroke-width="2"></path></svg></a>
+            <a class="ph-ic" href="/process" aria-label="How it was made" title="How it was made"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg></a>
+          </div>
+        </div>
+      </article>
+      <article class="ph-it" data-ph-i="1" data-ph-next="oeru" aria-labelledby="ph-t1">
+        <div class="ph-vis ph-vis-tcg" aria-hidden="true"><section-video data-seamless src="assets/gameui/pack2-c53ab403.mp4" src-webm="assets/gameui/pack2-5dd4f512.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/gameui/pack2-f7d2ed7b.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%"></video></section-video></div>
+        <div class="ph-shade" aria-hidden="true"></div>
+        <div class="ph-body">
+          <span class="ph-tag">Live game</span>
+          <p class="ph-maker">The Chill Gallery · Gacha</p>
+          <h3 class="ph-t" id="ph-t1">The Chill Gallery</h3>
+          <p class="ph-meta"><span class="ph-box">Web</span><span class="ph-box">Mobile</span><span class="ph-box">Live</span></p>
+          <p class="ph-line">2026 <i>·</i> Creative Lead <i>·</i> Product design, UI/UX</p>
+          <p class="ph-ep">Gacha, screen by screen</p>
+          <p class="ph-d">I designed the screens and flows and prototyped them myself — engineering adopted the prototype as the working spec.</p>
+          <div class="ph-bar"><span class="ph-trk"><span class="ph-fill" style="--p:1"></span></span><small data-ph-stage="Live now">Live now</small></div>
+          <div class="ph-act">
+            <a class="ph-play" href="/the-chill-gallery"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"></path></svg>View project</a>
+            <a class="ph-ic" href="/the-chill-gallery#gacha" aria-label="Screens" title="Screens"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"></rect><path d="M10.5 17.5h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg></a>
+            <a class="ph-ic" href="https://gacha.thechillgallery.com" target="_blank" rel="noopener" aria-label="Open gacha.thechillgallery.com" title="Open the live game"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
+          </div>
+        </div>
+      </article>
+      <article class="ph-it" data-ph-i="2" data-ph-next="Autopilotclaim" aria-labelledby="ph-t2">
+        <div class="ph-vis ph-vis-oeru" aria-hidden="true"><section-video data-seamless src="assets/oeru/city-loop-ad0e7b5867.mp4" src-webm="assets/oeru/city-loop-7e90c53765.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/oeru/city-loop-poster-917b30b4b5.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 100%"></video></section-video></div>
+        <div class="ph-shade" aria-hidden="true"></div>
+        <div class="ph-body">
+          <span class="ph-tag">Now building</span>
+          <p class="ph-maker">oeru · Fortifi Sdn Bhd</p>
+          <h3 class="ph-t" id="ph-t2">oeru</h3>
+          <p class="ph-meta"><span class="ph-box">Product</span><span class="ph-box">Web</span><span class="ph-box">In development</span></p>
+          <p class="ph-line">2026 <i>·</i> Product Manager <i>·</i> Customer service</p>
+          <p class="ph-ep">Danial</p>
+          <p class="ph-d">A 24/7 customer-service colleague for small shops — built solo, from the brief to the product.</p>
+          <div class="ph-bar"><span class="ph-trk"><span class="ph-fill ph-run"></span></span><small data-ph-stage="In development">In development</small></div>
+          <div class="ph-act">
+            <a class="ph-play" href="/oeru"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"></path></svg>View project</a>
+            <a class="ph-ic" href="/oeru#danial" aria-label="Meet Danial" title="Meet Danial"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path></svg></a>
+            <a class="ph-ic" href="/oeru#ship" aria-label="How it ships" title="How it ships"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg></a>
+          </div>
+        </div>
+      </article>
+      <article class="ph-it" data-ph-i="3" data-ph-next="Land of Hope" aria-labelledby="ph-t3">
+        <div class="ph-vis ph-vis-apc" aria-hidden="true"><section-video data-seamless src="assets/apc/scan-v5-a0377fde11.mp4" src-webm="assets/apc/scan-v5-dbaddf58e9.webm" style="position:absolute;inset:0;display:block;pointer-events:none"><video muted="" loop="" playsinline="" preload="none" data-poster="assets/apc/scan-v5-poster-8ccfb1e240.webp" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:60% 50%"></video></section-video></div>
+        <div class="ph-shade" aria-hidden="true"></div>
+        <div class="ph-body">
+          <span class="ph-tag">Live</span>
+          <p class="ph-maker">autopilotclaim.com</p>
+          <h3 class="ph-t" id="ph-t3">Autopilotclaim</h3>
+          <p class="ph-meta"><span class="ph-box">Web</span><span class="ph-box">Live</span></p>
+          <p class="ph-line">2026 <i>·</i> Product <i>·</i> Insurance claims</p>
+          <p class="ph-ep">From photos to a filed claim</p>
+          <p class="ph-d">Reads accident photos and files the insurance claim by itself.</p>
+          <div class="ph-bar"><span class="ph-trk"><span class="ph-fill" style="--p:1"></span></span><small data-ph-stage="Live now">Live now</small></div>
+          <div class="ph-act">
+            <a class="ph-play" href="/projects#mrm"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"></path></svg>View project</a>
+            <a class="ph-ic" href="https://autopilotclaim.com" target="_blank" rel="noopener" aria-label="Open autopilotclaim.com" title="Open autopilotclaim.com"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
+          </div>
+        </div>
+      </article>
+      <div class="ph-steps" aria-hidden="true"><span class="is-on"></span><span></span><span></span><span></span></div>
+    </div>
+    </div>
+    <div class="ph-tabs" role="tablist" aria-label="Choose a project">
+      <button type="button" class="ph-tab is-on" data-ph-go="0" role="tab" aria-selected="true"><img src="assets/ep1-a133e9fe19.webp" alt="" loading="lazy" decoding="async"><span>Land of Hope</span><i class="ph-tt"></i></button>
+      <button type="button" class="ph-tab" data-ph-go="1" role="tab" aria-selected="false"><img src="assets/gameui/signin-hd-8c2dd66151.webp" alt="" loading="lazy" decoding="async"><span>The Chill Gallery</span><i class="ph-tt"></i></button>
+      <button type="button" class="ph-tab" data-ph-go="2" role="tab" aria-selected="false"><img src="assets/oeru/card-2-76b33fce7b.webp" alt="" loading="lazy" decoding="async"><span>oeru</span><i class="ph-tt"></i></button>
+      <button type="button" class="ph-tab" data-ph-go="3" role="tab" aria-selected="false"><img src="assets/apc/bay-3-ad80fb7fa8.webp" alt="" loading="lazy" decoding="async"><span>Autopilotclaim</span><i class="ph-tt"></i></button>
+    </div>
+  </div>
   <div class="rg-head">
     <p class="rg-eye">Portfolio</p>
     <h2 id="h-wheel">Projects</h2>
