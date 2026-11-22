@@ -111,3 +111,20 @@ html[data-pc="b"] .ph-body,html[data-pc="c"] .ph-body{max-width:min(620px,50%)}
 .ph-d::-webkit-scrollbar{display:none}
 .ph-d.is-more{-webkit-mask-image:linear-gradient(180deg,#000 60%,transparent);mask-image:linear-gradient(180deg,#000 60%,transparent)}
 .ph-d.is-more.is-end{-webkit-mask-image:none;mask-image:none}
+
+/* Simple & clean (Chun Hee 2026-11-22: "C is good but too wordy"). ?pcs=0 full copy, 1 (default) short, 2 shortest.
+   1: tag, title, one short line, bar, one main button + one round button. 2: title, one short line, main button. */
+.ph-s{display:none;margin-top:14px;font-size:clamp(15px,1.25vw,17px);line-height:1.5;color:#d6d3ca;max-width:34ch}
+html:not([data-pcs="0"]) .ph-s{display:block}
+html:not([data-pcs="0"]) .ph-maker,html:not([data-pcs="0"]) .ph-meta,html:not([data-pcs="0"]) .ph-line,html:not([data-pcs="0"]) .ph-ep,html:not([data-pcs="0"]) .ph-d{display:none}
+html:not([data-pcs="0"]) .ph-ic~.ph-ic{display:none}
+html:not([data-pcs="0"]) .ph-t{margin-top:16px}
+html:not([data-pcs="0"]) .ph-bar{width:min(260px,100%)}
+html[data-pcs="2"] .ph-tag,html[data-pcs="2"] .ph-bar,html[data-pcs="2"] .ph-ic{display:none}
+html[data-pcs="2"] .ph-t{margin-top:0;font-size:clamp(52px,6.4vw,96px)}
+html[data-pcs="2"] .ph-act{margin-top:28px}
+@media (max-width:767px){
+  html:not([data-pcs="0"]) .ph-vis{height:78%}
+  html:not([data-pcs="0"]) .ph-it .ph-shade{background:linear-gradient(0deg,#0a0a0a 0%,#0a0a0a 18%,rgba(10,10,10,.75) 32%,rgba(10,10,10,0) 52%),linear-gradient(180deg,rgba(10,10,10,.6) 0%,rgba(10,10,10,0) 18%)}
+  html:not([data-pcs="0"]) .ph-body{padding-bottom:40px}
+}
