@@ -2,6 +2,7 @@
 // Run: node tests/review-flows.mjs [baseUrl]   (default http://localhost:8080)
 //   1. Contact in the nav opens /contact (its own page, nothing above it) from every page
 //   5. footer/badge contrast, skyline behind contact, /about clear of nav, home has no script errors
+//   7. Projects heroes: four projects in order while scrolling, one at a time, bottom-right corner empty
 //   6. KL skyline never crosses the contact rows while scrolling (pixel check, home + /about, 5 widths)
 //   1b. Home first screen: portrait visible, capsule nav hidden, role line not covered, at 390/768/1024/1440
 //   2. "Open the production line" on /land-of-hope goes to /process (fresh, and again after Back)
@@ -258,6 +259,34 @@ for (const w of [390, 768, 1024, 1280, 1440]) for (const page of ['/', '/about']
     }
     log(!worst.length, `Skyline clear of contact rows on ${page} @${w}`, worst.length ? 'towers cross the rows: ' + worst.join(', ') : 'clear at 6 scroll positions');
   } catch (e) { log(false, `Skyline clear of contact rows on ${page} @${w}`, e.message.split('\n')[0]); }
+  await ctx.close();
+}
+
+/* 7. Projects as title heroes (Chun Hee, 2026-11-22, layout C): scrolling down the Projects section shows the four
+      projects in order, one at a time, each hero fits the screen, the button opens that project,
+      and no mark or caption sits in the hero's bottom-right corner (only the hero's own words) */
+for (const w of [390, 1280, 1440]) {
+  const ctx = await ctxFor(w); const p = await ctx.newPage();
+  try {
+    await p.goto(base + '/', { waitUntil: 'load' }); await p.waitForTimeout(800);
+    const seen = [], bad = [];
+    for (const f of [0.05, 0.3, 0.55, 0.8, 0.99]) {
+      await p.evaluate((f) => { const t = document.querySelector('[data-ph-track]'); scrollTo(0, t.getBoundingClientRect().top + scrollY + f * (t.offsetHeight - innerHeight)); }, f);
+      await p.waitForTimeout(900);
+      const r = await p.evaluate(() => {
+        const on = [...document.querySelectorAll('.ph-it')].filter((x) => getComputedStyle(x).visibility === 'visible' && +getComputedStyle(x).opacity > 0.5);
+        const it = on[0], b = it && it.querySelector('.ph-body').getBoundingClientRect(), s = document.querySelector('.ph-stage').getBoundingClientRect();
+        const corner = it ? [...it.querySelectorAll('*')].filter((e) => e.children.length === 0 && e.textContent.trim() && e.getClientRects().length && !e.closest('.ph-body')).some((e) => { const q = e.getBoundingClientRect(); return q.left > s.right - s.width * 0.25 && q.top > s.bottom - s.height * 0.2; }) : false;
+        return { n: on.length, i: it ? +it.getAttribute('data-ph-i') : -1, fits: !!b && b.top >= s.top - 1 && b.bottom <= s.bottom + 1, corner, href: it && it.querySelector('.ph-play').getAttribute('href') };
+      });
+      seen.push(r.i); if (r.n !== 1 || !r.fits || r.corner) bad.push(JSON.stringify(r));
+    }
+    const order = [...new Set(seen)].join(',');
+    log(order === '0,1,2,3' && !bad.length, `Projects heroes in order on / @${w}`, `showed ${order}${bad.length ? ', problems: ' + bad.join(' ') : ', one at a time, each fits, bottom-right empty'}`);
+    await press(p, w, p.locator('.ph-it.is-on .ph-play'));
+    const ms = await waitUrl(p, /^\/projects$/);
+    log(ms >= 0, `Last hero button opens its project @${w}`, ms >= 0 ? 'opened /projects' : 'stayed on ' + new URL(p.url()).pathname);
+  } catch (e) { log(false, `Projects heroes on / @${w}`, e.message.split('\n')[0]); }
   await ctx.close();
 }
 

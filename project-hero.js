@@ -51,5 +51,9 @@
   });
   document.addEventListener('pointerover', function (e) { held = !!(e.target.closest && e.target.closest('.ph-stage,.ph-tabs')) && mode() === 'b'; });
   document.addEventListener('focusin', function (e) { var it = e.target.closest && e.target.closest('.ph-it'); if (it && mode() !== 'a') { show(+it.getAttribute('data-ph-i')); el = 0; } });
+  /* a description longer than its three-line box scrolls inside it; the fade says there is more */
+  function more() { $$('.ph-d').forEach(function (e) { e.classList.toggle('is-more', e.scrollHeight > e.clientHeight + 2); }); }
+  addEventListener('load', more); addEventListener('resize', more); setTimeout(more, 1500);
+  document.addEventListener('scroll', function (e) { var t = e.target; if (t.classList && t.classList.contains('ph-d')) t.classList.toggle('is-end', t.scrollTop + t.clientHeight >= t.scrollHeight - 2); }, true);
   requestAnimationFrame(frame);
 })();
