@@ -42,7 +42,7 @@
       this.io = new IntersectionObserver((entries) => {
         entries.forEach((en) => {
           this.wanted = en.isIntersecting;
-          if (en.isIntersecting) { this.load(); this.play(); }
+          if (en.isIntersecting) { if (!this.off() && this.onscreen()) this.load(); this.play(); }
           else this.pause();
         });
       }, { rootMargin: '600px 0px' });
@@ -55,7 +55,7 @@
          download while the hero is still painting; the poster covers the wait */
       if (document.readyState !== 'complete') {
         this.poster();
-        if (!this._waiting) { this._waiting = true; addEventListener('load', () => { this.load(); if (this.wanted) this.play(); }, { once: true }); }
+        if (!this._waiting) { this._waiting = true; addEventListener('load', () => { if (!this.off() || this._early) this.load(); if (this.wanted) this.play(); }, { once: true }); }
         return;
       }
       this._loaded = true;
@@ -86,10 +86,23 @@
     play() {
       /* a still frame is the whole experience under reduced motion */
       /* offstage: a page (the work wheel) can hold a backdrop that is fully faded out */
-      if (this.reduced || this.offstage || !this._loaded || !this.video.paused) return;
+      if (this.reduced || this.off()) return;
+      /* an offstage band (a stacked hero that is not showing) does not fetch its
+         file until it comes onstage, so stacked heroes do not all download at once */
+      if (!this._loaded) { if (this.wanted && this.onscreen()) this.load(); return; }
+      if (!this.video.paused) return;
       const p = this.video.play();
       if (p && p.catch) p.catch(function () {});
     }
+
+    /* offstage: set by the page, or a stacked hero (.ph-it) that is not the one showing */
+    off() { if (this.offstage) return true; const it = this.closest('.ph-it'); return !!(it && !it.classList.contains('is-on')); }
+
+    /* a stacked hero waits until its stack is on screen; other bands load within the margin */
+    onscreen() { if (!this.closest('.ph-it')) return true; const r = this.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }
+
+    /* fetch ahead without playing: the next hero in a stack, one step early */
+    preload() { this._early = true; this.load(); }
 
     pause() { if (this._loaded && !this.video.paused) this.video.pause(); }
   }
