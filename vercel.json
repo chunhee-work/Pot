@@ -22,12 +22,12 @@
       "destination": "/Chun%20Hee%20-%20Portfolio.dc.html"
     },
     {
-      "source": "/process",
-      "destination": "/process.html"
+      "source": "/contact",
+      "destination": "/Chun%20Hee%20-%20Portfolio.dc.html"
     },
     {
-      "source": "/work",
-      "destination": "/work.html"
+      "source": "/process",
+      "destination": "/process.html"
     },
     {
       "source": "/projects",
@@ -51,6 +51,18 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/work",
+      "destination": "/projects#side",
+      "permanent": true
+    },
+    {
+      "source": "/work.html",
+      "destination": "/projects#side",
+      "permanent": true
     }
   ]
 }

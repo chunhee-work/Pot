@@ -151,7 +151,8 @@ function mountMetalRim(host, opts) {
     // Driven by the page's existing rAF loop rather than starting a second one.
     frame(now) {
       if (dead || reduced || document.hidden) return;
-      resize();
+      /* size changes come from the ResizeObserver; reading clientWidth here forced a layout every frame */
+      if (!ro) resize();
       draw(now);
     },
     setSpeed(v) { speed = v; },
@@ -202,4 +203,223 @@ function mountMetalRim(host, opts) {
   let tries = 0;
   (function poll() { watch(); if (++tries < 90) requestAnimationFrame(poll); })();
 })();
+})();
+
+/* The pill shows Projects / About / CV / Contact at every width; a press on
+   Projects opens a small sheet under it with the three case studies and the
+   full list (Chun Hee, 2026-11-21: the case studies live inside Projects). */
+(function () {
+  var MQ = 'all', sheet = null, from = null;
+  var LINKS = [['/land-of-hope', 'Land of Hope'], ['/the-chill-gallery', 'The Chill Gallery'], ['/oeru', 'oeru'], ['/projects', 'All projects']];
+  function css() {
+    if (document.getElementById('pmenu-css')) return;
+    var s = document.createElement('style'); s.id = 'pmenu-css';
+    s.textContent = '.pmenu{position:fixed;top:84px;left:50%;transform:translate(-50%,-6px);z-index:95;width:min(320px,calc(100vw - 32px));padding:8px;border-radius:22px;background:#141413;border:1px solid rgba(244,242,236,.12);box-shadow:0 18px 40px rgba(0,0,0,.55);opacity:0;visibility:hidden;transition:opacity .25s,transform .3s cubic-bezier(.16,1,.3,1),visibility .25s;font-family:inherit}' +
+      '.pmenu.on{opacity:1;visibility:visible;transform:translate(-50%,0)}nav[data-metal] a[data-nav-wide]{display:none!important}' +
+      '.pmenu a{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 16px;border-radius:14px;color:#f4f2ec;text-decoration:none;font-size:15px;font-weight:600;letter-spacing:.01em}' +
+      '.pmenu a+a{border-top:1px solid rgba(244,242,236,.07)}.pmenu a:last-child{color:#a8a69e;font-size:13.5px}' +
+      '.pmenu a:focus-visible,.pmenu a:hover{background:rgba(244,242,236,.06);outline:none}' +
+      '.pmenu a::after{content:"\\2197";color:#8a887f;font-size:14px}' +
+      '@media (prefers-reduced-motion:reduce){.pmenu{transition:none}}';
+    document.head.appendChild(s);
+  }
+  function build() {
+    if (sheet) return sheet;
+    css();
+    sheet = document.createElement('div'); sheet.className = 'pmenu'; sheet.id = 'pmenu';
+    sheet.setAttribute('role', 'menu'); sheet.setAttribute('aria-label', 'Projects');
+    sheet.innerHTML = LINKS.map(function (l) { return '<a role="menuitem" href="' + l[0] + '">' + l[1] + '</a>'; }).join('');
+    document.body.appendChild(sheet);
+    return sheet;
+  }
+  function place(a) {
+    var r = a.getBoundingClientRect(), w = sheet.offsetWidth || 320;
+    var x = Math.max(16 + w / 2, Math.min(innerWidth - 16 - w / 2, r.left + r.width / 2));
+    sheet.style.left = x + 'px'; sheet.style.top = Math.round(r.bottom + 14) + 'px';
+  }
+  function isTrigger(a) {
+    return a && a.closest && a.closest('nav[data-metal]') && /^\/(#wheel)?$|^\/projects$/.test(a.getAttribute('href') || '') && /Projects/.test(a.textContent);
+  }
+  function show(a) {
+    build(); from = a; place(a); sheet.classList.add('on'); a.setAttribute('aria-expanded', 'true');
+    var f = sheet.querySelector('a'); if (f) f.focus({ preventScroll: true });
+  }
+  function hide(back) {
+    if (!sheet || !sheet.classList.contains('on')) return;
+    sheet.classList.remove('on');
+    if (from) { from.setAttribute('aria-expanded', 'false'); if (back) from.focus({ preventScroll: true }); }
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a');
+    if (sheet && sheet.contains(e.target)) { hide(false); return; }
+    if (isTrigger(a) && matchMedia(MQ).matches) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (sheet && sheet.classList.contains('on')) hide(true); else show(a);
+      return;
+    }
+    hide(false);
+  }, true);
+  addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(true); });
+  addEventListener('scroll', function () { hide(false); }, { passive: true });
+  addEventListener('resize', function () { hide(false); });
+  function mark() {
+    css();
+    document.querySelectorAll('nav[data-metal] a').forEach(function (a) {
+      if (isTrigger(a) && !a.hasAttribute('aria-haspopup')) { a.setAttribute('aria-haspopup', 'true'); a.setAttribute('aria-controls', 'pmenu'); a.setAttribute('aria-expanded', 'false'); }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mark); else mark();
+  addEventListener('load', mark);
+})();
+
+/* Contact, from any page. On a page that has the contact block, the click lands
+   on it at once (no glide that a late layout shift can cut short) and checks
+   again for a couple of seconds while images and fonts settle. Pages without
+   the block go to /#contact, and the home page lands it the same way on load.
+   The check stops as soon as the visitor scrolls on their own. */
+(function () {
+  var SEL = 'a[href="/#contact"],a[href="#contact"],a[data-scroll="#contact"]';
+  var timers = [], user = false;
+  function stopChecks() { timers.forEach(clearTimeout); timers = []; }
+  ['wheel', 'touchstart', 'keydown'].forEach(function (ev) {
+    addEventListener(ev, function (e) { if (ev !== 'keydown' || /^(Arrow|Page|Home|End|\s)/.test(e.key)) { user = true; stopChecks(); } }, { passive: true, capture: true });
+  });
+  function shown(el) { return el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden'; }
+  function reveal(el) {
+    el.querySelectorAll('[data-reveal]').forEach(function (r) { r.setAttribute('data-rv', '1'); r.style.opacity = '1'; r.style.transform = 'none'; });
+  }
+  function place(el) {
+    var y = Math.max(0, el.getBoundingClientRect().top + scrollY);
+    try { scrollTo({ top: y, behavior: 'instant' }); } catch (e) { scrollTo(0, y); }
+  }
+  function land(el) {
+    stopChecks(); user = false;
+    reveal(el); place(el);
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+    try { el.focus({ preventScroll: true }); } catch (e) {}
+    [120, 400, 900, 1600, 2600, 4000].forEach(function (t) {
+      timers.push(setTimeout(function () {
+        if (user || !shown(el)) return;
+        if (Math.abs(el.getBoundingClientRect().top) > 2) place(el);
+      }, t));
+    });
+  }
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest && e.target.closest(SEL);
+    if (!a) return;
+    var el = document.getElementById('contact');
+    if (!shown(el)) return;            /* no contact block here: let /#contact load */
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (location.hash !== '#contact') { try { history.pushState(null, '', '#contact'); } catch (er) {} }
+    land(el);
+  }, true);
+  function fromHash() {
+    if (location.hash !== '#contact') return;
+    var el = document.getElementById('contact');
+    if (shown(el)) land(el);
+  }
+  var nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+  if (!nav || nav.type === 'navigate') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fromHash); else fromHash();
+    addEventListener('load', function () { if (!user) fromHash(); });
+  }
+})();
+
+/* The capsule stays out of the way of the content: it slides up while the
+   visitor scrolls down, and comes back on any scroll up, near the top, or when
+   it takes keyboard focus. While a lightbox or dialog is open it is hidden, so
+   the dialog's own title and Close sit on top with nothing over them. */
+(function () {
+  var root = document.documentElement;
+  if (!document.getElementById('navhide-css')) {
+    var s = document.createElement('style'); s.id = 'navhide-css';
+    s.textContent = 'nav[data-metal]{transition:transform .38s cubic-bezier(.16,1,.3,1),opacity .25s,visibility .25s}' +
+      'html.nav-off nav[data-metal]:not(:focus-within){transform:translate(-50%,calc(-100% - 30px))!important;opacity:0;visibility:hidden}' +
+      'html.lb-on nav[data-metal],html.dlg-on nav[data-metal]{opacity:0!important;visibility:hidden!important;pointer-events:none}' +
+      'html.nav-off .pmenu{opacity:0;visibility:hidden}html::before{transition:opacity .3s}html.nav-off::before{opacity:0}' +
+      '[data-lightbox],#lb{z-index:200!important}' +
+      '@media (prefers-reduced-motion:reduce){nav[data-metal]{transition:none}}';
+    document.head.appendChild(s);
+  }
+  var lastY = scrollY, acc = 0, ticking = false;
+  function menuOpen() { var m = document.getElementById('pmenu'); return m && m.classList.contains('on'); }
+  function update() {
+    ticking = false;
+    var y = scrollY, d = y - lastY; lastY = y;
+    if (y < 120) { acc = 0; root.classList.remove('nav-off'); return; }
+    if ((d > 0) !== (acc > 0)) acc = 0;
+    acc += d;
+    if (acc > 24 && !menuOpen()) root.classList.add('nav-off');
+    else if (acc < -24) root.classList.remove('nav-off');
+  }
+  addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  /* any dialog in the page marks itself open: the main page's lightbox uses
+     visibility, the other pages toggle html.lb-on themselves */
+  function watchDialogs() {
+    var box = document.querySelector('[data-lightbox]');
+    if (!box || box.__navWatch) return;
+    box.__navWatch = true;
+    var sync = function () { root.classList.toggle('dlg-on', box.style.visibility === 'visible'); };
+    new MutationObserver(sync).observe(box, { attributes: true, attributeFilter: ['style'] });
+    sync();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watchDialogs); else watchDialogs();
+  addEventListener('load', watchDialogs);
+  var n = 0; (function again() { watchDialogs(); if (++n < 40) setTimeout(again, 250); })();
+})();
+
+/* Every dialog closes on Escape, wherever focus is. A YouTube player is another
+   document: once it has focus, no key reaches this page. So the dialog itself
+   holds focus (tabindex=-1), and when a click hands focus to the player the
+   dialog takes it straight back. The click still reaches the player (pointer
+   events follow the pointer, not focus), and Escape keeps working. */
+(function () {
+  function openDialogs() {
+    var out = [];
+    document.querySelectorAll('[data-lightbox]').forEach(function (d) { if (d.style.visibility === 'visible') out.push(d); });
+    var lb = document.getElementById('lb'); if (lb && !lb.hidden) out.push(lb);
+    document.querySelectorAll('dialog[open],[role="dialog"][aria-modal="true"]').forEach(function (d) {
+      if (out.indexOf(d) < 0 && d.getClientRects().length && getComputedStyle(d).visibility !== 'hidden' && !d.hidden &&
+          (d.tagName === 'DIALOG' || d.id === 'pmenu')) out.push(d);
+    });
+    return out;
+  }
+  function closeBtn(d) { return d.querySelector('[data-lb-close],#lb-close,[data-close],button[aria-label^="Close" i]'); }
+  function hold(d) {
+    if (!d.hasAttribute('tabindex')) d.setAttribute('tabindex', '-1');
+    d.style.outline = 'none';
+    try { d.focus({ preventScroll: true }); } catch (e) {}
+  }
+  addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' && e.key !== 'Esc') return;
+    var ds = openDialogs(); if (!ds.length) return;
+    var d = ds[ds.length - 1], b = closeBtn(d);
+    if (b) { e.preventDefault(); b.click(); }
+  }, true);
+  /* focus left this page's document: if it went into a player inside an open
+     dialog, take it back to the dialog */
+  addEventListener('blur', function () {
+    setTimeout(function () {
+      var a = document.activeElement;
+      if (!a || a.tagName !== 'IFRAME') return;
+      var d = a.closest('[data-lightbox],#lb,[role="dialog"]');
+      if (d && openDialogs().indexOf(d) >= 0) hold(d);
+    }, 0);
+  });
+  /* on open, focus sits on the dialog (or its Close), never in the player */
+  function watch() {
+    document.querySelectorAll('[data-lightbox],#lb').forEach(function (d) {
+      if (d.__escWatch) return; d.__escWatch = true;
+      var was = false;
+      new MutationObserver(function () {
+        var now = openDialogs().indexOf(d) >= 0;
+        if (now && !was) setTimeout(function () { var a = document.activeElement; if (!d.contains(a) || a.tagName === 'IFRAME') hold(d); }, 30);
+        was = now;
+      }).observe(d, { attributes: true, attributeFilter: ['style', 'hidden'] });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch); else watch();
+  addEventListener('load', watch);
+  var n = 0; (function again() { watch(); if (++n < 40) setTimeout(again, 250); })();
 })();
