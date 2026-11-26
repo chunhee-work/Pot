@@ -36,10 +36,6 @@
     {
       "source": "/cv",
       "destination": "/cv.html"
-    },
-    {
-      "source": "/gameui-staging",
-      "destination": "/gameui-staging.html"
     }
   ],
   "headers": [
@@ -62,6 +58,26 @@
     {
       "source": "/work.html",
       "destination": "/projects#side",
+      "permanent": true
+    },
+    {
+      "source": "/home.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/process.dc.html",
+      "destination": "/process",
+      "permanent": true
+    },
+    {
+      "source": "/gameui-staging",
+      "destination": "/the-chill-gallery",
+      "permanent": true
+    },
+    {
+      "source": "/gameui-staging.html",
+      "destination": "/the-chill-gallery",
       "permanent": true
     }
   ]
