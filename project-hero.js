@@ -23,6 +23,10 @@
       var its = $$('.ph-it');
       if (its.length) {
         if (!its[cur] || !its[cur].classList.contains('is-on') || its.filter(function (x) { return x.classList.contains('is-on'); }).length !== 1) show(cur);
+        /* the next hero's video starts loading one hero early, once the stack is near */
+        var sa = its[cur] && its[cur].querySelector('section-video'), sb = its[cur + 1] && its[cur + 1].querySelector('section-video');
+        if (sa && sa.wanted && !sa._loaded && sa.play) sa.play();
+        if (sa && sa._loaded && sa.onscreen && sa.onscreen() && sb && sb.preload && !sb._early) sb.preload();
         var p = 0;
         if (m === 'b') {
           var st = $('.ph-stage'), r = st && st.getBoundingClientRect(), seen = r && r.bottom > 0 && r.top < innerHeight;
